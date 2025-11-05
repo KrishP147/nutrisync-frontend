@@ -1,35 +1,27 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import api from './services/api';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [status, setStatus] = useState('Loading...');
+
+  useEffect(() => {
+    api.get('/health')
+      .then(response => setStatus(response.data.status))
+      .catch(error => setStatus('Error: ' + error.message));
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">
+          NutriSync
+        </h1>
+        <p className="text-gray-600">
+          Backend Status: <span className="font-semibold">{status}</span>
         </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;
