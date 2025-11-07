@@ -41,12 +41,15 @@ export default function Register() {
             if (signUpError) {
                 setError(signUpError.message);
                 setLoading(false);
-                return;
+            } else {
+                alert('Registration successful! Please check your email to confirm your account.');
+                navigate('/login');
             }
 
-            // On success, you might want to require email confirmation.
+            /*// On success, you might want to require email confirmation.
             // Redirecting to dashboard for now.
-            navigate('/dashboard');
+            navigate('/dashboard'); */
+
         } catch (err) {
             setError(err.message || 'An unexpected error occurred');
         } finally {
@@ -58,7 +61,7 @@ export default function Register() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
             <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Create an account</h1>
-                <p className="text-gray-600 mb-8">Sign up to start using NutriSync</p>
+                <p className="text-gray-600 mb-8">Start tracking your nutrition today with NutriSync</p>
 
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
@@ -108,12 +111,13 @@ export default function Register() {
                         {loading ? 'Creating account...' : 'Sign Up'}
                     </button>
                 </form>
-
+                
+                {/* This section is commented out for future social sign-up options
                 <div className="my-6 flex items-center">
                     <div className="flex-1 border-t border-gray-300"></div>
                     <span className="px-4 text-sm text-gray-500">or</span>
                     <div className="flex-1 border-t border-gray-300"></div>
-                </div>
+                </div> */}
 
                 <p className="mt-6 text-center text-sm text-gray-600">
                     Already have an account?{' '}
