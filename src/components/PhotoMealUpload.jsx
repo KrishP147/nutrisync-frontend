@@ -9,6 +9,9 @@ export default function PhotoMealUpload({ onMealAdded }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [debugInfo, setDebugInfo] = useState('');
+  const [mealType, setMealType] = useState('');
+  const [editableResult, setEditableResult] = useState(null);
+  const [editingIndex, setEditingIndex] = useState(null);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -17,6 +20,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
       setPreview(URL.createObjectURL(file));
       setResult(null);
       setError(null);
+      setMealType('');
     }
   };
 
@@ -28,6 +32,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
       setPreview(URL.createObjectURL(file));
       setResult(null);
       setError(null);
+      setMealType('');
     }
   };
 
@@ -37,6 +42,10 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
   const analyzeImage = async () => {
     if (!selectedFile) return;
+    if (!mealType) {
+      setError('Please select a meal type first');
+      return;
+    }
 
     setAnalyzing(true);
     setError(null);
@@ -56,7 +65,9 @@ export default function PhotoMealUpload({ onMealAdded }) {
       });
 
       setDebugInfo('Success!');
-      setResult(response.data);
+      const resultData = { ...response.data, meal_type: mealType };
+      setResult(resultData);
+      setEditableResult(resultData);
     } catch (err) {
       const errorMsg = `Error: ${err.message}\nStatus: ${err.response?.status}\nDetail: ${err.response?.data?.detail || err.response?.data?.error || 'No detail'}\nBackend URL: ${err.config?.baseURL || 'unknown'}`;
       setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to analyze image');
@@ -67,8 +78,56 @@ export default function PhotoMealUpload({ onMealAdded }) {
     }
   };
 
+  const updateFood = (index, field, value) => {
+    const updated = { ...editableResult };
+    updated.foods[index][field] = value;
+
+    // Recalculate totals
+    updated.total_nutrition = {
+      calories: updated.foods.reduce((sum, f) => sum + (parseFloat(f.calories) || 0), 0),
+      protein_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.protein_g) || 0), 0),
+      carbs_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.carbs_g) || 0), 0),
+      fat_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fat_g) || 0), 0),
+      fiber_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fiber_g) || 0), 0),
+    };
+
+    setEditableResult(updated);
+  };
+
+  const removeFood = (index) => {
+    const updated = { ...editableResult };
+    updated.foods.splice(index, 1);
+
+    // Recalculate totals
+    updated.total_nutrition = {
+      calories: updated.foods.reduce((sum, f) => sum + (parseFloat(f.calories) || 0), 0),
+      protein_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.protein_g) || 0), 0),
+      carbs_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.carbs_g) || 0), 0),
+      fat_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fat_g) || 0), 0),
+      fiber_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fiber_g) || 0), 0),
+    };
+
+    setEditableResult(updated);
+  };
+
+  const addManualFood = () => {
+    const updated = { ...editableResult };
+    updated.foods.push({
+      name: '',
+      portion: '',
+      calories: 0,
+      protein_g: 0,
+      carbs_g: 0,
+      fat_g: 0,
+      fiber_g: 0,
+      confidence: 1.0,
+    });
+    setEditableResult(updated);
+    setEditingIndex(updated.foods.length - 1);
+  };
+
   const saveMeal = async () => {
-    if (!result) return;
+    if (!editableResult) return;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -78,15 +137,15 @@ export default function PhotoMealUpload({ onMealAdded }) {
         .insert([
           {
             user_id: user.id,
-            meal_name: result.foods.map(f => f.name).join(', '),
-            meal_type: result.meal_type,
-            total_calories: result.total_nutrition.calories,
-            total_protein_g: result.total_nutrition.protein_g,
-            total_carbs_g: result.total_nutrition.carbs_g,
-            total_fat_g: result.total_nutrition.fat_g,
-            total_fiber_g: result.total_nutrition.fiber_g,
+            meal_name: editableResult.foods.map(f => f.name).join(', '),
+            meal_type: editableResult.meal_type,
+            total_calories: editableResult.total_nutrition.calories,
+            total_protein_g: editableResult.total_nutrition.protein_g,
+            total_carbs_g: editableResult.total_nutrition.carbs_g,
+            total_fat_g: editableResult.total_nutrition.fat_g,
+            total_fiber_g: editableResult.total_nutrition.fiber_g,
             is_ai_analyzed: true,
-            notes: result.recommendations,
+            notes: editableResult.recommendations,
           },
         ])
         .select();
@@ -96,7 +155,9 @@ export default function PhotoMealUpload({ onMealAdded }) {
         setSelectedFile(null);
         setPreview(null);
         setResult(null);
-        
+        setEditableResult(null);
+        setMealType('');
+
         if (onMealAdded) onMealAdded(data[0]);
       }
     } catch (e) {
@@ -115,7 +176,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
         </div>
       )}
 
-      {!preview && (
+      {!preview && !result && (
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -139,12 +200,34 @@ export default function PhotoMealUpload({ onMealAdded }) {
       {preview && !result && (
         <div>
           <img src={preview} alt="Preview" className="w-full rounded-lg mb-4 max-h-64 object-cover" />
-          
+
+          {/* Meal Type Selector */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Meal Type *
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {['breakfast', 'lunch', 'dinner', 'snack'].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setMealType(type)}
+                  className={`py-2 px-4 rounded-lg border-2 transition capitalize ${
+                    mealType === type
+                      ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold'
+                      : 'border-gray-300 hover:border-blue-300'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <button
               onClick={analyzeImage}
-              disabled={analyzing}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+              disabled={analyzing || !mealType}
+              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {analyzing ? '🔍 Analyzing...' : '🤖 Analyze with AI'}
             </button>
@@ -152,6 +235,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
               onClick={() => {
                 setSelectedFile(null);
                 setPreview(null);
+                setMealType('');
               }}
               className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
@@ -167,16 +251,113 @@ export default function PhotoMealUpload({ onMealAdded }) {
         </div>
       )}
 
-      {result && (
+      {editableResult && (
         <div className="space-y-4">
           <img src={preview} alt="Analyzed" className="w-full rounded-lg max-h-48 object-cover" />
-          
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 mb-2">Detected Foods:</h3>
-            <ul className="space-y-1">
-              {result.foods.map((food, idx) => (
-                <li key={idx} className="text-sm text-gray-700">
-                  • {food.name} ({food.portion}) - {food.calories} cal
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold text-gray-800">Detected Foods:</h3>
+              <button
+                onClick={addManualFood}
+                className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+              >
+                + Add Food
+              </button>
+            </div>
+            <ul className="space-y-2">
+              {editableResult.foods.map((food, idx) => (
+                <li key={idx} className="bg-white p-3 rounded border border-gray-200">
+                  {editingIndex === idx ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={food.name}
+                        onChange={(e) => updateFood(idx, 'name', e.target.value)}
+                        placeholder="Food name"
+                        className="w-full px-2 py-1 border rounded"
+                      />
+                      <input
+                        type="text"
+                        value={food.portion}
+                        onChange={(e) => updateFood(idx, 'portion', e.target.value)}
+                        placeholder="Portion (e.g., 100g)"
+                        className="w-full px-2 py-1 border rounded"
+                      />
+                      <div className="grid grid-cols-5 gap-2">
+                        <input
+                          type="number"
+                          value={food.calories}
+                          onChange={(e) => updateFood(idx, 'calories', parseFloat(e.target.value) || 0)}
+                          placeholder="Cal"
+                          className="px-2 py-1 border rounded text-sm"
+                        />
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={food.protein_g}
+                          onChange={(e) => updateFood(idx, 'protein_g', parseFloat(e.target.value) || 0)}
+                          placeholder="Protein"
+                          className="px-2 py-1 border rounded text-sm"
+                        />
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={food.carbs_g}
+                          onChange={(e) => updateFood(idx, 'carbs_g', parseFloat(e.target.value) || 0)}
+                          placeholder="Carbs"
+                          className="px-2 py-1 border rounded text-sm"
+                        />
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={food.fat_g}
+                          onChange={(e) => updateFood(idx, 'fat_g', parseFloat(e.target.value) || 0)}
+                          placeholder="Fat"
+                          className="px-2 py-1 border rounded text-sm"
+                        />
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={food.fiber_g}
+                          onChange={(e) => updateFood(idx, 'fiber_g', parseFloat(e.target.value) || 0)}
+                          placeholder="Fiber"
+                          className="px-2 py-1 border rounded text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingIndex(null)}
+                          className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                        >
+                          Done
+                        </button>
+                        <button
+                          onClick={() => removeFood(idx)}
+                          className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800">
+                          {food.name} <span className="text-gray-500 text-sm">({food.portion})</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {food.calories} cal | P: {food.protein_g}g | C: {food.carbs_g}g | F: {food.fat_g}g
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setEditingIndex(idx)}
+                        className="text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -184,30 +365,30 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
           <div className="grid grid-cols-5 gap-2">
             <div className="text-center p-3 bg-blue-50 rounded">
-              <p className="text-xl font-bold text-blue-600">{result.total_nutrition.calories}</p>
+              <p className="text-xl font-bold text-blue-600">{Math.round(editableResult.total_nutrition.calories)}</p>
               <p className="text-xs text-gray-600">Calories</p>
             </div>
             <div className="text-center p-3 bg-green-50 rounded">
-              <p className="text-xl font-bold text-green-600">{result.total_nutrition.protein_g.toFixed(1)}g</p>
+              <p className="text-xl font-bold text-green-600">{editableResult.total_nutrition.protein_g.toFixed(1)}g</p>
               <p className="text-xs text-gray-600">Protein</p>
             </div>
             <div className="text-center p-3 bg-yellow-50 rounded">
-              <p className="text-xl font-bold text-yellow-600">{result.total_nutrition.carbs_g.toFixed(1)}g</p>
+              <p className="text-xl font-bold text-yellow-600">{editableResult.total_nutrition.carbs_g.toFixed(1)}g</p>
               <p className="text-xs text-gray-600">Carbs</p>
             </div>
             <div className="text-center p-3 bg-orange-50 rounded">
-              <p className="text-xl font-bold text-orange-600">{result.total_nutrition.fat_g.toFixed(1)}g</p>
+              <p className="text-xl font-bold text-orange-600">{editableResult.total_nutrition.fat_g.toFixed(1)}g</p>
               <p className="text-xs text-gray-600">Fat</p>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded">
-              <p className="text-xl font-bold text-purple-600">{result.total_nutrition.fiber_g.toFixed(1)}g</p>
+              <p className="text-xl font-bold text-purple-600">{editableResult.total_nutrition.fiber_g.toFixed(1)}g</p>
               <p className="text-xs text-gray-600">Fiber</p>
             </div>
           </div>
 
-          {result.recommendations && (
+          {editableResult.recommendations && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-gray-700">💡 {result.recommendations}</p>
+              <p className="text-sm text-gray-700">💡 {editableResult.recommendations}</p>
             </div>
           )}
 
@@ -221,8 +402,10 @@ export default function PhotoMealUpload({ onMealAdded }) {
             <button
               onClick={() => {
                 setResult(null);
+                setEditableResult(null);
                 setSelectedFile(null);
                 setPreview(null);
+                setMealType('');
               }}
               className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
