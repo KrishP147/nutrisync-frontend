@@ -8,6 +8,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState('');
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -39,20 +40,28 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
     setAnalyzing(true);
     setError(null);
+    setDebugInfo(`Starting... File: ${selectedFile.name}, Size: ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB, Type: ${selectedFile.type}`);
 
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
+      setDebugInfo('Uploading to backend...');
+
       const response = await api.post('/api/analyze-meal-image', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 60000,
       });
 
+      setDebugInfo('Success!');
       setResult(response.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to analyze image');
+      const errorMsg = `Error: ${err.message}\nStatus: ${err.response?.status}\nDetail: ${err.response?.data?.detail || err.response?.data?.error || 'No detail'}\nBackend URL: ${err.config?.baseURL || 'unknown'}`;
+      setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to analyze image');
+      setDebugInfo(errorMsg);
+      console.error('Full error:', err);
     } finally {
       setAnalyzing(false);
     }
@@ -99,6 +108,12 @@ export default function PhotoMealUpload({ onMealAdded }) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">📸 Photo Analysis</h2>
+
+      {debugInfo && (
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded text-xs mb-4">
+          <pre className="whitespace-pre-wrap">{debugInfo}</pre>
+        </div>
+      )}
 
       {!preview && (
         <div
