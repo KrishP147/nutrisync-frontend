@@ -30,12 +30,15 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
 
     const timer = setTimeout(async () => {
       setLoading(true);
+      console.log('[FoodSearch] Searching for:', query);
       try {
         const response = await api.get(`/api/search-food?query=${encodeURIComponent(query)}`);
+        console.log('[FoodSearch] Response:', response.data);
         setResults(response.data.foods || []);
         setShowDropdown(true);
       } catch (error) {
-        console.error('Food search failed:', error);
+        console.error('[FoodSearch] Search failed:', error);
+        console.error('[FoodSearch] Error details:', error.response?.data);
         setResults([]);
       } finally {
         setLoading(false);
@@ -114,8 +117,27 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
       )}
 
       {showDropdown && !loading && results.length === 0 && query.length >= 2 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-center text-gray-500 text-sm z-10">
-          No foods found. Try a different search term.
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
+          <p className="text-center text-gray-500 text-sm mb-2">
+            No foods found. Try a different search term or add manually:
+          </p>
+          <button
+            onClick={() => {
+              const manualFood = {
+                name: query,
+                portion: `${quantity} serving`,
+                calories: 0,
+                protein_g: 0,
+                carbs_g: 0,
+                fat_g: 0,
+                fiber_g: 0,
+              };
+              onFoodSelect(manualFood);
+            }}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+          >
+            Add "{query}" manually (enter nutrition later)
+          </button>
         </div>
       )}
     </div>
