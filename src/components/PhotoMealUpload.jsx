@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import api from '../services/api';
+import FoodSearchInput from './FoodSearchInput';
 
 export default function PhotoMealUpload({ onMealAdded }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -12,6 +13,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
   const [mealType, setMealType] = useState('');
   const [editableResult, setEditableResult] = useState(null);
   const [editingIndex, setEditingIndex] = useState(null);
+  const [showFoodSearch, setShowFoodSearch] = useState(false);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -111,19 +113,27 @@ export default function PhotoMealUpload({ onMealAdded }) {
   };
 
   const addManualFood = () => {
+    setShowFoodSearch(true);
+  };
+
+  const handleFoodSelect = (food) => {
     const updated = { ...editableResult };
     updated.foods.push({
-      name: '',
-      portion: '',
-      calories: 0,
-      protein_g: 0,
-      carbs_g: 0,
-      fat_g: 0,
-      fiber_g: 0,
+      ...food,
       confidence: 1.0,
     });
+
+    // Recalculate totals
+    updated.total_nutrition = {
+      calories: updated.foods.reduce((sum, f) => sum + (parseFloat(f.calories) || 0), 0),
+      protein_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.protein_g) || 0), 0),
+      carbs_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.carbs_g) || 0), 0),
+      fat_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fat_g) || 0), 0),
+      fiber_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fiber_g) || 0), 0),
+    };
+
     setEditableResult(updated);
-    setEditingIndex(updated.foods.length - 1);
+    setShowFoodSearch(false);
   };
 
   const saveMeal = async () => {
@@ -256,7 +266,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
           <img src={preview} alt="Analyzed" className="w-full rounded-lg max-h-48 object-cover" />
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center mb-3">
               <h3 className="font-semibold text-gray-800">Detected Foods:</h3>
               <button
                 onClick={addManualFood}
@@ -265,6 +275,19 @@ export default function PhotoMealUpload({ onMealAdded }) {
                 + Add Food
               </button>
             </div>
+
+            {showFoodSearch && (
+              <div className="mb-3">
+                <FoodSearchInput onFoodSelect={handleFoodSelect} />
+                <button
+                  onClick={() => setShowFoodSearch(false)}
+                  className="mt-2 text-sm text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
             <ul className="space-y-2">
               {editableResult.foods.map((food, idx) => (
                 <li key={idx} className="bg-white p-3 rounded border border-gray-200">
