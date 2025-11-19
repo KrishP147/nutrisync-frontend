@@ -6,6 +6,7 @@ import MealList from '../components/MealList';
 import DailySummary from '../components/DailySummary';
 import WeeklyTrends from '../components/WeeklyTrends';
 import Recommendations from '../components/Recommendations';
+import PhotoMealUpload from '../components/PhotoMealUpload';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -44,6 +45,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Meal Form */}
           <div className="lg:col-span-1 space-y-8">
+            <PhotoMealUpload onMealAdded={handleMealAdded} />
             <MealForm onMealAdded={handleMealAdded} />
             <Recommendations key={refreshTrigger} />
           </div>
