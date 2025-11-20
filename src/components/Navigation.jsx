@@ -27,7 +27,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">NutriSync</span>
+            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">NutriSync</span>
           </Link>
 
           {/* Nav Links + Logout */}
@@ -41,14 +41,14 @@ export default function Navigation() {
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-lg transition-all ${
+                  className={`px-2 sm:px-4 py-2 rounded-lg transition-all ${
                     isActive(item.path)
                       ? 'bg-purple-200 text-purple-900 font-medium'
                       : 'text-gray-700 hover:text-purple-700 hover:bg-purple-100'
                   }`}
                 >
-                  <span className="mr-2">{item.icon}</span>
-                  {item.label}
+                  <span className="mr-1 sm:mr-2">{item.icon}</span>
+                  <span className="hidden sm:inline">{item.label}</span>
                 </motion.div>
                 {isActive(item.path) && (
                   <motion.div
@@ -62,7 +62,7 @@ export default function Navigation() {
             {/* Logout Button - Small & Red */}
             <button
               onClick={handleLogout}
-              className="ml-6 text-red-600 hover:text-red-700 font-medium text-sm transition"
+              className="ml-2 sm:ml-6 text-red-600 hover:text-red-700 font-medium text-sm transition"
             >
               Logout
             </button>

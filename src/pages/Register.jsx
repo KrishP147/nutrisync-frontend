@@ -58,6 +58,29 @@ export default function Register() {
         }
     };
 
+    const handleGoogleSignup = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + '/dashboard'
+                }
+            });
+
+            if (error) {
+                setError(error.message);
+            }
+            // No navigation needed - Supabase handles OAuth redirect
+        } catch {
+            setError('Failed to connect to Google. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <BubbleBackground interactive={true}>
             <div className="min-h-screen flex items-center justify-center p-4">
@@ -116,6 +139,20 @@ export default function Register() {
                         {loading ? 'Creating account...' : 'Sign Up'}
                     </button>
                 </form>
+
+                <div className="my-6 flex items-center">
+                    <div className="flex-1 border-t border-gray-300"></div>
+                    <span className="px-4 text-sm text-gray-500">or</span>
+                    <div className="flex-1 border-t border-gray-300"></div>
+                </div>
+
+                <button
+                    onClick={handleGoogleSignup}
+                    className="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                >
+                    <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+                    Continue with Google
+                </button>
 
                 <p className="mt-6 text-center text-sm text-gray-700">
                     Already have an account?{' '}

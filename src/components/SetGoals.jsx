@@ -154,7 +154,7 @@ export default function SetGoals({ onGoalsUpdate }) {
               <input
                 type="number"
                 step="100"
-                value={tempGoals.calories}
+                value={tempGoals.calories === 0 ? '' : tempGoals.calories}
                 onChange={(e) => setTempGoals({ ...tempGoals, calories: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />
@@ -167,7 +167,7 @@ export default function SetGoals({ onGoalsUpdate }) {
               <input
                 type="number"
                 step="20"
-                value={tempGoals.protein}
+                value={tempGoals.protein === 0 ? '' : tempGoals.protein}
                 onChange={(e) => setTempGoals({ ...tempGoals, protein: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />
@@ -180,7 +180,7 @@ export default function SetGoals({ onGoalsUpdate }) {
               <input
                 type="number"
                 step="20"
-                value={tempGoals.carbs}
+                value={tempGoals.carbs === 0 ? '' : tempGoals.carbs}
                 onChange={(e) => setTempGoals({ ...tempGoals, carbs: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />
@@ -193,7 +193,7 @@ export default function SetGoals({ onGoalsUpdate }) {
               <input
                 type="number"
                 step="20"
-                value={tempGoals.fat}
+                value={tempGoals.fat === 0 ? '' : tempGoals.fat}
                 onChange={(e) => setTempGoals({ ...tempGoals, fat: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />

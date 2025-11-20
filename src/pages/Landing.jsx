@@ -42,8 +42,9 @@ export default function Landing() {
       <header className="relative z-10 px-4 py-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-black">NutriSync</h1>
-          <Link to="/login" className="text-black hover:text-gray-700 text-sm">
-            Already have an account? Click here to login
+          <Link to="/login" className="text-black hover:text-gray-700 text-sm text-right leading-tight">
+            <span className="hidden sm:inline">Already have an account? Click here to login</span>
+            <span className="sm:hidden">Already have<br />an account?</span>
           </Link>
         </div>
       </header>
@@ -122,7 +123,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-gray-200 py-8 mt-20">
         <div className="max-w-7xl mx-auto px-4 text-center text-gray-600">
-          <p>&copy; 2024 NutriSync. Built for better nutrition.</p>
+          <p>&copy; 2025 NutriSync. Built for better nutrition.</p>
         </div>
       </footer>
     </div>
