@@ -60,8 +60,9 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
       fiber_g: parseFloat((food.fiber_g * quantity).toFixed(1)),
     };
 
+    // Update the input field to show what was selected
+    setQuery(food.name);
     onFoodSelect(multipliedFood);
-    setQuery('');
     setResults([]);
     setShowDropdown(false);
     setQuantity(1);

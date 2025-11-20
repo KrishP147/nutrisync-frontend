@@ -67,7 +67,25 @@ export default function PhotoMealUpload({ onMealAdded }) {
       });
 
       setDebugInfo('Success!');
-      const resultData = { ...response.data, meal_type: mealType };
+
+      // Transform API response to include base values and portions
+      const transformedFoods = response.data.foods.map(food => ({
+        ...food,
+        base_calories: food.calories,
+        base_protein_g: food.protein_g,
+        base_carbs_g: food.carbs_g,
+        base_fat_g: food.fat_g,
+        base_fiber_g: food.fiber_g || 0,
+        portion_size: 100, // Default to 100g
+        portion_unit: 'g',
+      }));
+
+      const resultData = {
+        ...response.data,
+        foods: transformedFoods,
+        meal_type: mealType
+      };
+
       setResult(resultData);
       setEditableResult(resultData);
     } catch (err) {
@@ -80,9 +98,44 @@ export default function PhotoMealUpload({ onMealAdded }) {
     }
   };
 
+  const updateFoodQuantity = (index, newPortionSize) => {
+    const updated = { ...editableResult };
+    const food = updated.foods[index];
+    const multiplier = newPortionSize / 100;
+
+    // Update portion size and recalculate macros
+    updated.foods[index] = {
+      ...food,
+      portion_size: parseFloat(newPortionSize) || 100,
+      calories: Math.round(food.base_calories * multiplier),
+      protein_g: parseFloat((food.base_protein_g * multiplier).toFixed(1)),
+      carbs_g: parseFloat((food.base_carbs_g * multiplier).toFixed(1)),
+      fat_g: parseFloat((food.base_fat_g * multiplier).toFixed(1)),
+      fiber_g: parseFloat((food.base_fiber_g * multiplier).toFixed(1)),
+    };
+
+    // Recalculate totals
+    updated.total_nutrition = {
+      calories: updated.foods.reduce((sum, f) => sum + (parseFloat(f.calories) || 0), 0),
+      protein_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.protein_g) || 0), 0),
+      carbs_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.carbs_g) || 0), 0),
+      fat_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fat_g) || 0), 0),
+      fiber_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fiber_g) || 0), 0),
+    };
+
+    setEditableResult(updated);
+  };
+
   const updateFood = (index, field, value) => {
     const updated = { ...editableResult };
     updated.foods[index][field] = value;
+
+    // If updating base values, recalculate current values
+    if (field.startsWith('base_')) {
+      const multiplier = updated.foods[index].portion_size / 100;
+      const baseField = field.replace('base_', '');
+      updated.foods[index][baseField] = parseFloat(value) * multiplier;
+    }
 
     // Recalculate totals
     updated.total_nutrition = {
@@ -119,7 +172,20 @@ export default function PhotoMealUpload({ onMealAdded }) {
   const handleFoodSelect = (food) => {
     const updated = { ...editableResult };
     updated.foods.push({
-      ...food,
+      name: food.name,
+      portion: food.portion || '100g',
+      portion_size: 100,
+      portion_unit: 'g',
+      base_calories: food.calories,
+      base_protein_g: food.protein_g,
+      base_carbs_g: food.carbs_g,
+      base_fat_g: food.fat_g,
+      base_fiber_g: food.fiber_g || 0,
+      calories: food.calories,
+      protein_g: food.protein_g,
+      carbs_g: food.carbs_g,
+      fat_g: food.fat_g,
+      fiber_g: food.fiber_g || 0,
       confidence: 1.0,
     });
 
@@ -142,37 +208,63 @@ export default function PhotoMealUpload({ onMealAdded }) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { data, error } = await supabase
+      // Create the meal as a compound food
+      const { data: mealData, error: mealError } = await supabase
         .from('meals')
         .insert([
           {
             user_id: user.id,
             meal_name: editableResult.foods.map(f => f.name).join(', '),
             meal_type: editableResult.meal_type,
-            total_calories: editableResult.total_nutrition.calories,
-            total_protein_g: editableResult.total_nutrition.protein_g,
-            total_carbs_g: editableResult.total_nutrition.carbs_g,
-            total_fat_g: editableResult.total_nutrition.fat_g,
-            total_fiber_g: editableResult.total_nutrition.fiber_g,
+            total_calories: Math.round(editableResult.total_nutrition.calories),
+            total_protein_g: parseFloat(editableResult.total_nutrition.protein_g.toFixed(1)),
+            total_carbs_g: parseFloat(editableResult.total_nutrition.carbs_g.toFixed(1)),
+            total_fat_g: parseFloat(editableResult.total_nutrition.fat_g.toFixed(1)),
+            total_fiber_g: parseFloat(editableResult.total_nutrition.fiber_g.toFixed(1)),
             is_ai_analyzed: true,
+            is_compound: editableResult.foods.length > 1,
             notes: editableResult.recommendations,
           },
         ])
         .select();
 
-      if (!error) {
-        // Reset form
-        setSelectedFile(null);
-        setPreview(null);
-        setResult(null);
-        setEditableResult(null);
-        setMealType('');
+      if (mealError) throw mealError;
 
-        if (onMealAdded) onMealAdded(data[0]);
+      // Save individual components if it's a compound food
+      if (editableResult.foods.length > 1 && mealData[0]) {
+        const components = editableResult.foods.map(food => ({
+          meal_id: mealData[0].id,
+          component_name: food.name,
+          portion_size: food.portion_size || 100,
+          portion_unit: food.portion_unit || 'g',
+          base_calories: food.base_calories,
+          base_protein_g: food.base_protein_g,
+          base_carbs_g: food.base_carbs_g,
+          base_fat_g: food.base_fat_g,
+          base_fiber_g: food.base_fiber_g || 0,
+        }));
+
+        const { error: componentsError } = await supabase
+          .from('meal_components')
+          .insert(components);
+
+        if (componentsError) {
+          console.error('Failed to save components:', componentsError);
+          // Continue anyway - meal is saved
+        }
       }
+
+      // Reset form
+      setSelectedFile(null);
+      setPreview(null);
+      setResult(null);
+      setEditableResult(null);
+      setMealType('');
+
+      if (onMealAdded) onMealAdded(mealData[0]);
     } catch (e) {
       console.error(e);
-      setError('Failed to save meal');
+      setError('Failed to save meal: ' + e.message);
     }
   };
 
@@ -290,7 +382,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
             <ul className="space-y-2">
               {editableResult.foods.map((food, idx) => (
-                <li key={idx} className="bg-white p-3 rounded border border-gray-200">
+                <li key={idx} className="bg-white p-3 rounded border border-blue-200">
                   {editingIndex === idx ? (
                     <div className="space-y-2">
                       <input
@@ -300,50 +392,44 @@ export default function PhotoMealUpload({ onMealAdded }) {
                         placeholder="Food name"
                         className="w-full px-2 py-1 border rounded"
                       />
-                      <input
-                        type="text"
-                        value={food.portion}
-                        onChange={(e) => updateFood(idx, 'portion', e.target.value)}
-                        placeholder="Portion (e.g., 100g)"
-                        className="w-full px-2 py-1 border rounded"
-                      />
+                      <p className="text-xs text-gray-600">Edit base values (per 100{food.portion_unit}):</p>
                       <div className="grid grid-cols-5 gap-2">
                         <input
                           type="number"
-                          value={food.calories}
-                          onChange={(e) => updateFood(idx, 'calories', parseFloat(e.target.value) || 0)}
+                          value={food.base_calories}
+                          onChange={(e) => updateFood(idx, 'base_calories', parseFloat(e.target.value) || 0)}
                           placeholder="Cal"
                           className="px-2 py-1 border rounded text-sm"
                         />
                         <input
                           type="number"
                           step="0.1"
-                          value={food.protein_g}
-                          onChange={(e) => updateFood(idx, 'protein_g', parseFloat(e.target.value) || 0)}
+                          value={food.base_protein_g}
+                          onChange={(e) => updateFood(idx, 'base_protein_g', parseFloat(e.target.value) || 0)}
                           placeholder="Protein"
                           className="px-2 py-1 border rounded text-sm"
                         />
                         <input
                           type="number"
                           step="0.1"
-                          value={food.carbs_g}
-                          onChange={(e) => updateFood(idx, 'carbs_g', parseFloat(e.target.value) || 0)}
+                          value={food.base_carbs_g}
+                          onChange={(e) => updateFood(idx, 'base_carbs_g', parseFloat(e.target.value) || 0)}
                           placeholder="Carbs"
                           className="px-2 py-1 border rounded text-sm"
                         />
                         <input
                           type="number"
                           step="0.1"
-                          value={food.fat_g}
-                          onChange={(e) => updateFood(idx, 'fat_g', parseFloat(e.target.value) || 0)}
+                          value={food.base_fat_g}
+                          onChange={(e) => updateFood(idx, 'base_fat_g', parseFloat(e.target.value) || 0)}
                           placeholder="Fat"
                           className="px-2 py-1 border rounded text-sm"
                         />
                         <input
                           type="number"
                           step="0.1"
-                          value={food.fiber_g}
-                          onChange={(e) => updateFood(idx, 'fiber_g', parseFloat(e.target.value) || 0)}
+                          value={food.base_fiber_g}
+                          onChange={(e) => updateFood(idx, 'base_fiber_g', parseFloat(e.target.value) || 0)}
                           placeholder="Fiber"
                           className="px-2 py-1 border rounded text-sm"
                         />
@@ -364,21 +450,37 @@ export default function PhotoMealUpload({ onMealAdded }) {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-800">
-                          {food.name} <span className="text-gray-500 text-sm">({food.portion})</span>
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {food.calories} cal | P: {food.protein_g}g | C: {food.carbs_g}g | F: {food.fat_g}g
-                        </p>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-800">{food.name}</p>
+                          <p className="text-xs text-gray-500">
+                            Base: {food.base_calories} cal per 100{food.portion_unit}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setEditingIndex(idx)}
+                          className="text-sm text-blue-600 hover:text-blue-800"
+                        >
+                          Edit Manually
+                        </button>
                       </div>
-                      <button
-                        onClick={() => setEditingIndex(idx)}
-                        className="text-sm text-blue-600 hover:text-blue-800"
-                      >
-                        Edit
-                      </button>
+
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-600 w-24">Amount ({food.portion_unit}):</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={food.portion_size}
+                          onChange={(e) => updateFoodQuantity(idx, e.target.value)}
+                          className="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div className="bg-gray-50 p-2 rounded text-sm text-gray-700">
+                        <p className="font-medium">{food.calories} cal</p>
+                        <p className="text-xs">P: {food.protein_g}g | C: {food.carbs_g}g | F: {food.fat_g}g | Fiber: {food.fiber_g}g</p>
+                      </div>
                     </div>
                   )}
                 </li>

@@ -5,7 +5,8 @@ export default function MealList({ refreshTrigger }) {
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingMealId, setEditingMealId] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  const [editQuantity, setEditQuantity] = useState(1);
+  const [editComponents, setEditComponents] = useState([]);
 
   useEffect(() => {
     fetchMeals();
@@ -28,6 +29,18 @@ export default function MealList({ refreshTrigger }) {
     setLoading(false);
   };
 
+  const fetchMealComponents = async (mealId) => {
+    const { data, error } = await supabase
+      .from('meal_components')
+      .select('*')
+      .eq('meal_id', mealId);
+
+    if (!error && data) {
+      return data;
+    }
+    return [];
+  };
+
   const handleDelete = async (id) => {
     if (!confirm('Delete this meal?')) return;
 
@@ -41,56 +54,136 @@ export default function MealList({ refreshTrigger }) {
     }
   };
 
-  const startEditing = (meal) => {
+  const startEditing = async (meal) => {
     setEditingMealId(meal.id);
-    setEditForm({
-      meal_name: meal.meal_name,
-      meal_type: meal.meal_type,
-      total_calories: meal.total_calories,
-      total_protein_g: meal.total_protein_g,
-      total_carbs_g: meal.total_carbs_g,
-      total_fat_g: meal.total_fat_g,
-      total_fiber_g: meal.total_fiber_g || 0,
-    });
+
+    // Calculate the quantity based on portion_size if available
+    if (meal.portion_size) {
+      setEditQuantity(meal.portion_size / 100); // Assuming base is 100g
+    } else {
+      setEditQuantity(1);
+    }
+
+    // Fetch components if it's a compound food
+    if (meal.is_compound) {
+      const components = await fetchMealComponents(meal.id);
+      setEditComponents(components);
+    } else {
+      setEditComponents([]);
+    }
   };
 
   const cancelEditing = () => {
     setEditingMealId(null);
-    setEditForm({});
+    setEditQuantity(1);
+    setEditComponents([]);
   };
 
-  const saveEdit = async (id) => {
-    const { error } = await supabase
-      .from('meals')
-      .update({
-        meal_name: editForm.meal_name,
-        meal_type: editForm.meal_type,
-        total_calories: parseInt(editForm.total_calories) || 0,
-        total_protein_g: parseFloat(editForm.total_protein_g) || 0,
-        total_carbs_g: parseFloat(editForm.total_carbs_g) || 0,
-        total_fat_g: parseFloat(editForm.total_fat_g) || 0,
-        total_fiber_g: parseFloat(editForm.total_fiber_g) || 0,
-      })
-      .eq('id', id);
+  const updateComponentQuantity = (index, newQuantity) => {
+    const updated = [...editComponents];
+    updated[index] = {
+      ...updated[index],
+      portion_size: parseFloat(newQuantity) || 0
+    };
+    setEditComponents(updated);
+  };
 
-    if (!error) {
-      // Update local state
-      setMeals(meals.map(m =>
-        m.id === id
-          ? {
-              ...m,
-              meal_name: editForm.meal_name,
-              meal_type: editForm.meal_type,
-              total_calories: parseInt(editForm.total_calories) || 0,
-              total_protein_g: parseFloat(editForm.total_protein_g) || 0,
-              total_carbs_g: parseFloat(editForm.total_carbs_g) || 0,
-              total_fat_g: parseFloat(editForm.total_fat_g) || 0,
-              total_fiber_g: parseFloat(editForm.total_fiber_g) || 0,
-            }
-          : m
-      ));
-      setEditingMealId(null);
-      setEditForm({});
+  const saveEdit = async (meal) => {
+    const quantity = parseFloat(editQuantity) || 1;
+
+    if (meal.is_compound && editComponents.length > 0) {
+      // Update each component
+      for (const component of editComponents) {
+        await supabase
+          .from('meal_components')
+          .update({
+            portion_size: component.portion_size
+          })
+          .eq('id', component.id);
+      }
+
+      // Recalculate total macros from components
+      const totalCalories = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_calories * multiplier);
+      }, 0);
+
+      const totalProtein = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_protein_g * multiplier);
+      }, 0);
+
+      const totalCarbs = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_carbs_g * multiplier);
+      }, 0);
+
+      const totalFat = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_fat_g * multiplier);
+      }, 0);
+
+      const totalFiber = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_fiber_g * multiplier);
+      }, 0);
+
+      // Update meal totals
+      const { error } = await supabase
+        .from('meals')
+        .update({
+          total_calories: Math.round(totalCalories),
+          total_protein_g: parseFloat(totalProtein.toFixed(1)),
+          total_carbs_g: parseFloat(totalCarbs.toFixed(1)),
+          total_fat_g: parseFloat(totalFat.toFixed(1)),
+          total_fiber_g: parseFloat(totalFiber.toFixed(1)),
+        })
+        .eq('id', meal.id);
+
+      if (!error) {
+        await fetchMeals();
+        setEditingMealId(null);
+        setEditComponents([]);
+      }
+    } else {
+      // Simple food - use quantity multiplier
+      // Get base values (assuming stored values are for portion_size or default 100g)
+      const baseMultiplier = meal.portion_size ? (meal.portion_size / 100) : 1;
+      const baseCalories = meal.total_calories / baseMultiplier;
+      const baseProtein = meal.total_protein_g / baseMultiplier;
+      const baseCarbs = meal.total_carbs_g / baseMultiplier;
+      const baseFat = meal.total_fat_g / baseMultiplier;
+      const baseFiber = meal.total_fiber_g / baseMultiplier;
+
+      const { error } = await supabase
+        .from('meals')
+        .update({
+          portion_size: quantity * 100,
+          total_calories: Math.round(baseCalories * quantity),
+          total_protein_g: parseFloat((baseProtein * quantity).toFixed(1)),
+          total_carbs_g: parseFloat((baseCarbs * quantity).toFixed(1)),
+          total_fat_g: parseFloat((baseFat * quantity).toFixed(1)),
+          total_fiber_g: parseFloat((baseFiber * quantity).toFixed(1)),
+        })
+        .eq('id', meal.id);
+
+      if (!error) {
+        setMeals(meals.map(m =>
+          m.id === meal.id
+            ? {
+                ...m,
+                portion_size: quantity * 100,
+                total_calories: Math.round(baseCalories * quantity),
+                total_protein_g: parseFloat((baseProtein * quantity).toFixed(1)),
+                total_carbs_g: parseFloat((baseCarbs * quantity).toFixed(1)),
+                total_fat_g: parseFloat((baseFat * quantity).toFixed(1)),
+                total_fiber_g: parseFloat((baseFiber * quantity).toFixed(1)),
+              }
+            : m
+        ));
+        setEditingMealId(null);
+        setEditQuantity(1);
+      }
     }
   };
 
@@ -126,102 +219,72 @@ export default function MealList({ refreshTrigger }) {
             // Edit Mode
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Meal Name
-                </label>
-                <input
-                  type="text"
-                  value={editForm.meal_name}
-                  onChange={(e) => setEditForm({ ...editForm, meal_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">{meal.meal_name}</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  {meal.meal_type} • {formatDate(meal.consumed_at)}
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Meal Type
-                </label>
-                <select
-                  value={editForm.meal_type}
-                  onChange={(e) => setEditForm({ ...editForm, meal_type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="breakfast">Breakfast</option>
-                  <option value="lunch">Lunch</option>
-                  <option value="dinner">Dinner</option>
-                  <option value="snack">Snack</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Calories
-                  </label>
-                  <input
-                    type="number"
-                    value={editForm.total_calories}
-                    onChange={(e) => setEditForm({ ...editForm, total_calories: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+              {meal.is_compound && editComponents.length > 0 ? (
+                // Compound food - edit each component
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-700">Edit Components:</p>
+                  {editComponents.map((component, idx) => (
+                    <div key={component.id} className="bg-blue-50 p-3 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-800">{component.component_name}</p>
+                          <p className="text-xs text-gray-600">
+                            Base: {component.base_calories} cal per 100{component.portion_unit}
+                          </p>
+                        </div>
+                        <div className="w-32">
+                          <label className="block text-xs text-gray-600 mb-1">
+                            Amount ({component.portion_unit})
+                          </label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={component.portion_size}
+                            onChange={(e) => updateComponentQuantity(idx, e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          />
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-blue-600">
+                            {Math.round(component.base_calories * (component.portion_size / 100))} cal
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            P: {(component.base_protein_g * (component.portion_size / 100)).toFixed(1)}g
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-
+              ) : (
+                // Simple food - quantity multiplier
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Protein (g)
+                    Quantity Multiplier
                   </label>
                   <input
                     type="number"
                     step="0.1"
-                    value={editForm.total_protein_g}
-                    onChange={(e) => setEditForm({ ...editForm, total_protein_g: e.target.value })}
+                    min="0.1"
+                    value={editQuantity}
+                    onChange={(e) => setEditQuantity(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    1.0 = original portion, 2.0 = double, 0.5 = half
+                  </p>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Carbs (g)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={editForm.total_carbs_g}
-                    onChange={(e) => setEditForm({ ...editForm, total_carbs_g: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fat (g)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={editForm.total_fat_g}
-                    onChange={(e) => setEditForm({ ...editForm, total_fat_g: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fiber (g)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={editForm.total_fiber_g}
-                    onChange={(e) => setEditForm({ ...editForm, total_fiber_g: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="flex gap-2 pt-2">
                 <button
-                  onClick={() => saveEdit(meal.id)}
+                  onClick={() => saveEdit(meal)}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 text-sm font-medium"
                 >
                   Save Changes
@@ -242,6 +305,7 @@ export default function MealList({ refreshTrigger }) {
                   <h3 className="text-lg font-semibold text-gray-800">{meal.meal_name}</h3>
                   <p className="text-sm text-gray-500">
                     {meal.meal_type} • {formatDate(meal.consumed_at)}
+                    {meal.is_compound && <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Compound</span>}
                   </p>
                 </div>
                 <div className="flex gap-2">
