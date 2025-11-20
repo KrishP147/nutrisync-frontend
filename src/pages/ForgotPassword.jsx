@@ -17,8 +17,13 @@ export default function ForgotPassword() {
     setError('');
 
     try {
+      // Use production URL for password reset, or localhost if in development
+      const redirectUrl = import.meta.env.PROD
+        ? 'https://nutrisync.vercel.app/reset-password'
+        : `${window.location.origin}/reset-password`;
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: redirectUrl,
       });
 
       if (error) throw error;

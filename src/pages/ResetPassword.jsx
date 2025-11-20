@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import BackgroundCircles from '../components/ui/BackgroundCircles';
 
@@ -9,7 +9,19 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [validToken, setValidToken] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if there's a valid recovery token in the URL
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+
+    if (!accessToken || type !== 'recovery') {
+      setValidToken(false);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,6 +55,47 @@ export default function ResetPassword() {
       setLoading(false);
     }
   };
+
+  // Show error if no valid token
+  if (!validToken) {
+    return (
+      <div className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center">
+        <div className="fixed inset-0">
+          <BackgroundCircles variant="primary" />
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="relative z-10 w-full max-w-md mx-auto px-4"
+        >
+          <div className="bg-white/95 backdrop-blur-sm border-2 border-red-500 rounded-xl p-8 shadow-xl">
+            <h1 className="text-3xl font-bold text-black mb-2 text-center">Invalid Reset Link</h1>
+            <p className="text-gray-600 mb-6 text-center">
+              This password reset link is invalid or has expired.
+            </p>
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-500 rounded-lg text-yellow-800 text-sm">
+              Please request a new password reset link from the forgot password page.
+            </div>
+            <div className="space-y-2">
+              <Link
+                to="/forgot-password"
+                className="block w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-purple-800 transition text-center"
+              >
+                Request New Link
+              </Link>
+              <Link
+                to="/login"
+                className="block w-full text-center text-purple-600 hover:text-purple-700 font-medium py-2"
+              >
+                Back to Login
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center">
