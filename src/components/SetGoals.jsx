@@ -1,114 +1,29 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { supabase } from '../supabaseClient';
+import { useGoals } from '../contexts/GoalsContext';
+import UserProfile from './UserProfile';
 
-export default function SetGoals({ onGoalsUpdate }) {
+export default function SetGoals() {
+  const { goals, updateGoals, loading } = useGoals();
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [goals, setGoals] = useState({
-    calories: 2000,
-    protein: 150,
-    carbs: 250,
-    fat: 67
-  });
-
   const [tempGoals, setTempGoals] = useState(goals);
 
+  // Update tempGoals when goals change from context
   useEffect(() => {
-    fetchGoals();
-  }, []);
-
-  const fetchGoals = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('user_goals')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching goals:', error);
-      }
-
-      if (data) {
-        const fetchedGoals = {
-          calories: data.calories,
-          protein: data.protein,
-          carbs: data.carbs,
-          fat: data.fat
-        };
-        setGoals(fetchedGoals);
-        setTempGoals(fetchedGoals);
-        if (onGoalsUpdate) onGoalsUpdate(fetchedGoals);
-      } else {
-        // No goals found, use defaults
-        if (onGoalsUpdate) onGoalsUpdate(goals);
-      }
-    } catch (error) {
-      console.error('Error in fetchGoals:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setTempGoals(goals);
+  }, [goals]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        alert('You must be logged in to save goals');
-        setSaving(false);
-        return;
-      }
-
-      // Try to update first
-      const { error: updateError } = await supabase
-        .from('user_goals')
-        .update({
-          calories: tempGoals.calories,
-          protein: tempGoals.protein,
-          carbs: tempGoals.carbs,
-          fat: tempGoals.fat
-        })
-        .eq('user_id', user.id);
-
-      // If no rows affected, insert
-      if (updateError && updateError.code === 'PGRST116') {
-        const { error: insertError } = await supabase
-          .from('user_goals')
-          .insert({
-            user_id: user.id,
-            calories: tempGoals.calories,
-            protein: tempGoals.protein,
-            carbs: tempGoals.carbs,
-            fat: tempGoals.fat
-          });
-
-        if (insertError) {
-          console.error('Error inserting goals:', insertError);
-          alert('Failed to save goals. Please try again.');
-          setSaving(false);
-          return;
-        }
-      } else if (updateError) {
-        console.error('Error updating goals:', updateError);
+      const success = await updateGoals(tempGoals);
+      
+      if (success) {
+        setIsEditing(false);
+      } else {
         alert('Failed to save goals. Please try again.');
-        setSaving(false);
-        return;
       }
-
-      setGoals(tempGoals);
-      if (onGoalsUpdate) onGoalsUpdate(tempGoals);
-      setIsEditing(false);
     } catch (error) {
       console.error('Error in handleSave:', error);
       alert('An unexpected error occurred. Please try again.');
@@ -132,15 +47,18 @@ export default function SetGoals({ onGoalsUpdate }) {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-2xl font-bold text-black">Daily Goals</h2>
-          <p className="text-sm text-gray-600 mt-1">Set your daily nutrition targets</p>
+          <p className="text-sm text-gray-600 mt-1">Set your daily nutrition targets manually or calculate from profile</p>
         </div>
         {!isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-medium"
-          >
-            Edit Goals
-          </button>
+          <div className="flex gap-2">
+            <UserProfile />
+            <button
+              onClick={() => setIsEditing(true)}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-medium"
+            >
+              ✏️ Edit Manually
+            </button>
+          </div>
         )}
       </div>
 

@@ -4,7 +4,9 @@ import Navigation from '../components/Navigation';
 import GitHubHeatmap from '../components/GitHubHeatmap';
 import WeeklyTrends from '../components/WeeklyTrends';
 import SetGoals from '../components/SetGoals';
+import UserProfile from '../components/UserProfile';
 import AuroraBackground from '../components/ui/AuroraBackground';
+import { useGoals } from '../contexts/GoalsContext';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, RadarChart, PolarGrid, 
   PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, 
@@ -13,58 +15,16 @@ import {
 import { motion } from 'motion/react';
 
 export default function Progress() {
+  const { goals } = useGoals();
   const [heatmapData, setHeatmapData] = useState({});
   const [lineChartData, setLineChartData] = useState([]);
   const [barChartData, setBarChartData] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [goals, setGoals] = useState({
-    calories: 2000,
-    protein: 150,
-    carbs: 250,
-    fat: 67
-  });
 
   useEffect(() => {
-    fetchGoals();
     fetchProgressData();
-  }, []);
-
-  const fetchGoals = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('user_goals')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching goals:', error);
-      }
-
-      if (data) {
-        const fetchedGoals = {
-          calories: data.calories,
-          protein: data.protein,
-          carbs: data.carbs,
-          fat: data.fat
-        };
-        setGoals(fetchedGoals);
-      }
-    } catch (error) {
-      console.error('Error in fetchGoals:', error);
-    }
-  };
-
-  const handleGoalsUpdate = (newGoals) => {
-    setGoals(newGoals);
-    // Re-process data with new goals
-    fetchProgressData();
-  };
+  }, [goals]); // Re-fetch when goals change
 
   const fetchProgressData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -87,11 +47,20 @@ export default function Progress() {
   };
 
   const processData = (meals) => {
+    // Helper to format date as YYYY-MM-DD in local time
+    const formatDateLocal = (dateObj) => {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     // Process for heatmap
     const heatmap = {};
 
     meals.forEach(meal => {
-      const date = new Date(meal.consumed_at).toISOString().split('T')[0];
+      const dateObj = new Date(meal.consumed_at);
+      const date = formatDateLocal(dateObj);
 
       if (!heatmap[date]) {
         heatmap[date] = {
@@ -115,28 +84,36 @@ export default function Progress() {
     // Process for line chart (last 30 days)
     const last30Days = Object.entries(heatmap)
       .slice(-30)
-      .map(([date, data]) => ({
-        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        calories: data.calories,
-        protein: data.protein.toFixed(1),
-        carbs: data.carbs.toFixed(1),
-        fat: data.fat.toFixed(1),
-        proteinPercent: ((data.protein / goals.protein) * 100).toFixed(0),
-        caloriesPercent: ((data.calories / goals.calories) * 100).toFixed(0),
-      }));
+      .map(([date, data]) => {
+        const [year, month, day] = date.split('-').map(Number);
+        const dateObj = new Date(year, month - 1, day);
+        return {
+          date: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          calories: data.calories,
+          protein: data.protein.toFixed(1),
+          carbs: data.carbs.toFixed(1),
+          fat: data.fat.toFixed(1),
+          proteinPercent: ((data.protein / goals.protein) * 100).toFixed(0),
+          caloriesPercent: ((data.calories / goals.calories) * 100).toFixed(0),
+        };
+      });
 
     setLineChartData(last30Days);
 
     // Process for bar chart (last 7 days)
     const last7Days = Object.entries(heatmap)
       .slice(-7)
-      .map(([date, data]) => ({
-        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        Protein: parseFloat(data.protein.toFixed(1)),
-        Carbs: parseFloat(data.carbs.toFixed(1)),
-        Fat: parseFloat(data.fat.toFixed(1)),
-        Fiber: parseFloat(data.fiber.toFixed(1)),
-      }));
+      .map(([date, data]) => {
+        const [year, month, day] = date.split('-').map(Number);
+        const dateObj = new Date(year, month - 1, day);
+        return {
+          date: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          Protein: parseFloat(data.protein.toFixed(1)),
+          Carbs: parseFloat(data.carbs.toFixed(1)),
+          Fat: parseFloat(data.fat.toFixed(1)),
+          Fiber: parseFloat(data.fiber.toFixed(1)),
+        };
+      });
 
     setBarChartData(last7Days);
 
@@ -182,7 +159,7 @@ export default function Progress() {
         </motion.div>
 
         {/* Set Goals Component */}
-        <SetGoals onGoalsUpdate={handleGoalsUpdate} />
+        <SetGoals />
 
         {/* GitHub-style Heatmap - Now First */}
         <motion.div

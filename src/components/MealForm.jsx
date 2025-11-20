@@ -262,7 +262,7 @@ export default function MealForm({ onMealAdded }) {
                           value={food.portion_display}
                           onChange={(e) => updateFoodQuantity(idx, e.target.value)}
                           placeholder="1"
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 text-black"
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 text-black bg-white"
                         />
                       </div>
                       <div className="text-right">
@@ -343,7 +343,7 @@ export default function MealForm({ onMealAdded }) {
               value={mealName}
               onChange={(e) => setMealName(e.target.value)}
               placeholder="e.g., Chicken breast with rice"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
               required
             />
 
@@ -357,7 +357,7 @@ export default function MealForm({ onMealAdded }) {
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
                   placeholder="500"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
                   required
                 />
               </div>
@@ -372,7 +372,7 @@ export default function MealForm({ onMealAdded }) {
                   value={protein}
                   onChange={(e) => setProtein(e.target.value)}
                   placeholder="30"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
                   required
                 />
               </div>
@@ -387,7 +387,7 @@ export default function MealForm({ onMealAdded }) {
                   value={carbs}
                   onChange={(e) => setCarbs(e.target.value)}
                   placeholder="50"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
                   required
                 />
               </div>
@@ -402,7 +402,7 @@ export default function MealForm({ onMealAdded }) {
                   value={fat}
                   onChange={(e) => setFat(e.target.value)}
                   placeholder="15"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
                   required
                 />
               </div>
@@ -417,7 +417,7 @@ export default function MealForm({ onMealAdded }) {
                   value={fiber}
                   onChange={(e) => setFiber(e.target.value)}
                   placeholder="5"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
                 />
               </div>
             </div>

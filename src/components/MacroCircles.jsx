@@ -3,13 +3,12 @@ import { supabase } from '../supabaseClient';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { motion } from 'motion/react';
+import { useGoals } from '../contexts/GoalsContext';
 
-export default function MacroCircles({ goals: propsGoals }) {
+export default function MacroCircles() {
+  const { goals } = useGoals();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // Use goals from props or defaults
-  const goals = propsGoals || { calories: 2000, protein: 150, carbs: 250, fat: 67 };
 
   useEffect(() => {
     fetchData();

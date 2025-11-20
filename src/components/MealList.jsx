@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated, limit, variant = 'purple' }) {
+export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated, limit, variant = 'purple', specificDate }) {
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingMealId, setEditingMealId] = useState(null);
@@ -61,12 +61,30 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('meals')
       .select('*')
-      .eq('user_id', user.id)
-      .order('consumed_at', { ascending: false })
-      .limit(limit || 20);
+      .eq('user_id', user.id);
+
+    // If specificDate is provided, filter by that date
+    if (specificDate) {
+      // Parse date string as local time (not UTC) to avoid timezone issues
+      const [year, month, day] = specificDate.split('-').map(Number);
+      const dayStart = new Date(year, month - 1, day, 0, 0, 0, 0);
+      const dayEnd = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+      query = query
+        .gte('consumed_at', dayStart.toISOString())
+        .lte('consumed_at', dayEnd.toISOString());
+    }
+
+    query = query.order('consumed_at', { ascending: false });
+
+    if (limit) {
+      query = query.limit(limit);
+    }
+
+    const { data, error } = await query;
 
     if (!error) {
       setMeals(data || []);
@@ -337,7 +355,9 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
   if (meals.length === 0) {
     return (
       <div className={`${colors.cardBg} border-2 ${colors.cardBorder} rounded-xl p-8 text-center shadow-md`}>
-        <p className={colors.textSecondary}>No meals logged yet. Start by adding your first meal!</p>
+        <p className={colors.textSecondary}>
+          {specificDate ? 'Nothing was logged today.' : 'No meals logged yet. Start by adding your first meal!'}
+        </p>
       </div>
     );
   }

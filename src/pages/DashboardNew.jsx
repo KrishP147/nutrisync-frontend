@@ -10,45 +10,6 @@ import { motion } from 'motion/react';
 
 export default function DashboardNew() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [goals, setGoals] = useState({
-    calories: 2000,
-    protein: 150,
-    carbs: 250,
-    fat: 67
-  });
-
-  useEffect(() => {
-    fetchGoals();
-  }, [refreshTrigger]);
-
-  const fetchGoals = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('user_goals')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching goals:', error);
-      }
-
-      if (data) {
-        setGoals({
-          calories: data.calories,
-          protein: data.protein,
-          carbs: data.carbs,
-          fat: data.fat
-        });
-      }
-    } catch (error) {
-      console.error('Error in fetchGoals:', error);
-    }
-  };
 
   const handleMealChange = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -75,7 +36,7 @@ export default function DashboardNew() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <MacroCircles key={refreshTrigger} goals={goals} />
+          <MacroCircles key={refreshTrigger} />
         </motion.div>
 
         {/* Recommendations */}

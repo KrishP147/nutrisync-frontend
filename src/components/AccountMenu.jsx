@@ -100,10 +100,22 @@ export default function AccountMenu() {
             >
               <button
                 onClick={() => {
-                  navigate('/forgot-password');
+                  navigate('/profile');
                   setIsOpen(false);
                 }}
                 className="w-full px-4 py-3 text-left text-gray-700 hover:bg-purple-50 transition flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Profile
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/change-password');
+                  setIsOpen(false);
+                }}
+                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-purple-50 transition flex items-center gap-2 border-t border-gray-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
