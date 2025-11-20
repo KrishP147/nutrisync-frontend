@@ -22,8 +22,14 @@ function App() {
     });
 
     // Listen for auth changes
-    const { data: {subscription}, } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const { data: {subscription}, } = supabase.auth.onAuthStateChange((event, session) => {
+      // Don't set session for password recovery events
+      // Let the ResetPassword component handle it
+      if (event === 'PASSWORD_RECOVERY') {
+        setSession(null);
+      } else {
+        setSession(session);
+      }
     });
 
     return () => subscription.unsubscribe();

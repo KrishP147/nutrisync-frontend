@@ -1,17 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import TrueFocus from './ui/TrueFocus';
+import AccountMenu from './AccountMenu';
 
 export default function Navigation() {
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
-  };
 
   const isActive = (path) => location.pathname === path;
 
@@ -59,13 +51,8 @@ export default function Navigation() {
               </Link>
             ))}
 
-            {/* Logout Button - Small & Red */}
-            <button
-              onClick={handleLogout}
-              className="ml-2 sm:ml-6 text-red-600 hover:text-red-700 font-medium text-sm transition"
-            >
-              Logout
-            </button>
+            {/* Account Menu Dropdown */}
+            <AccountMenu />
           </div>
         </div>
       </div>
