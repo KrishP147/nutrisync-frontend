@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import Navigation from '../components/Navigation';
 import MacroCircles from '../components/MacroCircles';
 import TodayPieChart from '../components/TodayPieChart';
@@ -17,12 +18,37 @@ export default function DashboardNew() {
   });
 
   useEffect(() => {
-    // Load goals from localStorage
-    const savedGoals = localStorage.getItem('nutriSyncGoals');
-    if (savedGoals) {
-      setGoals(JSON.parse(savedGoals));
-    }
+    fetchGoals();
   }, [refreshTrigger]);
+
+  const fetchGoals = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching goals:', error);
+      }
+
+      if (data) {
+        setGoals({
+          calories: data.calories,
+          protein: data.protein,
+          carbs: data.carbs,
+          fat: data.fat
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetchGoals:', error);
+    }
+  };
 
   const handleMealChange = () => {
     setRefreshTrigger(prev => prev + 1);

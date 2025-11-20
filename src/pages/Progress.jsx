@@ -26,22 +26,45 @@ export default function Progress() {
   });
 
   useEffect(() => {
-    // Load goals from localStorage
-    const savedGoals = localStorage.getItem('nutriSyncGoals');
-    if (savedGoals) {
-      setGoals(JSON.parse(savedGoals));
-    }
+    fetchGoals();
+    fetchProgressData();
   }, []);
+
+  const fetchGoals = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching goals:', error);
+      }
+
+      if (data) {
+        const fetchedGoals = {
+          calories: data.calories,
+          protein: data.protein,
+          carbs: data.carbs,
+          fat: data.fat
+        };
+        setGoals(fetchedGoals);
+      }
+    } catch (error) {
+      console.error('Error in fetchGoals:', error);
+    }
+  };
 
   const handleGoalsUpdate = (newGoals) => {
     setGoals(newGoals);
     // Re-process data with new goals
     fetchProgressData();
   };
-
-  useEffect(() => {
-    fetchProgressData();
-  }, []);
 
   const fetchProgressData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
