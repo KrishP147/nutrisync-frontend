@@ -22,32 +22,15 @@ export default function Navigation() {
   ];
 
   return (
-    <nav className="glass-card sticky top-0 z-50 backdrop-blur-xl">
+    <nav className="bg-gradient-to-r from-purple-50 to-purple-100 border-b-2 border-purple-500 sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center space-x-2">
-            <motion.div
-              initial={{ rotate: 0 }}
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.5 }}
-              className="text-3xl"
-            >
-              🥗
-            </motion.div>
-            <TrueFocus
-              sentence="NutriSync"
-              separator=""
-              manualMode={false}
-              blurAmount={3}
-              borderColor="#22c55e"
-              glowColor="rgba(34, 197, 94, 0.6)"
-              animationDuration={0.8}
-              pauseBetweenAnimations={2}
-            />
+            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">NutriSync</span>
           </Link>
 
-          {/* Nav Links */}
+          {/* Nav Links + Logout */}
           <div className="flex items-center space-x-1">
             {navItems.map((item) => (
               <Link
@@ -60,8 +43,8 @@ export default function Navigation() {
                   whileTap={{ scale: 0.95 }}
                   className={`px-4 py-2 rounded-lg transition-all ${
                     isActive(item.path)
-                      ? 'bg-matrix-green-900/50 text-matrix-green-400'
-                      : 'text-dark-secondary hover:text-matrix-green-400 hover:bg-dark-secondary/30'
+                      ? 'bg-purple-200 text-purple-900 font-medium'
+                      : 'text-gray-700 hover:text-purple-700 hover:bg-purple-100'
                   }`}
                 >
                   <span className="mr-2">{item.icon}</span>
@@ -70,21 +53,19 @@ export default function Navigation() {
                 {isActive(item.path) && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-matrix-green-400"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600"
                   />
                 )}
               </Link>
             ))}
 
-            {/* Logout Button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            {/* Logout Button - Small & Red */}
+            <button
               onClick={handleLogout}
-              className="ml-4 px-4 py-2 text-dark-secondary hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all"
+              className="ml-6 text-red-600 hover:text-red-700 font-medium text-sm transition"
             >
-              🚪 Logout
-            </motion.button>
+              Logout
+            </button>
           </div>
         </div>
       </div>

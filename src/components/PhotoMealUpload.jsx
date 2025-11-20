@@ -313,8 +313,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">📸 Photo Analysis</h2>
+    <div className="bg-white border-2 border-green-100 rounded-xl shadow-sm p-6">
+      <h2 className="text-2xl font-bold text-black mb-4">📸 Photo Analysis</h2>
 
       {debugInfo && (
         <div className="bg-blue-50 border border-blue-200 p-3 rounded text-xs mb-4">
@@ -375,7 +375,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
               disabled={analyzing || !mealType}
               className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {analyzing ? '🔍 Analyzing...' : '🤖 Analyze with AI'}
+              {analyzing ? '🔍 Analyzing...' : '📸 Analyze Photo'}
             </button>
             <button
               onClick={() => {

@@ -83,12 +83,14 @@ export default function DailySummaryNew() {
           transition={{ delay: 0.1 }}
           className="text-center p-4 bg-dark-secondary/50 rounded-lg border border-matrix-green-900/30"
         >
-          <CountUp
-            from={0}
-            to={summary.calories}
-            duration={1.5}
-            className="text-4xl font-bold text-matrix-green-400"
-          />
+          <div className="text-3xl md:text-4xl font-bold text-matrix-green-400 break-words">
+            <CountUp
+              from={0}
+              to={summary.calories}
+              duration={1.5}
+              className="text-3xl md:text-4xl font-bold text-matrix-green-400"
+            />
+          </div>
           <p className="text-sm text-dark-secondary mt-2">Calories</p>
         </motion.div>
 
@@ -98,14 +100,14 @@ export default function DailySummaryNew() {
           transition={{ delay: 0.2 }}
           className="text-center p-4 bg-dark-secondary/50 rounded-lg border border-protein-green/30"
         >
-          <div className="text-4xl font-bold text-protein-green">
+          <div className="text-3xl md:text-4xl font-bold text-protein-green break-words">
             <CountUp
               from={0}
               to={summary.protein}
               duration={1.5}
-              className="text-4xl font-bold text-protein-green"
+              className="text-3xl md:text-4xl font-bold text-protein-green"
             />
-            <span className="text-2xl">g</span>
+            <span className="text-xl md:text-2xl">g</span>
           </div>
           <p className="text-sm text-dark-secondary mt-2">Protein</p>
         </motion.div>
@@ -116,14 +118,14 @@ export default function DailySummaryNew() {
           transition={{ delay: 0.3 }}
           className="text-center p-4 bg-dark-secondary/50 rounded-lg border border-carbs-blue/30"
         >
-          <div className="text-4xl font-bold text-carbs-blue">
+          <div className="text-3xl md:text-4xl font-bold text-carbs-blue break-words">
             <CountUp
               from={0}
               to={summary.carbs}
               duration={1.5}
-              className="text-4xl font-bold text-carbs-blue"
+              className="text-3xl md:text-4xl font-bold text-carbs-blue"
             />
-            <span className="text-2xl">g</span>
+            <span className="text-xl md:text-2xl">g</span>
           </div>
           <p className="text-sm text-dark-secondary mt-2">Carbs</p>
         </motion.div>
@@ -134,14 +136,14 @@ export default function DailySummaryNew() {
           transition={{ delay: 0.4 }}
           className="text-center p-4 bg-dark-secondary/50 rounded-lg border border-fat-orange/30"
         >
-          <div className="text-4xl font-bold text-fat-orange">
+          <div className="text-3xl md:text-4xl font-bold text-fat-orange break-words">
             <CountUp
               from={0}
               to={summary.fat}
               duration={1.5}
-              className="text-4xl font-bold text-fat-orange"
+              className="text-3xl md:text-4xl font-bold text-fat-orange"
             />
-            <span className="text-2xl">g</span>
+            <span className="text-xl md:text-2xl">g</span>
           </div>
           <p className="text-sm text-dark-secondary mt-2">Fat</p>
         </motion.div>
@@ -152,14 +154,14 @@ export default function DailySummaryNew() {
           transition={{ delay: 0.5 }}
           className="text-center p-4 bg-dark-secondary/50 rounded-lg border border-fiber-purple/30"
         >
-          <div className="text-4xl font-bold text-fiber-purple">
+          <div className="text-3xl md:text-4xl font-bold text-fiber-purple break-words">
             <CountUp
               from={0}
               to={summary.fiber}
               duration={1.5}
-              className="text-4xl font-bold text-fiber-purple"
+              className="text-3xl md:text-4xl font-bold text-fiber-purple"
             />
-            <span className="text-2xl">g</span>
+            <span className="text-xl md:text-2xl">g</span>
           </div>
           <p className="text-sm text-dark-secondary mt-2">Fiber</p>
         </motion.div>

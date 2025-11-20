@@ -20,4 +20,44 @@
   .glow-blue {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   }
+
+  /* Custom Scrollbar - Purple */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #a855f7, #7c3aed);
+    border-radius: 10px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #c084fc, #a855f7);
+  }
+
+  /* Custom Scrollbar - Light (for light backgrounds) */
+  .custom-scrollbar-light::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  .custom-scrollbar-light::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar-light::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #a855f7, #7c3aed);
+    border-radius: 10px;
+    border: 2px solid rgba(168, 85, 247, 0.2);
+  }
+
+  .custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #c084fc, #a855f7);
+  }
 }

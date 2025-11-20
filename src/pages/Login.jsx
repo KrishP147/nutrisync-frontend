@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
+import BubbleBackground from '../components/ui/BubbleBackground';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -69,10 +70,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
-        <p className="text-gray-600 mb-8">Log in to continue to NutriSync</p>
+    <BubbleBackground interactive={true}>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white/95 backdrop-blur-sm border-2 border-teal-300 p-8 rounded-2xl shadow-2xl max-w-md w-full">
+        <div className="text-center mb-6">
+          <h1 className="text-4xl font-bold text-black mb-2">Welcome Back</h1>
+          <div className="w-16 h-1 bg-green-500 mx-auto mb-4"></div>
+          <p className="text-gray-700">Log in to continue to NutriSync</p>
+        </div>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
@@ -89,7 +94,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-black bg-white"
               required
             />
           </div>
@@ -101,7 +106,7 @@ export default function Login() {
               </label>
               <Link
                 to="/forgot-password"
-                className="text-sm text-blue-600 hover:underline"
+                className="text-sm text-green-600 hover:underline"
               >
                 Forgot Password?
               </Link>
@@ -110,7 +115,7 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-black bg-white"
               required
             />
           </div>
@@ -131,7 +136,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition disabled:opacity-50 font-medium shadow-lg hover:shadow-xl"
           >
             {loading ? 'Logging in...' : 'Log In'}
           </button>
@@ -151,13 +156,14 @@ export default function Login() {
           Continue with Google
         </button>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-gray-700">
           Don't have an account?{' '}
-          <Link to="/register" className="text-blue-600 hover:underline">
+          <Link to="/register" className="text-teal-600 hover:underline font-medium">
             Sign up
           </Link>
         </p>
+        </div>
       </div>
-    </div>
+    </BubbleBackground>
   );
 }

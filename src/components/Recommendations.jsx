@@ -88,18 +88,18 @@ export default function Recommendations() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Recommendations</h2>
+    <div className="bg-white border-2 border-green-100 rounded-xl p-6 shadow-sm">
+      <h2 className="text-2xl font-bold text-black mb-4">Recommendations</h2>
 
       <div className="space-y-3">
         {recommendations.map((rec, index) => (
           <div
             key={index}
-            className={`p-4 rounded-lg border ${priorityColors[rec.priority]}`}
+            className={`p-4 rounded-lg border-2 ${priorityColors[rec.priority]}`}
           >
             <div className="flex items-start gap-3">
               <span className="text-2xl">{rec.icon}</span>
-              <p className="text-gray-700">{rec.message}</p>
+              <p className="text-gray-800 font-medium">{rec.message}</p>
             </div>
           </div>
         ))}

@@ -1,12 +1,57 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-export default function MealList({ refreshTrigger }) {
+export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated, limit, variant = 'purple' }) {
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingMealId, setEditingMealId] = useState(null);
   const [editQuantity, setEditQuantity] = useState('1');
   const [editComponents, setEditComponents] = useState([]);
+
+  // Define color schemes based on variant
+  const colorSchemes = {
+    'purple': {
+      cardBg: 'bg-purple-900/90',
+      cardBorder: 'border-purple-500',
+      textPrimary: 'text-white',
+      textSecondary: 'text-purple-200',
+      inputBg: 'bg-purple-700',
+      inputBorder: 'border-purple-500',
+      componentBg: 'bg-purple-800',
+      componentBorder: 'border-purple-600',
+      accentColor: 'text-purple-300',
+      buttonPrimary: 'bg-purple-600 hover:bg-purple-700',
+      buttonSecondary: 'bg-purple-800 hover:bg-purple-700',
+    },
+    'light-purple': {
+      cardBg: 'bg-gradient-to-br from-purple-100 to-fuchsia-100',
+      cardBorder: 'border-purple-300',
+      textPrimary: 'text-gray-900',
+      textSecondary: 'text-gray-700',
+      inputBg: 'bg-purple-50',
+      inputBorder: 'border-purple-200',
+      componentBg: 'bg-purple-50',
+      componentBorder: 'border-purple-200',
+      accentColor: 'text-purple-800',
+      buttonPrimary: 'bg-purple-500 hover:bg-purple-600',
+      buttonSecondary: 'bg-purple-300 hover:bg-purple-400',
+    },
+    'light-green': {
+      cardBg: 'bg-gradient-to-br from-green-100 to-emerald-100',
+      cardBorder: 'border-green-300',
+      textPrimary: 'text-gray-900',
+      textSecondary: 'text-gray-700',
+      inputBg: 'bg-green-50',
+      inputBorder: 'border-green-200',
+      componentBg: 'bg-green-50',
+      componentBorder: 'border-green-200',
+      accentColor: 'text-green-800',
+      buttonPrimary: 'bg-green-500 hover:bg-green-600',
+      buttonSecondary: 'bg-green-300 hover:bg-green-400',
+    }
+  };
+
+  const colors = colorSchemes[variant] || colorSchemes.purple;
 
   useEffect(() => {
     fetchMeals();
@@ -21,7 +66,7 @@ export default function MealList({ refreshTrigger }) {
       .select('*')
       .eq('user_id', user.id)
       .order('consumed_at', { ascending: false })
-      .limit(20);
+      .limit(limit || 20);
 
     if (!error) {
       setMeals(data || []);
@@ -51,6 +96,7 @@ export default function MealList({ refreshTrigger }) {
 
     if (!error) {
       setMeals(meals.filter(m => m.id !== id));
+      if (onMealDeleted) onMealDeleted();
     }
   };
 
@@ -225,6 +271,7 @@ export default function MealList({ refreshTrigger }) {
         await fetchMeals();
         setEditingMealId(null);
         setEditComponents([]);
+        if (onMealUpdated) onMealUpdated();
       }
     } else {
       // Simple food - use smart parsed portion size
@@ -268,6 +315,7 @@ export default function MealList({ refreshTrigger }) {
         ));
         setEditingMealId(null);
         setEditQuantity('1');
+        if (onMealUpdated) onMealUpdated();
       }
     }
   };
@@ -288,24 +336,22 @@ export default function MealList({ refreshTrigger }) {
 
   if (meals.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-8 text-center">
-        <p className="text-gray-500">No meals logged yet. Start by adding your first meal!</p>
+      <div className={`${colors.cardBg} border-2 ${colors.cardBorder} rounded-xl p-8 text-center shadow-md`}>
+        <p className={colors.textSecondary}>No meals logged yet. Start by adding your first meal!</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-800">Recent Meals</h2>
-
       {meals.map((meal) => (
-        <div key={meal.id} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
+        <div key={meal.id} className={`${colors.cardBg} border-2 ${colors.cardBorder} rounded-xl p-6 hover:shadow-lg transition shadow-md`}>
           {editingMealId === meal.id ? (
             // Edit Mode
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{meal.meal_name}</h3>
-                <p className="text-sm text-gray-500 mb-4">
+                <h3 className={`text-lg font-semibold ${colors.textPrimary} mb-2`}>{meal.meal_name}</h3>
+                <p className={`text-sm ${colors.textSecondary} mb-4`}>
                   {meal.meal_type} • {formatDate(meal.consumed_at)}
                 </p>
               </div>
@@ -313,18 +359,18 @@ export default function MealList({ refreshTrigger }) {
               {meal.is_compound && editComponents.length > 0 ? (
                 // Compound food - edit each component
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-gray-700">Edit Components:</p>
+                  <p className={`text-sm font-medium ${colors.textSecondary}`}>Edit Components:</p>
                   {editComponents.map((component, idx) => (
-                    <div key={component.id} className="bg-blue-50 p-3 rounded-lg">
+                    <div key={component.id} className={`${colors.componentBg} p-3 rounded-lg border ${colors.componentBorder}`}>
                       <div className="flex items-center gap-3">
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-800">{component.component_name}</p>
-                          <p className="text-xs text-gray-600">
+                          <p className={`text-sm font-medium ${colors.textPrimary}`}>{component.component_name}</p>
+                          <p className={`text-xs ${colors.textSecondary}`}>
                             Base: {component.base_calories} cal per 100{component.portion_unit}
                           </p>
                         </div>
                         <div className="w-32">
-                          <label className="block text-xs text-gray-600 mb-1">
+                          <label className={`block text-xs ${colors.textSecondary} mb-1`}>
                             Count (g or x)
                           </label>
                           <input
@@ -332,14 +378,14 @@ export default function MealList({ refreshTrigger }) {
                             value={component.portion_display ?? ''}
                             onChange={(e) => updateComponentQuantity(idx, e.target.value)}
                             placeholder="e.g., 150g or 2"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                            className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-white rounded-lg focus:ring-2 focus:ring-opacity-50 text-sm`}
                           />
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-blue-600">
+                          <p className={`text-sm font-semibold ${colors.accentColor}`}>
                             {Math.round(component.base_calories * (component.portion_size / 100))} cal
                           </p>
-                          <p className="text-xs text-gray-600">
+                          <p className={`text-xs ${colors.textSecondary}`}>
                             P: {(component.base_protein_g * (component.portion_size / 100)).toFixed(1)}g
                           </p>
                         </div>
@@ -350,7 +396,7 @@ export default function MealList({ refreshTrigger }) {
               ) : (
                 // Simple food - smart quantity input
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium ${colors.textSecondary} mb-1`}>
                     Count (g or x)
                   </label>
                   <input
@@ -358,9 +404,9 @@ export default function MealList({ refreshTrigger }) {
                     value={editQuantity}
                     onChange={(e) => setEditQuantity(e.target.value)}
                     placeholder="e.g., 150g or 2"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-white rounded-lg focus:ring-2 focus:ring-opacity-50`}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs ${colors.textSecondary} mt-1`}>
                     Enter grams (e.g., 150g) or multiplier (e.g., 2)
                   </p>
                 </div>
@@ -369,13 +415,13 @@ export default function MealList({ refreshTrigger }) {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => saveEdit(meal)}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 text-sm font-medium"
+                  className={`flex-1 ${colors.buttonPrimary} text-white py-2 px-4 rounded-lg text-sm font-medium transition`}
                 >
                   Save Changes
                 </button>
                 <button
                   onClick={cancelEditing}
-                  className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300 text-sm font-medium"
+                  className={`flex-1 ${colors.buttonSecondary} ${colors.textSecondary} py-2 px-4 rounded-lg text-sm font-medium transition`}
                 >
                   Cancel
                 </button>
@@ -386,22 +432,22 @@ export default function MealList({ refreshTrigger }) {
             <>
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{formatMealTitle(meal)}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className={`text-lg font-semibold ${colors.textPrimary}`}>{formatMealTitle(meal)}</h3>
+                  <p className={`text-sm ${colors.textSecondary}`}>
                     {meal.meal_type} • {formatDate(meal.consumed_at)}
-                    {meal.is_compound && <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Compound</span>}
+                    {meal.is_compound && <span className={`ml-2 text-xs ${colors.componentBg} ${colors.textSecondary} px-2 py-0.5 rounded`}>Compound</span>}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => startEditing(meal)}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    className={`${colors.accentColor} hover:opacity-80 text-sm font-medium`}
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(meal.id)}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    className="text-red-400 hover:text-red-300 text-sm font-medium"
                   >
                     Delete
                   </button>
@@ -410,20 +456,20 @@ export default function MealList({ refreshTrigger }) {
 
               <div className="grid grid-cols-4 gap-4 mt-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{meal.total_calories}</p>
-                  <p className="text-xs text-gray-500">Calories</p>
+                  <p className={`text-2xl font-bold ${colors.accentColor}`}>{meal.total_calories}</p>
+                  <p className={`text-xs ${colors.textSecondary}`}>Calories</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">{meal.total_protein_g}g</p>
-                  <p className="text-xs text-gray-500">Protein</p>
+                  <p className="text-2xl font-bold text-blue-600">{meal.total_protein_g}g</p>
+                  <p className={`text-xs ${colors.textSecondary}`}>Protein</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{meal.total_carbs_g}g</p>
-                  <p className="text-xs text-gray-500">Carbs</p>
+                  <p className="text-2xl font-bold text-orange-300">{meal.total_carbs_g}g</p>
+                  <p className={`text-xs ${colors.textSecondary}`}>Carbs</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-orange-600">{meal.total_fat_g}g</p>
-                  <p className="text-xs text-gray-500">Fat</p>
+                  <p className="text-2xl font-bold text-purple-400">{meal.total_fat_g}g</p>
+                  <p className={`text-xs ${colors.textSecondary}`}>Fat</p>
                 </div>
               </div>
             </>

@@ -200,8 +200,8 @@ export default function MealForm({ onMealAdded }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Log a Meal</h2>
+    <div className="bg-white border-2 border-green-100 rounded-xl shadow-sm p-6">
+      <h2 className="text-2xl font-bold text-black mb-4">Log a Meal</h2>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">

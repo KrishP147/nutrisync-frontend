@@ -62,8 +62,8 @@ export default function WeeklyTrends() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Weekly Trends</h2>
+    <div className="bg-white border-2 border-green-100 rounded-xl shadow-sm p-6">
+      <h2 className="text-2xl font-bold text-black mb-6">Weekly Trends</h2>
 
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
