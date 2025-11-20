@@ -77,6 +77,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
         base_fat_g: food.fat_g,
         base_fiber_g: food.fiber_g || 0,
         portion_size: 100, // Default to 100g
+        portion_display: '1', // Display as "1" (representing 100g)
         portion_unit: 'g',
       }));
 
@@ -98,21 +99,58 @@ export default function PhotoMealUpload({ onMealAdded }) {
     }
   };
 
-  const updateFoodQuantity = (index, newPortionSize) => {
+  const updateFoodQuantity = (index, inputValue) => {
     const updated = { ...editableResult };
     const food = updated.foods[index];
-    const multiplier = newPortionSize / 100;
+
+    // Store the display value
+    updated.foods[index] = { ...food, portion_display: inputValue };
+
+    // Handle empty input
+    if (inputValue === '' || inputValue === null || inputValue === undefined) {
+      updated.foods[index].portion_size = 0;
+      updated.foods[index].calories = 0;
+      updated.foods[index].protein_g = 0;
+      updated.foods[index].carbs_g = 0;
+      updated.foods[index].fat_g = 0;
+      updated.foods[index].fiber_g = 0;
+      
+      // Recalculate totals
+      updated.total_nutrition = {
+        calories: updated.foods.reduce((sum, f) => sum + (parseFloat(f.calories) || 0), 0),
+        protein_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.protein_g) || 0), 0),
+        carbs_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.carbs_g) || 0), 0),
+        fat_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fat_g) || 0), 0),
+        fiber_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fiber_g) || 0), 0),
+      };
+      
+      setEditableResult(updated);
+      return;
+    }
+
+    // Smart input parsing: check if input contains letters (unit)
+    const containsLetters = /[a-zA-Z]/.test(inputValue);
+    let portionSize;
+
+    if (containsLetters) {
+      // Extract numeric value from input (e.g., "150g" -> 150)
+      const numericValue = parseFloat(inputValue.replace(/[^\d.]/g, ''));
+      portionSize = numericValue || 100;
+    } else {
+      // Pure number - treat as multiplier (e.g., "2" -> 200g)
+      const multiplier = parseFloat(inputValue);
+      portionSize = isNaN(multiplier) ? 100 : multiplier * 100;
+    }
+
+    const multiplier = portionSize / 100;
 
     // Update portion size and recalculate macros
-    updated.foods[index] = {
-      ...food,
-      portion_size: parseFloat(newPortionSize) || 100,
-      calories: Math.round(food.base_calories * multiplier),
-      protein_g: parseFloat((food.base_protein_g * multiplier).toFixed(1)),
-      carbs_g: parseFloat((food.base_carbs_g * multiplier).toFixed(1)),
-      fat_g: parseFloat((food.base_fat_g * multiplier).toFixed(1)),
-      fiber_g: parseFloat((food.base_fiber_g * multiplier).toFixed(1)),
-    };
+    updated.foods[index].portion_size = portionSize;
+    updated.foods[index].calories = Math.round(food.base_calories * multiplier);
+    updated.foods[index].protein_g = parseFloat((food.base_protein_g * multiplier).toFixed(1));
+    updated.foods[index].carbs_g = parseFloat((food.base_carbs_g * multiplier).toFixed(1));
+    updated.foods[index].fat_g = parseFloat((food.base_fat_g * multiplier).toFixed(1));
+    updated.foods[index].fiber_g = parseFloat((food.base_fiber_g * multiplier).toFixed(1));
 
     // Recalculate totals
     updated.total_nutrition = {
@@ -175,6 +213,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
       name: food.name,
       portion: food.portion || '100g',
       portion_size: 100,
+      portion_display: '1', // Default to "1" (representing 100g)
       portion_unit: 'g',
       base_calories: food.calories,
       base_protein_g: food.protein_g,
@@ -467,12 +506,12 @@ export default function PhotoMealUpload({ onMealAdded }) {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label className="text-sm text-gray-600 w-24">Amount ({food.portion_unit}):</label>
+                        <label className="text-sm text-gray-600 w-24">Count (g or x):</label>
                         <input
-                          type="number"
-                          step="0.1"
-                          value={food.portion_size}
+                          type="text"
+                          value={food.portion_display || '1'}
                           onChange={(e) => updateFoodQuantity(idx, e.target.value)}
+                          placeholder="e.g., 150g or 2"
                           className="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
                         />
                       </div>

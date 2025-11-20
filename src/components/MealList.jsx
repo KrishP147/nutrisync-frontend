@@ -5,7 +5,7 @@ export default function MealList({ refreshTrigger }) {
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingMealId, setEditingMealId] = useState(null);
-  const [editQuantity, setEditQuantity] = useState(1);
+  const [editQuantity, setEditQuantity] = useState('1');
   const [editComponents, setEditComponents] = useState([]);
 
   useEffect(() => {
@@ -57,17 +57,18 @@ export default function MealList({ refreshTrigger }) {
   const startEditing = async (meal) => {
     setEditingMealId(meal.id);
 
-    // Calculate the quantity based on portion_size if available
-    if (meal.portion_size) {
-      setEditQuantity(meal.portion_size / 100); // Assuming base is 100g
-    } else {
-      setEditQuantity(1);
-    }
+    // Always start with "1" as the default display
+    setEditQuantity('1');
 
     // Fetch components if it's a compound food
     if (meal.is_compound) {
       const components = await fetchMealComponents(meal.id);
-      setEditComponents(components);
+      // Set each component's display to "1" as well
+      const componentsWithDisplay = components.map(c => ({
+        ...c,
+        portion_display: '1'
+      }));
+      setEditComponents(componentsWithDisplay);
     } else {
       setEditComponents([]);
     }
@@ -75,8 +76,26 @@ export default function MealList({ refreshTrigger }) {
 
   const cancelEditing = () => {
     setEditingMealId(null);
-    setEditQuantity(1);
+    setEditQuantity('1');
     setEditComponents([]);
+  };
+
+  const formatMealTitle = (meal) => {
+    // Format meal name with portion info in brackets
+    let portionText = '';
+    
+    if (meal.portion_size && meal.portion_unit) {
+      // Check if portion_size is a multiple of 100 (multiplier-based)
+      if (meal.portion_size % 100 === 0 && meal.portion_unit === 'g') {
+        const multiplier = meal.portion_size / 100;
+        portionText = ` (${multiplier}x)`;
+      } else {
+        // Show exact gram amount
+        portionText = ` (${meal.portion_size}${meal.portion_unit})`;
+      }
+    }
+    
+    return meal.meal_name + portionText;
   };
 
   const updateComponentQuantity = (index, newQuantity) => {
@@ -89,7 +108,19 @@ export default function MealList({ refreshTrigger }) {
   };
 
   const saveEdit = async (meal) => {
-    const quantity = parseFloat(editQuantity) || 1;
+    // Parse editQuantity with smart input parsing
+    let portionSize;
+    const containsLetters = /[a-zA-Z]/.test(editQuantity);
+    
+    if (containsLetters) {
+      // Extract numeric value (e.g., "150g" -> 150)
+      const numericValue = parseFloat(editQuantity.replace(/[^\d.]/g, ''));
+      portionSize = numericValue || 100;
+    } else {
+      // Pure number - treat as multiplier (e.g., "2" -> 200g)
+      const multiplier = parseFloat(editQuantity) || 1;
+      portionSize = multiplier * 100;
+    }
 
     if (meal.is_compound && editComponents.length > 0) {
       // Update each component
@@ -146,7 +177,7 @@ export default function MealList({ refreshTrigger }) {
         setEditComponents([]);
       }
     } else {
-      // Simple food - use quantity multiplier
+      // Simple food - use smart parsed portion size
       // Get base values (assuming stored values are for portion_size or default 100g)
       const baseMultiplier = meal.portion_size ? (meal.portion_size / 100) : 1;
       const baseCalories = meal.total_calories / baseMultiplier;
@@ -155,15 +186,18 @@ export default function MealList({ refreshTrigger }) {
       const baseFat = meal.total_fat_g / baseMultiplier;
       const baseFiber = meal.total_fiber_g / baseMultiplier;
 
+      const multiplier = portionSize / 100;
+
       const { error } = await supabase
         .from('meals')
         .update({
-          portion_size: quantity * 100,
-          total_calories: Math.round(baseCalories * quantity),
-          total_protein_g: parseFloat((baseProtein * quantity).toFixed(1)),
-          total_carbs_g: parseFloat((baseCarbs * quantity).toFixed(1)),
-          total_fat_g: parseFloat((baseFat * quantity).toFixed(1)),
-          total_fiber_g: parseFloat((baseFiber * quantity).toFixed(1)),
+          portion_size: portionSize,
+          portion_unit: 'g',
+          total_calories: Math.round(baseCalories * multiplier),
+          total_protein_g: parseFloat((baseProtein * multiplier).toFixed(1)),
+          total_carbs_g: parseFloat((baseCarbs * multiplier).toFixed(1)),
+          total_fat_g: parseFloat((baseFat * multiplier).toFixed(1)),
+          total_fiber_g: parseFloat((baseFiber * multiplier).toFixed(1)),
         })
         .eq('id', meal.id);
 
@@ -172,17 +206,18 @@ export default function MealList({ refreshTrigger }) {
           m.id === meal.id
             ? {
                 ...m,
-                portion_size: quantity * 100,
-                total_calories: Math.round(baseCalories * quantity),
-                total_protein_g: parseFloat((baseProtein * quantity).toFixed(1)),
-                total_carbs_g: parseFloat((baseCarbs * quantity).toFixed(1)),
-                total_fat_g: parseFloat((baseFat * quantity).toFixed(1)),
-                total_fiber_g: parseFloat((baseFiber * quantity).toFixed(1)),
+                portion_size: portionSize,
+                portion_unit: 'g',
+                total_calories: Math.round(baseCalories * multiplier),
+                total_protein_g: parseFloat((baseProtein * multiplier).toFixed(1)),
+                total_carbs_g: parseFloat((baseCarbs * multiplier).toFixed(1)),
+                total_fat_g: parseFloat((baseFat * multiplier).toFixed(1)),
+                total_fiber_g: parseFloat((baseFiber * multiplier).toFixed(1)),
               }
             : m
         ));
         setEditingMealId(null);
-        setEditQuantity(1);
+        setEditQuantity('1');
       }
     }
   };
@@ -263,21 +298,20 @@ export default function MealList({ refreshTrigger }) {
                   ))}
                 </div>
               ) : (
-                // Simple food - quantity multiplier
+                // Simple food - smart quantity input
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity Multiplier
+                    Count (g or x)
                   </label>
                   <input
-                    type="number"
-                    step="0.1"
-                    min="0.1"
+                    type="text"
                     value={editQuantity}
                     onChange={(e) => setEditQuantity(e.target.value)}
+                    placeholder="e.g., 150g or 2"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    1.0 = original portion, 2.0 = double, 0.5 = half
+                    Enter grams (e.g., 150g) or multiplier (e.g., 2)
                   </p>
                 </div>
               )}
@@ -302,7 +336,7 @@ export default function MealList({ refreshTrigger }) {
             <>
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{meal.meal_name}</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">{formatMealTitle(meal)}</h3>
                   <p className="text-sm text-gray-500">
                     {meal.meal_type} • {formatDate(meal.consumed_at)}
                     {meal.is_compound && <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Compound</span>}
