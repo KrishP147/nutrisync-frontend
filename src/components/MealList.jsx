@@ -57,17 +57,44 @@ export default function MealList({ refreshTrigger }) {
   const startEditing = async (meal) => {
     setEditingMealId(meal.id);
 
-    // Always start with "1" as the default display
-    setEditQuantity('1');
+    // Set the initial quantity display based on the meal's actual portion_size
+    if (meal.portion_size && meal.portion_unit) {
+      const portionSize = meal.portion_size;
+      
+      // If it's a multiple of 100, show as multiplier (e.g., "2")
+      if (portionSize % 100 === 0 && meal.portion_unit === 'g') {
+        setEditQuantity((portionSize / 100).toString());
+      } else {
+        // Show as grams (e.g., "150g")
+        setEditQuantity(`${portionSize}${meal.portion_unit}`);
+      }
+    } else {
+      // Default to "1" if no portion info saved
+      setEditQuantity('1');
+    }
 
     // Fetch components if it's a compound food
     if (meal.is_compound) {
       const components = await fetchMealComponents(meal.id);
-      // Set each component's display to "1" as well
-      const componentsWithDisplay = components.map(c => ({
-        ...c,
-        portion_display: '1'
-      }));
+      // Set each component's display based on current portion_size
+      const componentsWithDisplay = components.map(c => {
+        // Calculate display value from portion_size
+        const portionSize = c.portion_size || 100;
+        let displayValue;
+        
+        // If it's a multiple of 100, show as multiplier (e.g., "2")
+        if (portionSize % 100 === 0) {
+          displayValue = (portionSize / 100).toString();
+        } else {
+          // Show as grams (e.g., "150g")
+          displayValue = `${portionSize}g`;
+        }
+        
+        return {
+          ...c,
+          portion_display: displayValue
+        };
+      });
       setEditComponents(componentsWithDisplay);
     } else {
       setEditComponents([]);
@@ -98,12 +125,35 @@ export default function MealList({ refreshTrigger }) {
     return meal.meal_name + portionText;
   };
 
-  const updateComponentQuantity = (index, newQuantity) => {
+  const updateComponentQuantity = (index, inputValue) => {
     const updated = [...editComponents];
-    updated[index] = {
-      ...updated[index],
-      portion_size: parseFloat(newQuantity) || 0
-    };
+    const component = updated[index];
+    
+    // Store the display value
+    updated[index] = { ...component, portion_display: inputValue };
+    
+    // Handle empty input
+    if (inputValue === '' || inputValue === null || inputValue === undefined) {
+      updated[index].portion_size = 0;
+      setEditComponents(updated);
+      return;
+    }
+    
+    // Smart input parsing: check if input contains letters (unit)
+    const containsLetters = /[a-zA-Z]/.test(inputValue);
+    let portionSize;
+    
+    if (containsLetters) {
+      // Extract numeric value from input (e.g., "150g" -> 150)
+      const numericValue = parseFloat(inputValue.replace(/[^\d.]/g, ''));
+      portionSize = numericValue || 100;
+    } else {
+      // Pure number - treat as multiplier (e.g., "2" -> 200g)
+      const multiplier = parseFloat(inputValue);
+      portionSize = isNaN(multiplier) ? 100 : multiplier * 100;
+    }
+    
+    updated[index].portion_size = portionSize;
     setEditComponents(updated);
   };
 
@@ -275,13 +325,13 @@ export default function MealList({ refreshTrigger }) {
                         </div>
                         <div className="w-32">
                           <label className="block text-xs text-gray-600 mb-1">
-                            Amount ({component.portion_unit})
+                            Count (g or x)
                           </label>
                           <input
-                            type="number"
-                            step="0.1"
-                            value={component.portion_size}
+                            type="text"
+                            value={component.portion_display ?? ''}
                             onChange={(e) => updateComponentQuantity(idx, e.target.value)}
+                            placeholder="e.g., 150g or 2"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                           />
                         </div>

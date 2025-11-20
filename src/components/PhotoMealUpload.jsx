@@ -248,6 +248,9 @@ export default function PhotoMealUpload({ onMealAdded }) {
       const { data: { user } } = await supabase.auth.getUser();
 
       // Create the meal as a compound food
+      // Calculate aggregate portion info for display in title
+      const totalPortionSize = editableResult.foods.reduce((sum, f) => sum + (f.portion_size || 100), 0);
+      
       const { data: mealData, error: mealError } = await supabase
         .from('meals')
         .insert([
@@ -262,6 +265,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
             total_fiber_g: parseFloat(editableResult.total_nutrition.fiber_g.toFixed(1)),
             is_ai_analyzed: true,
             is_compound: editableResult.foods.length > 1,
+            portion_size: totalPortionSize,
+            portion_unit: 'g',
             notes: editableResult.recommendations,
           },
         ])

@@ -111,6 +111,9 @@ export default function MealForm({ onMealAdded }) {
       // Multi-food mode with autocomplete
       const totals = calculateTotals();
       const isCompound = foods.length >= 2;
+      
+      // Calculate aggregate portion info for display in title
+      const totalPortionSize = foods.reduce((sum, f) => sum + (f.portion_size || 100), 0);
 
       const { data: mealData, error: mealError } = await supabase
         .from('meals')
@@ -125,6 +128,8 @@ export default function MealForm({ onMealAdded }) {
             total_fat_g: parseFloat(totals.fat_g.toFixed(1)),
             total_fiber_g: parseFloat(totals.fiber_g.toFixed(1)),
             is_compound: isCompound,
+            portion_size: totalPortionSize,
+            portion_unit: 'g',
           },
         ])
         .select();
