@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
+import FoodSearchInput from './FoodSearchInput';
 
 export default function MealForm({ onMealAdded }) {
   const [mealName, setMealName] = useState('');
@@ -11,6 +12,17 @@ export default function MealForm({ onMealAdded }) {
   const [fiber, setFiber] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [useAutocomplete, setUseAutocomplete] = useState(true);
+
+  const handleFoodSelect = (food) => {
+    // Auto-populate form with selected food
+    setMealName(food.name);
+    setCalories(food.calories.toString());
+    setProtein(food.protein_g.toString());
+    setCarbs(food.carbs_g.toString());
+    setFat(food.fat_g.toString());
+    setFiber(food.fiber_g.toString());
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,20 +77,6 @@ export default function MealForm({ onMealAdded }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Meal Name
-          </label>
-          <input
-            type="text"
-            value={mealName}
-            onChange={(e) => setMealName(e.target.value)}
-            placeholder="e.g., Chicken breast with rice"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
             Meal Type
           </label>
           <select
@@ -92,6 +90,50 @@ export default function MealForm({ onMealAdded }) {
             <option value="snack">Snack</option>
           </select>
         </div>
+
+        {useAutocomplete ? (
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Search Food
+              </label>
+              <button
+                type="button"
+                onClick={() => setUseAutocomplete(false)}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                Enter manually
+              </button>
+            </div>
+            <FoodSearchInput
+              onFoodSelect={handleFoodSelect}
+              initialValue={mealName}
+            />
+          </div>
+        ) : (
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Meal Name
+              </label>
+              <button
+                type="button"
+                onClick={() => setUseAutocomplete(true)}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                Search database
+              </button>
+            </div>
+            <input
+              type="text"
+              value={mealName}
+              onChange={(e) => setMealName(e.target.value)}
+              placeholder="e.g., Chicken breast with rice"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
