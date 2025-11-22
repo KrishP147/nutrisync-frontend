@@ -19,6 +19,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center space-x-2">
+            <img src="/assets/nutrisync-logo.png" alt="NutriSync Logo" className="h-8 w-8 sm:h-10 sm:w-10" />
             <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">NutriSync</span>
           </Link>
 

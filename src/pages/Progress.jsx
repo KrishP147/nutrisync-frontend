@@ -314,11 +314,12 @@ export default function Progress() {
                     border: '2px solid #a855f7',
                     borderRadius: '8px',
                   }}
+                  formatter={(value) => `${parseFloat(value).toFixed(1)}%`}
                 />
               </RadarChart>
             </ResponsiveContainer>
             <p className="text-center text-sm text-gray-600 mt-4">
-              Shows your average achievement vs goals across all metrics
+              Shows your average achievement percentage vs goals across all metrics
             </p>
           </motion.div>
         )}

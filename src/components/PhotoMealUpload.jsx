@@ -345,7 +345,20 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
       {preview && !result && (
         <div>
-          <img src={preview} alt="Preview" className="w-full rounded-lg mb-4 max-h-64 object-cover" />
+          <div className="relative">
+            <img src={preview} alt="Preview" className="w-full rounded-lg mb-4 max-h-64 object-cover" />
+            <button
+              onClick={() => {
+                setSelectedFile(null);
+                setPreview(null);
+                setMealType('');
+              }}
+              className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition shadow-lg"
+              title="Remove photo"
+            >
+              ✕
+            </button>
+          </div>
 
           {/* Meal Type Selector */}
           <div className="mb-4">
@@ -360,7 +373,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
                   className={`py-2 px-4 rounded-lg border-2 transition capitalize ${
                     mealType === type
                       ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold'
-                      : 'border-gray-300 hover:border-blue-300'
+                      : 'border-gray-300 hover:border-blue-300 text-black'
                   }`}
                 >
                   {type}
@@ -399,7 +412,22 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
       {editableResult && (
         <div className="space-y-4">
-          <img src={preview} alt="Analyzed" className="w-full rounded-lg max-h-48 object-cover" />
+          <div className="relative">
+            <img src={preview} alt="Analyzed" className="w-full rounded-lg max-h-48 object-cover" />
+            <button
+              onClick={() => {
+                setResult(null);
+                setEditableResult(null);
+                setSelectedFile(null);
+                setPreview(null);
+                setMealType('');
+              }}
+              className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition shadow-lg"
+              title="Remove photo"
+            >
+              ✕
+            </button>
+          </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex justify-between items-center mb-3">

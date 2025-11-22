@@ -15,7 +15,7 @@ export default function AccountMenu() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/login');
+    navigate('/');
   };
 
   const handleDeleteAccount = async (e) => {

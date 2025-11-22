@@ -41,7 +41,10 @@ export default function Landing() {
       {/* Header */}
       <header className="relative z-10 px-4 py-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-black">NutriSync</h1>
+          <div className="flex items-center space-x-3">
+            <img src="/assets/nutrisync-logo.png" alt="NutriSync Logo" className="h-8 w-8" />
+            <h1 className="text-2xl font-bold text-black">NutriSync</h1>
+          </div>
           <Link to="/login" className="text-black hover:text-gray-700 text-sm text-right leading-tight">
             <span className="hidden sm:inline">Already have an account? Click here to login</span>
             <span className="sm:hidden">Already have<br />an account?</span>

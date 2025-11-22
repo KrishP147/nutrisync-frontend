@@ -62,8 +62,8 @@ export default function TodayPieChart() {
       className="bg-white border-2 border-purple-500 rounded-xl p-6 shadow-xl mb-8"
     >
       <h2 className="text-2xl font-bold text-black mb-4">Today's Macro Breakdown</h2>
-      <div className="flex items-center justify-between">
-        <div className="w-80 h-80">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="w-full md:w-80 h-80">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
               <Pie
@@ -81,7 +81,7 @@ export default function TodayPieChart() {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip 
+              <Tooltip
                 contentStyle={{
                   backgroundColor: '#ffffff',
                   border: '2px solid #a855f7',
@@ -93,7 +93,7 @@ export default function TodayPieChart() {
           </ResponsiveContainer>
         </div>
 
-        <div className="flex-1 ml-8 space-y-3">
+        <div className="flex-1 md:ml-8 space-y-3 w-full">
           <div className="flex items-center justify-between bg-purple-50 p-4 rounded-lg border-2 border-purple-300">
             <span className="text-gray-700 font-medium">Total Calories</span>
             <span className="text-2xl font-bold text-purple-600">{todayData.calories}</span>
