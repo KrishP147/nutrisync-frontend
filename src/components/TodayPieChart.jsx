@@ -63,16 +63,16 @@ export default function TodayPieChart() {
     >
       <h2 className="text-2xl font-bold text-black mb-4">Today's Macro Breakdown</h2>
       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="w-full md:w-80 h-80">
+        <div className="w-full md:w-80 h-64 md:h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+            <PieChart>
               <Pie
                 data={pieData}
                 dataKey="value"
                 cx="50%"
                 cy="50%"
-                outerRadius={90}
-                innerRadius={50}
+                outerRadius={60}
+                innerRadius={35}
                 paddingAngle={5}
                 label={renderLabel}
                 labelLine={false}

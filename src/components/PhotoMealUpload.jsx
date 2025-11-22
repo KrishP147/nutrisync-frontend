@@ -14,6 +14,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
   const [editableResult, setEditableResult] = useState(null);
   const [editingIndex, setEditingIndex] = useState(null);
   const [showFoodSearch, setShowFoodSearch] = useState(false);
+  const [mealMultiplier, setMealMultiplier] = useState(1);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -77,7 +78,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
         base_fat_g: food.fat_g,
         base_fiber_g: food.fiber_g || 0,
         portion_size: 100, // Default to 100g
-        portion_display: '1', // Display as "1" (representing 100g)
+        portion_display: food.portion || '100g', // Use AI-estimated portion
         portion_unit: 'g',
       }));
 
@@ -142,7 +143,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
       portionSize = isNaN(multiplier) ? 100 : multiplier * 100;
     }
 
-    const multiplier = portionSize / 100;
+    const multiplier = (portionSize / 100) * mealMultiplier;
 
     // Update portion size and recalculate macros
     updated.foods[index].portion_size = portionSize;
@@ -151,6 +152,36 @@ export default function PhotoMealUpload({ onMealAdded }) {
     updated.foods[index].carbs_g = parseFloat((food.base_carbs_g * multiplier).toFixed(1));
     updated.foods[index].fat_g = parseFloat((food.base_fat_g * multiplier).toFixed(1));
     updated.foods[index].fiber_g = parseFloat((food.base_fiber_g * multiplier).toFixed(1));
+
+    // Recalculate totals
+    updated.total_nutrition = {
+      calories: updated.foods.reduce((sum, f) => sum + (parseFloat(f.calories) || 0), 0),
+      protein_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.protein_g) || 0), 0),
+      carbs_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.carbs_g) || 0), 0),
+      fat_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fat_g) || 0), 0),
+      fiber_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fiber_g) || 0), 0),
+    };
+
+    setEditableResult(updated);
+  };
+
+  const updateMealMultiplier = (multiplierValue) => {
+    const multiplier = parseFloat(multiplierValue) || 1;
+    setMealMultiplier(multiplier);
+
+    if (!editableResult) return;
+
+    const updated = { ...editableResult };
+
+    // Apply multiplier to all foods
+    updated.foods = updated.foods.map(food => ({
+      ...food,
+      calories: Math.round(food.base_calories * (food.portion_size / 100) * multiplier),
+      protein_g: parseFloat((food.base_protein_g * (food.portion_size / 100) * multiplier).toFixed(1)),
+      carbs_g: parseFloat((food.base_carbs_g * (food.portion_size / 100) * multiplier).toFixed(1)),
+      fat_g: parseFloat((food.base_fat_g * (food.portion_size / 100) * multiplier).toFixed(1)),
+      fiber_g: parseFloat((food.base_fiber_g * (food.portion_size / 100) * multiplier).toFixed(1)),
+    }));
 
     // Recalculate totals
     updated.total_nutrition = {
@@ -316,9 +347,9 @@ export default function PhotoMealUpload({ onMealAdded }) {
     <div className="bg-white border-2 border-green-100 rounded-xl shadow-sm p-6">
       <h2 className="text-2xl font-bold text-black mb-4">📸 Photo Analysis</h2>
 
-      {debugInfo && (
-        <div className="bg-blue-50 border border-blue-200 p-3 rounded text-xs mb-4">
-          <pre className="whitespace-pre-wrap">{debugInfo}</pre>
+      {analyzing && (
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded text-sm mb-4 text-center">
+          <p className="text-gray-700">🔄 Analyzing your meal...</p>
         </div>
       )}
 
@@ -438,6 +469,26 @@ export default function PhotoMealUpload({ onMealAdded }) {
               >
                 + Add Food
               </button>
+            </div>
+
+            {/* Meal Multiplier */}
+            <div className="mb-3 bg-white p-3 rounded border-2 border-purple-300">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Meal Multiplier:</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.1"
+                  value={mealMultiplier}
+                  onChange={(e) => updateMealMultiplier(e.target.value)}
+                  placeholder="1"
+                  className="flex-1 px-3 py-1.5 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 text-sm"
+                />
+                <span className="text-xs text-gray-600 whitespace-nowrap">(×{mealMultiplier} of all items)</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Use this to multiply the entire meal (e.g., 2 = double all portions, 0.5 = half)
+              </p>
             </div>
 
             {showFoodSearch && (
