@@ -47,6 +47,14 @@ export default function Progress() {
   };
 
   const processData = (meals) => {
+    // Use default goals if not loaded
+    const safeGoals = {
+      calories: goals?.calories || 2000,
+      protein: goals?.protein || 150,
+      carbs: goals?.carbs || 250,
+      fat: goals?.fat || 67
+    };
+
     // Helper to format date as YYYY-MM-DD in local time
     const formatDateLocal = (dateObj) => {
       const year = dateObj.getFullYear();
@@ -93,8 +101,8 @@ export default function Progress() {
           protein: data.protein.toFixed(1),
           carbs: data.carbs.toFixed(1),
           fat: data.fat.toFixed(1),
-          proteinPercent: ((data.protein / goals.protein) * 100).toFixed(0),
-          caloriesPercent: ((data.calories / goals.calories) * 100).toFixed(0),
+          proteinPercent: ((data.protein / safeGoals.protein) * 100).toFixed(0),
+          caloriesPercent: ((data.calories / safeGoals.calories) * 100).toFixed(0),
         };
       });
 
@@ -119,12 +127,24 @@ export default function Progress() {
 
     // Calculate stats
     const totalDays = Object.keys(heatmap).length;
+
+    if (totalDays === 0) {
+      setStats({
+        avgCalories: '0',
+        avgProtein: '0',
+        proteinGoalRate: '0',
+        calorieGoalRate: '0',
+        totalDays: 0,
+      });
+      return;
+    }
+
     const avgCalories = Object.values(heatmap).reduce((sum, day) => sum + day.calories, 0) / totalDays;
     const avgProtein = Object.values(heatmap).reduce((sum, day) => sum + day.protein, 0) / totalDays;
 
-    const daysHitProteinGoal = Object.values(heatmap).filter(day => day.protein >= goals.protein).length;
+    const daysHitProteinGoal = Object.values(heatmap).filter(day => day.protein >= safeGoals.protein).length;
     const daysHitCalorieGoal = Object.values(heatmap).filter(
-      day => day.calories >= goals.calories * 0.9 && day.calories <= goals.calories * 1.1
+      day => day.calories >= safeGoals.calories * 0.9 && day.calories <= safeGoals.calories * 1.1
     ).length;
 
     setStats({
