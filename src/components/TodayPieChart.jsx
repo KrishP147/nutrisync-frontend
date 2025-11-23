@@ -6,9 +6,17 @@ import { motion } from 'motion/react';
 export default function TodayPieChart() {
   const [todayData, setTodayData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     fetchTodayData();
+
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const fetchTodayData = async () => {
@@ -50,7 +58,9 @@ export default function TodayPieChart() {
     return null;
   }
 
+  // Custom label renderer - only show on desktop
   const renderLabel = (entry) => {
+    if (isMobile) return null;
     return `${entry.value}g`;
   };
 
@@ -63,16 +73,16 @@ export default function TodayPieChart() {
     >
       <h2 className="text-2xl font-bold text-black mb-4">Today's Macro Breakdown</h2>
       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="w-full md:w-80 h-64 md:h-80">
+        <div className="w-full md:w-80 h-56 md:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={pieData}
                 dataKey="value"
                 cx="50%"
-                cy="50%"
-                outerRadius={60}
-                innerRadius={35}
+                cy="45%"
+                outerRadius={isMobile ? 50 : 85}
+                innerRadius={isMobile ? 30 : 50}
                 paddingAngle={5}
                 label={renderLabel}
                 labelLine={false}

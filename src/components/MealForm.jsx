@@ -17,6 +17,7 @@ export default function MealForm({ onMealAdded }) {
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
   const [fiber, setFiber] = useState('');
+  const [notes, setNotes] = useState('');
 
   const handleFoodSelect = (food) => {
     const newFood = {
@@ -130,6 +131,7 @@ export default function MealForm({ onMealAdded }) {
             is_compound: isCompound,
             portion_size: totalPortionSize,
             portion_unit: 'g',
+            notes: notes || null,
           },
         ])
         .select();
@@ -160,6 +162,7 @@ export default function MealForm({ onMealAdded }) {
       // Reset form
       setFoods([]);
       setShowFoodSearch(true);
+      setNotes('');
       setLoading(false);
 
       if (onMealAdded) onMealAdded(mealData[0]);
@@ -177,6 +180,7 @@ export default function MealForm({ onMealAdded }) {
             total_carbs_g: parseFloat(carbs) || 0,
             total_fat_g: parseFloat(fat) || 0,
             total_fiber_g: parseFloat(fiber) || 0,
+            notes: notes || null,
           },
         ])
         .select();
@@ -192,6 +196,7 @@ export default function MealForm({ onMealAdded }) {
         setCarbs('');
         setFat('');
         setFiber('');
+        setNotes('');
         setLoading(false);
 
         if (onMealAdded) onMealAdded(data[0]);
@@ -423,6 +428,24 @@ export default function MealForm({ onMealAdded }) {
             </div>
           </div>
         )}
+
+        {/* Meal Notes */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Add Notes (Optional)
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Add any notes about this meal..."
+            maxLength={500}
+            rows={2}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white resize-none"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            {notes.length}/500 characters
+          </p>
+        </div>
 
         <button
           type="submit"

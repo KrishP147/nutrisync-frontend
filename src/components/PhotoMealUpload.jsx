@@ -2,19 +2,23 @@ import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import api from '../services/api';
 import FoodSearchInput from './FoodSearchInput';
+import imageCompression from 'browser-image-compression';
 
 export default function PhotoMealUpload({ onMealAdded }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
+  const [originalResult, setOriginalResult] = useState(null);
   const [error, setError] = useState(null);
-  const [debugInfo, setDebugInfo] = useState('');
   const [mealType, setMealType] = useState('');
   const [editableResult, setEditableResult] = useState(null);
   const [editingIndex, setEditingIndex] = useState(null);
   const [showFoodSearch, setShowFoodSearch] = useState(false);
   const [mealMultiplier, setMealMultiplier] = useState(1);
+  const [notes, setNotes] = useState('');
+  const [photoUrl, setPhotoUrl] = useState(null);
+  const [savePhoto, setSavePhoto] = useState(true);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -43,6 +47,52 @@ export default function PhotoMealUpload({ onMealAdded }) {
     e.preventDefault();
   };
 
+  const uploadPhotoToStorage = async (file) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Compression options
+      const options = {
+        maxSizeMB: 1, // Max file size in MB
+        maxWidthOrHeight: 1200, // Max width or height
+        useWebWorker: true,
+        fileType: 'image/jpeg', // Convert to JPEG for better compression
+      };
+
+      // Compress the image
+      console.log(`Original file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      const compressedFile = await imageCompression(file, options);
+      console.log(`Compressed file size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+
+      // Create a unique filename (always use .jpg since we're converting to JPEG)
+      const fileName = `${user.id}/${Date.now()}.jpg`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('meal-photos')
+        .upload(fileName, compressedFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'image/jpeg'
+        });
+
+      if (error) {
+        console.error('Error uploading photo:', error);
+        return null;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('meal-photos')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (err) {
+      console.error('Error in uploadPhotoToStorage:', err);
+      return null;
+    }
+  };
+
   const analyzeImage = async () => {
     if (!selectedFile) return;
     if (!mealType) {
@@ -52,13 +102,18 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
     setAnalyzing(true);
     setError(null);
-    setDebugInfo(`Starting... File: ${selectedFile.name}, Size: ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB, Type: ${selectedFile.type}`);
 
     try {
+      // Upload photo to Supabase Storage BEFORE AI analysis (only if savePhoto is true)
+      if (savePhoto) {
+        const uploadedPhotoUrl = await uploadPhotoToStorage(selectedFile);
+        if (uploadedPhotoUrl) {
+          setPhotoUrl(uploadedPhotoUrl);
+        }
+      }
+
       const formData = new FormData();
       formData.append('file', selectedFile);
-
-      setDebugInfo('Uploading to backend...');
 
       const response = await api.post('/api/analyze-meal-image', formData, {
         headers: {
@@ -67,20 +122,46 @@ export default function PhotoMealUpload({ onMealAdded }) {
         timeout: 60000,
       });
 
-      setDebugInfo('Success!');
-
       // Transform API response to include base values and portions
-      const transformedFoods = response.data.foods.map(food => ({
-        ...food,
-        base_calories: food.calories,
-        base_protein_g: food.protein_g,
-        base_carbs_g: food.carbs_g,
-        base_fat_g: food.fat_g,
-        base_fiber_g: food.fiber_g || 0,
-        portion_size: 100, // Default to 100g
-        portion_display: food.portion || '100g', // Use AI-estimated portion
-        portion_unit: 'g',
-      }));
+      const transformedFoods = response.data.foods.map(food => {
+        // Extract portion size from AI response
+        // Handle formats: "85g", "1 bun (75g)", "2 slices (50g)"
+        const portionStr = food.portion || '100g';
+
+        // Try to extract number from parentheses first (e.g., "1 bun (75g)" -> 75)
+        const parenMatch = portionStr.match(/\((\d+(?:\.\d+)?)/);
+        const geminiPortionGrams = parenMatch
+          ? parseFloat(parenMatch[1])
+          : (parseFloat(portionStr.replace(/[^\d.]/g, '')) || 100);
+
+        // AI returns nutrients for the detected portion
+        // We store these as "per geminiPortionGrams" base values
+        // Example: If Gemini detected "1 slice (20g)" with 5 cal,
+        // we store base_calories = 5 per 20g (not per 100g!)
+
+        return {
+          ...food,
+          // Store ORIGINAL AI values to prevent rounding errors during reset
+          original_calories: food.calories,
+          original_protein_g: food.protein_g,
+          original_carbs_g: food.carbs_g,
+          original_fat_g: food.fat_g,
+          original_fiber_g: food.fiber_g || 0,
+          original_portion_size: geminiPortionGrams,
+          original_portion_display: portionStr,
+          // Store base values PER GEMINI PORTION (not per 100g)
+          // This is the key change - base values match the Gemini portion size
+          base_calories: food.calories,
+          base_protein_g: food.protein_g,
+          base_carbs_g: food.carbs_g,
+          base_fat_g: food.fat_g,
+          base_fiber_g: food.fiber_g || 0,
+          base_portion_size: geminiPortionGrams, // The size that base values correspond to
+          portion_size: geminiPortionGrams,
+          portion_display: '1', // Show "1" by default (representing 1 unit of the Gemini portion)
+          portion_unit: 'g',
+        };
+      });
 
       const resultData = {
         ...response.data,
@@ -89,11 +170,10 @@ export default function PhotoMealUpload({ onMealAdded }) {
       };
 
       setResult(resultData);
+      setOriginalResult(JSON.parse(JSON.stringify(resultData))); // Deep copy for reset
       setEditableResult(resultData);
     } catch (err) {
-      const errorMsg = `Error: ${err.message}\nStatus: ${err.response?.status}\nDetail: ${err.response?.data?.detail || err.response?.data?.error || 'No detail'}\nBackend URL: ${err.config?.baseURL || 'unknown'}`;
       setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to analyze image');
-      setDebugInfo(errorMsg);
       console.error('Full error:', err);
     } finally {
       setAnalyzing(false);
@@ -115,7 +195,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
       updated.foods[index].carbs_g = 0;
       updated.foods[index].fat_g = 0;
       updated.foods[index].fiber_g = 0;
-      
+
       // Recalculate totals
       updated.total_nutrition = {
         calories: updated.foods.reduce((sum, f) => sum + (parseFloat(f.calories) || 0), 0),
@@ -124,7 +204,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
         fat_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fat_g) || 0), 0),
         fiber_g: updated.foods.reduce((sum, f) => sum + (parseFloat(f.fiber_g) || 0), 0),
       };
-      
+
       setEditableResult(updated);
       return;
     }
@@ -132,18 +212,21 @@ export default function PhotoMealUpload({ onMealAdded }) {
     // Smart input parsing: check if input contains letters (unit)
     const containsLetters = /[a-zA-Z]/.test(inputValue);
     let portionSize;
+    const basePortionSize = food.base_portion_size || 100; // The portion size that base values correspond to
 
     if (containsLetters) {
       // Extract numeric value from input (e.g., "150g" -> 150)
       const numericValue = parseFloat(inputValue.replace(/[^\d.]/g, ''));
-      portionSize = numericValue || 100;
+      portionSize = numericValue || basePortionSize;
     } else {
-      // Pure number - treat as multiplier (e.g., "2" -> 200g)
+      // Pure number - treat as multiplier of the BASE portion
+      // e.g., "2" means 2 units of the Gemini-detected portion (e.g., 2 slices = 2 × 20g = 40g)
       const multiplier = parseFloat(inputValue);
-      portionSize = isNaN(multiplier) ? 100 : multiplier * 100;
+      portionSize = isNaN(multiplier) ? basePortionSize : multiplier * basePortionSize;
     }
 
-    const multiplier = (portionSize / 100) * mealMultiplier;
+    // Calculate multiplier relative to the base portion size
+    const multiplier = portionSize / basePortionSize;
 
     // Update portion size and recalculate macros
     updated.foods[index].portion_size = portionSize;
@@ -165,23 +248,58 @@ export default function PhotoMealUpload({ onMealAdded }) {
     setEditableResult(updated);
   };
 
-  const updateMealMultiplier = (multiplierValue) => {
-    const multiplier = parseFloat(multiplierValue) || 1;
-    setMealMultiplier(multiplier);
+  const getTotalCompoundWeight = () => {
+    if (!editableResult || !editableResult.foods) return 0;
+    return editableResult.foods.reduce((sum, f) => sum + (f.portion_size || 100), 0);
+  };
 
-    if (!editableResult) return;
+  const updateMealMultiplier = (inputValue) => {
+    // Allow empty input for backspace/clearing
+    if (inputValue === '') {
+      setMealMultiplier('');
+      return;
+    }
+
+    if (!editableResult || !originalResult) return;
+
+    // Calculate ORIGINAL total weight (from when AI first analyzed)
+    const originalTotalWeight = originalResult.foods.reduce((sum, f) => sum + (f.portion_size || 100), 0);
+
+    // Handle alphanumeric input
+    const containsLetters = /[a-zA-Z]/.test(inputValue);
+    let multiplier;
+
+    if (containsLetters) {
+      // Extract numeric value and divide by ORIGINAL total weight
+      // e.g., "250g" with originalTotalWeight 350 -> 250/350 = 0.714
+      const gramAmount = parseFloat(inputValue.replace(/[^\d.]/g, ''));
+      multiplier = gramAmount / originalTotalWeight;
+    } else {
+      // Pure number - use as direct multiplier
+      multiplier = parseFloat(inputValue) || 1;
+    }
+
+    setMealMultiplier(inputValue);
 
     const updated = { ...editableResult };
 
-    // Apply multiplier to all foods
-    updated.foods = updated.foods.map(food => ({
-      ...food,
-      calories: Math.round(food.base_calories * (food.portion_size / 100) * multiplier),
-      protein_g: parseFloat((food.base_protein_g * (food.portion_size / 100) * multiplier).toFixed(1)),
-      carbs_g: parseFloat((food.base_carbs_g * (food.portion_size / 100) * multiplier).toFixed(1)),
-      fat_g: parseFloat((food.base_fat_g * (food.portion_size / 100) * multiplier).toFixed(1)),
-      fiber_g: parseFloat((food.base_fiber_g * (food.portion_size / 100) * multiplier).toFixed(1)),
-    }));
+    // Apply multiplier to ORIGINAL foods, not current state
+    updated.foods = originalResult.foods.map(food => {
+      const basePortionSize = food.base_portion_size || 100;
+      const newPortionSize = (food.portion_size || basePortionSize) * multiplier;
+      const actualMultiplier = newPortionSize / basePortionSize;
+
+      return {
+        ...food,
+        portion_size: newPortionSize,
+        portion_display: `${Math.round(newPortionSize)}g`,
+        calories: Math.round(food.base_calories * actualMultiplier),
+        protein_g: parseFloat((food.base_protein_g * actualMultiplier).toFixed(1)),
+        carbs_g: parseFloat((food.base_carbs_g * actualMultiplier).toFixed(1)),
+        fat_g: parseFloat((food.base_fat_g * actualMultiplier).toFixed(1)),
+        fiber_g: parseFloat((food.base_fiber_g * actualMultiplier).toFixed(1)),
+      };
+    });
 
     // Recalculate totals
     updated.total_nutrition = {
@@ -195,13 +313,21 @@ export default function PhotoMealUpload({ onMealAdded }) {
     setEditableResult(updated);
   };
 
+  const resetToOriginal = () => {
+    if (originalResult) {
+      setEditableResult(JSON.parse(JSON.stringify(originalResult))); // Deep copy
+      setMealMultiplier(1);
+    }
+  };
+
   const updateFood = (index, field, value) => {
     const updated = { ...editableResult };
     updated.foods[index][field] = value;
 
     // If updating base values, recalculate current values
     if (field.startsWith('base_')) {
-      const multiplier = updated.foods[index].portion_size / 100;
+      const basePortionSize = updated.foods[index].base_portion_size || 100;
+      const multiplier = updated.foods[index].portion_size / basePortionSize;
       const baseField = field.replace('base_', '');
       updated.foods[index][baseField] = parseFloat(value) * multiplier;
     }
@@ -234,6 +360,43 @@ export default function PhotoMealUpload({ onMealAdded }) {
     setEditableResult(updated);
   };
 
+  const saveAsCustomFood = async (index) => {
+    const food = editableResult.foods[index];
+    const foodName = prompt(`Save "${food.name}" as custom food? Enter a name:`, food.name);
+
+    if (!foodName) return; // User cancelled
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Convert base values to per 100g for consistency
+      const basePortionSize = food.base_portion_size || 100;
+      const conversionMultiplier = 100 / basePortionSize;
+
+      const { error } = await supabase
+        .from('user_foods')
+        .insert([{
+          user_id: user.id,
+          name: foodName,
+          base_calories: Math.round(food.base_calories * conversionMultiplier),
+          base_protein_g: parseFloat((food.base_protein_g * conversionMultiplier).toFixed(1)),
+          base_carbs_g: parseFloat((food.base_carbs_g * conversionMultiplier).toFixed(1)),
+          base_fat_g: parseFloat((food.base_fat_g * conversionMultiplier).toFixed(1)),
+          base_fiber_g: parseFloat((food.base_fiber_g * conversionMultiplier).toFixed(1)),
+          source: 'edited_from_ai',
+          original_food_name: food.name
+        }]);
+
+      if (error) {
+        alert('Failed to save custom food: ' + error.message);
+      } else {
+        alert(`✅ "${foodName}" saved as custom food!`);
+      }
+    } catch (err) {
+      alert('Failed to save custom food: ' + err.message);
+    }
+  };
+
   const addManualFood = () => {
     setShowFoodSearch(true);
   };
@@ -251,6 +414,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
       base_carbs_g: food.carbs_g,
       base_fat_g: food.fat_g,
       base_fiber_g: food.fiber_g || 0,
+      base_portion_size: 100, // Database foods are per 100g
       calories: food.calories,
       protein_g: food.protein_g,
       carbs_g: food.carbs_g,
@@ -281,13 +445,22 @@ export default function PhotoMealUpload({ onMealAdded }) {
       // Create the meal as a compound food
       // Calculate aggregate portion info for display in title
       const totalPortionSize = editableResult.foods.reduce((sum, f) => sum + (f.portion_size || 100), 0);
-      
+
+      // Generate meal name with multiplier suffix
+      let baseMealName = editableResult.foods.map(f => f.name).join(', ');
+
+      // Add multiplier suffix if not 1
+      if (mealMultiplier !== 1 && mealMultiplier !== '' && mealMultiplier !== '1') {
+        const containsLetters = /[a-zA-Z]/.test(String(mealMultiplier));
+        baseMealName += containsLetters ? ` (${mealMultiplier})` : ` (${mealMultiplier}x)`;
+      }
+
       const { data: mealData, error: mealError } = await supabase
         .from('meals')
         .insert([
           {
             user_id: user.id,
-            meal_name: editableResult.foods.map(f => f.name).join(', '),
+            meal_name: baseMealName,
             meal_type: editableResult.meal_type,
             total_calories: Math.round(editableResult.total_nutrition.calories),
             total_protein_g: parseFloat(editableResult.total_nutrition.protein_g.toFixed(1)),
@@ -298,7 +471,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
             is_compound: editableResult.foods.length > 1,
             portion_size: totalPortionSize,
             portion_unit: 'g',
-            notes: editableResult.recommendations,
+            notes: notes || null,
+            photo_url: photoUrl || null,
           },
         ])
         .select();
@@ -334,7 +508,12 @@ export default function PhotoMealUpload({ onMealAdded }) {
       setPreview(null);
       setResult(null);
       setEditableResult(null);
+      setOriginalResult(null);
       setMealType('');
+      setMealMultiplier(1);
+      setNotes('');
+      setPhotoUrl(null);
+      setSavePhoto(true);
 
       if (onMealAdded) onMealAdded(mealData[0]);
     } catch (e) {
@@ -347,17 +526,11 @@ export default function PhotoMealUpload({ onMealAdded }) {
     <div className="bg-white border-2 border-green-100 rounded-xl shadow-sm p-6">
       <h2 className="text-2xl font-bold text-black mb-4">📸 Photo Analysis</h2>
 
-      {analyzing && (
-        <div className="bg-blue-50 border border-blue-200 p-3 rounded text-sm mb-4 text-center">
-          <p className="text-gray-700">🔄 Analyzing your meal...</p>
-        </div>
-      )}
-
       {!preview && !result && (
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition cursor-pointer"
+          className="border-2 border-dashed border-gray-300 rounded-lg p-16 min-h-[400px] flex items-center justify-center text-center hover:border-blue-400 transition cursor-pointer"
         >
           <input
             type="file"
@@ -367,8 +540,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
             id="file-input"
           />
           <label htmlFor="file-input" className="cursor-pointer">
-            <div className="text-6xl mb-4">📷</div>
-            <p className="text-gray-600 mb-2">Drop an image here or click to upload</p>
+            <div className="text-8xl mb-6">📷</div>
+            <p className="text-gray-600 mb-2 text-lg">Drop an image here or click to upload</p>
             <p className="text-sm text-gray-500">Supported: JPG, PNG, HEIC</p>
           </label>
         </div>
@@ -383,6 +556,9 @@ export default function PhotoMealUpload({ onMealAdded }) {
                 setSelectedFile(null);
                 setPreview(null);
                 setMealType('');
+                setMealMultiplier(1);
+                setNotes('');
+                setPhotoUrl(null);
               }}
               className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition shadow-lg"
               title="Remove photo"
@@ -413,25 +589,27 @@ export default function PhotoMealUpload({ onMealAdded }) {
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={analyzeImage}
-              disabled={analyzing || !mealType}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {analyzing ? '🔍 Analyzing...' : '📸 Analyze Photo'}
-            </button>
-            <button
-              onClick={() => {
-                setSelectedFile(null);
-                setPreview(null);
-                setMealType('');
-              }}
-              className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
+          {/* Save Photo Checkbox */}
+          <div className="mb-4 flex items-center">
+            <input
+              type="checkbox"
+              id="savePhoto"
+              checked={savePhoto}
+              onChange={(e) => setSavePhoto(e.target.checked)}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="savePhoto" className="ml-2 text-sm text-gray-700">
+              Save photo with meal log (uncheck to analyze without saving photo)
+            </label>
           </div>
+
+          <button
+            onClick={analyzeImage}
+            disabled={analyzing || !mealType}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {analyzing ? '🔍 Analyzing...' : '📸 Analyze Photo'}
+          </button>
         </div>
       )}
 
@@ -448,10 +626,14 @@ export default function PhotoMealUpload({ onMealAdded }) {
             <button
               onClick={() => {
                 setResult(null);
+                setOriginalResult(null);
                 setEditableResult(null);
                 setSelectedFile(null);
                 setPreview(null);
                 setMealType('');
+                setMealMultiplier(1);
+                setNotes('');
+                setPhotoUrl(null);
               }}
               className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition shadow-lg"
               title="Remove photo"
@@ -473,21 +655,21 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
             {/* Meal Multiplier */}
             <div className="mb-3 bg-white p-3 rounded border-2 border-purple-300">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mb-1">
                 <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Meal Multiplier:</label>
                 <input
-                  type="number"
-                  step="0.5"
-                  min="0.1"
+                  type="text"
                   value={mealMultiplier}
                   onChange={(e) => updateMealMultiplier(e.target.value)}
-                  placeholder="1"
-                  className="flex-1 px-3 py-1.5 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 text-sm"
+                  placeholder="1 or 2x or 250g"
+                  className="flex-1 px-3 py-1.5 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 text-sm text-gray-900"
                 />
-                <span className="text-xs text-gray-600 whitespace-nowrap">(×{mealMultiplier} of all items)</span>
+                <span className="text-xs font-semibold text-purple-700 whitespace-nowrap bg-purple-50 px-2 py-1 rounded">
+                  Total: {Math.round(getTotalCompoundWeight())}g
+                </span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Use this to multiply the entire meal (e.g., 2 = double all portions, 0.5 = half)
+              <p className="text-xs text-gray-500">
+                Enter a number (e.g., 2) to multiply all portions, or grams (e.g., 250g) to scale to that weight
               </p>
             </div>
 
@@ -513,49 +695,59 @@ export default function PhotoMealUpload({ onMealAdded }) {
                         value={food.name}
                         onChange={(e) => updateFood(idx, 'name', e.target.value)}
                         placeholder="Food name"
-                        className="w-full px-2 py-1 border rounded"
+                        className="w-full px-2 py-1 border rounded text-gray-900"
                       />
-                      <p className="text-xs text-gray-600">Edit base values (per 100{food.portion_unit}):</p>
+                      <p className="text-xs text-gray-600 font-medium">Edit base nutrition values (per 100{food.portion_unit}):</p>
                       <div className="grid grid-cols-5 gap-2">
-                        <input
-                          type="number"
-                          value={food.base_calories}
-                          onChange={(e) => updateFood(idx, 'base_calories', parseFloat(e.target.value) || 0)}
-                          placeholder="Cal"
-                          className="px-2 py-1 border rounded text-sm"
-                        />
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={food.base_protein_g}
-                          onChange={(e) => updateFood(idx, 'base_protein_g', parseFloat(e.target.value) || 0)}
-                          placeholder="Protein"
-                          className="px-2 py-1 border rounded text-sm"
-                        />
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={food.base_carbs_g}
-                          onChange={(e) => updateFood(idx, 'base_carbs_g', parseFloat(e.target.value) || 0)}
-                          placeholder="Carbs"
-                          className="px-2 py-1 border rounded text-sm"
-                        />
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={food.base_fat_g}
-                          onChange={(e) => updateFood(idx, 'base_fat_g', parseFloat(e.target.value) || 0)}
-                          placeholder="Fat"
-                          className="px-2 py-1 border rounded text-sm"
-                        />
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={food.base_fiber_g}
-                          onChange={(e) => updateFood(idx, 'base_fiber_g', parseFloat(e.target.value) || 0)}
-                          placeholder="Fiber"
-                          className="px-2 py-1 border rounded text-sm"
-                        />
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-0.5">Calories</label>
+                          <input
+                            type="number"
+                            value={food.base_calories}
+                            onChange={(e) => updateFood(idx, 'base_calories', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-0.5">Protein (g)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={food.base_protein_g}
+                            onChange={(e) => updateFood(idx, 'base_protein_g', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-0.5">Carbs (g)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={food.base_carbs_g}
+                            onChange={(e) => updateFood(idx, 'base_carbs_g', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-0.5">Fat (g)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={food.base_fat_g}
+                            onChange={(e) => updateFood(idx, 'base_fat_g', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-0.5">Fiber (g)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={food.base_fiber_g}
+                            onChange={(e) => updateFood(idx, 'base_fiber_g', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -563,6 +755,12 @@ export default function PhotoMealUpload({ onMealAdded }) {
                           className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
                         >
                           Done
+                        </button>
+                        <button
+                          onClick={() => saveAsCustomFood(idx)}
+                          className="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700"
+                        >
+                          ⭐ Save as Custom Food
                         </button>
                         <button
                           onClick={() => removeFood(idx)}
@@ -578,7 +776,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
                         <div className="flex-1">
                           <p className="font-medium text-gray-800">{food.name}</p>
                           <p className="text-xs text-gray-500">
-                            Base: {food.base_calories} cal per 100{food.portion_unit}
+                            Base: {food.base_calories} cal per {food.base_portion_size || 100}{food.portion_unit} (enter {food.base_portion_size || 100}{food.portion_unit} or 1)
                           </p>
                         </div>
                         <button
@@ -590,19 +788,46 @@ export default function PhotoMealUpload({ onMealAdded }) {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label className="text-sm text-gray-600 w-24">Count (g or x):</label>
-                        <input
-                          type="text"
-                          value={food.portion_display || '1'}
-                          onChange={(e) => updateFoodQuantity(idx, e.target.value)}
-                          placeholder="e.g., 150g or 2"
-                          className="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
-                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <label className="text-sm text-gray-600 w-24">Count (g or x):</label>
+                            <input
+                              type="text"
+                              value={food.portion_display}
+                              onChange={(e) => updateFoodQuantity(idx, e.target.value)}
+                              placeholder="e.g., 150g or 2"
+                              className="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 ml-24">
+                            <span className="font-semibold text-purple-600">{food.base_portion_size || 100}g = 1</span> • Total: {Math.round(food.portion_size)}g
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="bg-gray-50 p-2 rounded text-sm text-gray-700">
-                        <p className="font-medium">{food.calories} cal</p>
-                        <p className="text-xs">P: {food.protein_g}g | C: {food.carbs_g}g | F: {food.fat_g}g | Fiber: {food.fiber_g}g</p>
+                      <div className="bg-gray-50 p-2 rounded text-sm">
+                        <div className="grid grid-cols-5 gap-1 text-center">
+                          <div>
+                            <p className="font-bold text-blue-600">{food.calories}</p>
+                            <p className="text-xs text-gray-500">cal</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-green-600">{food.protein_g}g</p>
+                            <p className="text-xs text-gray-500">P</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-yellow-600">{food.carbs_g}g</p>
+                            <p className="text-xs text-gray-500">C</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-orange-600">{food.fat_g}g</p>
+                            <p className="text-xs text-gray-500">F</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-purple-600">{food.fiber_g}g</p>
+                            <p className="text-xs text-gray-500">Fiber</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -640,6 +865,24 @@ export default function PhotoMealUpload({ onMealAdded }) {
             </div>
           )}
 
+          {/* Meal Notes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Add Notes (Optional)
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any notes about this meal (e.g., where you ate, how you felt, special ingredients...)"
+              maxLength={500}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 resize-none"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {notes.length}/500 characters
+            </p>
+          </div>
+
           <div className="flex gap-2">
             <button
               onClick={saveMeal}
@@ -648,16 +891,11 @@ export default function PhotoMealUpload({ onMealAdded }) {
               ✅ Save Meal
             </button>
             <button
-              onClick={() => {
-                setResult(null);
-                setEditableResult(null);
-                setSelectedFile(null);
-                setPreview(null);
-                setMealType('');
-              }}
-              className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+              onClick={resetToOriginal}
+              className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+              title="Reset to AI-detected values"
             >
-              Try Another
+              🔄 Reset
             </button>
           </div>
         </div>
