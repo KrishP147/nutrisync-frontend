@@ -18,6 +18,7 @@ export default function MealForm({ onMealAdded }) {
   const [fat, setFat] = useState('');
   const [fiber, setFiber] = useState('');
   const [notes, setNotes] = useState('');
+  const [saveAsCustom, setSaveAsCustom] = useState(false);
 
   const handleFoodSelect = (food) => {
     const newFood = {
@@ -168,6 +169,28 @@ export default function MealForm({ onMealAdded }) {
       if (onMealAdded) onMealAdded(mealData[0]);
     } else {
       // Manual entry mode (single food)
+
+      // Save as custom food if checkbox is checked
+      if (saveAsCustom) {
+        const { error: customFoodError } = await supabase
+          .from('user_foods')
+          .insert([{
+            user_id: user.id,
+            name: mealName,
+            base_calories: parseInt(calories) || 0,
+            base_protein_g: parseFloat(protein) || 0,
+            base_carbs_g: parseFloat(carbs) || 0,
+            base_fat_g: parseFloat(fat) || 0,
+            base_fiber_g: parseFloat(fiber) || 0,
+            source: 'manual_entry',
+          }]);
+
+        if (customFoodError) {
+          console.error('Failed to save as custom food:', customFoodError);
+          // Continue with meal logging even if custom food save fails
+        }
+      }
+
       const { data, error } = await supabase
         .from('meals')
         .insert([
@@ -197,6 +220,7 @@ export default function MealForm({ onMealAdded }) {
         setFat('');
         setFiber('');
         setNotes('');
+        setSaveAsCustom(false);
         setLoading(false);
 
         if (onMealAdded) onMealAdded(data[0]);
@@ -425,6 +449,24 @@ export default function MealForm({ onMealAdded }) {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
                 />
               </div>
+            </div>
+
+            {/* Save as Custom Food Checkbox */}
+            <div className="mt-3 bg-purple-50 border-2 border-purple-200 rounded-lg p-3">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={saveAsCustom}
+                  onChange={(e) => setSaveAsCustom(e.target.checked)}
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-800">
+                  ⭐ Save as Custom Food (reusable in future)
+                </span>
+              </label>
+              <p className="text-xs text-gray-600 mt-1 ml-6">
+                This will save "{mealName || 'this food'}" to your custom foods library for quick access later
+              </p>
             </div>
           </div>
         )}

@@ -297,27 +297,27 @@ export default function Analytics() {
 
   const COLORS = ['#1d4ed8', '#f59e0b', '#10b981', '#a855f7', '#ef4444'];
 
-  // Animated background bars
-  const bars = Array.from({ length: 18 }, (_, i) => ({
+  // Animated background bars - taller and faster
+  const bars = Array.from({ length: 25 }, (_, i) => ({
     id: i,
-    delay: Math.random() * 4,
-    duration: Math.random() * 12 + 14,
+    delay: Math.random() * 3,
+    duration: Math.random() * 8 + 10,
     width: Math.random() * 260 + 240,
     height: 6,
     opacity: Math.random() * 0.5 + 0.35,
-    offset: Math.random() * 50,
+    offset: Math.random() * 30,
   }));
 
   if (loading) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-white">
+      <div className="relative min-h-screen overflow-hidden bg-amber-50">
         {/* Animated Background */}
         {bars.map((bar) => (
           <motion.div
             key={bar.id}
             className="absolute"
             style={{
-              top: `${bar.id * 6 + bar.offset}%`,
+              top: `${bar.id * 4.5 + bar.offset}%`,
               left: "-40%",
               width: bar.width,
               height: bar.height,
@@ -349,14 +349,14 @@ export default function Analytics() {
 
   if (!stats) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-white">
+      <div className="relative min-h-screen overflow-hidden bg-amber-50">
         {/* Animated Background */}
         {bars.map((bar) => (
           <motion.div
             key={bar.id}
             className="absolute"
             style={{
-              top: `${bar.id * 6 + bar.offset}%`,
+              top: `${bar.id * 4.5 + bar.offset}%`,
               left: "-40%",
               width: bar.width,
               height: bar.height,
@@ -390,14 +390,14 @@ export default function Analytics() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white">
+    <div className="relative min-h-screen overflow-hidden bg-amber-50">
       {/* Animated Background */}
       {bars.map((bar) => (
         <motion.div
           key={bar.id}
           className="absolute"
           style={{
-            top: `${bar.id * 6 + bar.offset}%`,
+            top: `${bar.id * 4.5 + bar.offset}%`,
             left: "-40%",
             width: bar.width,
             height: bar.height,
@@ -482,11 +482,11 @@ export default function Analytics() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.45 }}
-            className="bg-gradient-to-r from-yellow-400 to-orange-400 border-2 border-yellow-500 rounded-xl p-6 shadow-xl mb-8"
+            className="bg-white border-4 border-yellow-500 rounded-xl p-6 shadow-xl mb-8"
           >
             <h2 className="text-xl font-bold text-gray-900 mb-1">⭐ Your Favorite Food</h2>
-            <p className="text-2xl font-bold text-white">{stats.favoriteFood.name}</p>
-            <p className="text-sm text-gray-800 mt-1">Logged {stats.favoriteFood.count} times</p>
+            <p className="text-2xl font-bold text-yellow-600">{stats.favoriteFood.name}</p>
+            <p className="text-sm text-gray-700 mt-1">Logged {stats.favoriteFood.count} times</p>
           </motion.div>
         )}
 
@@ -495,10 +495,10 @@ export default function Analytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 border-2 border-purple-600 rounded-xl p-8 shadow-xl mb-8 text-white"
+          className="bg-white border-4 border-blue-800 rounded-xl p-8 shadow-xl mb-8"
         >
-          <h2 className="text-2xl font-bold mb-2">Your Eater Type: {stats.eaterType.primary}</h2>
-          <p className="text-purple-100 text-lg">{stats.eaterType.description}</p>
+          <h2 className="text-2xl font-bold mb-2 text-gray-900">Your Eater Type: {stats.eaterType.primary}</h2>
+          <p className="text-gray-700 text-lg">{stats.eaterType.description}</p>
         </motion.div>
 
         {/* Charts Row 1 */}
@@ -593,28 +593,6 @@ export default function Analytics() {
             </ResponsiveContainer>
           </motion.div>
         </div>
-
-        {/* Additional Stats */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
-          className="bg-white border-2 border-gray-300 rounded-xl p-6 shadow-md"
-        >
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Additional Insights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-gray-600 mb-1">Biggest Meal Type</p>
-              <p className="text-2xl font-bold text-blue-700 capitalize">{stats.biggestMealType}</p>
-              <p className="text-xs text-gray-500 mt-1">By average calories</p>
-            </div>
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <p className="text-sm text-gray-600 mb-1">Most Active Eating Hour</p>
-              <p className="text-2xl font-bold text-purple-700">{stats.peakHour}</p>
-              <p className="text-xs text-gray-500 mt-1">Most meals logged at this time</p>
-            </div>
-          </div>
-        </motion.div>
 
         {/* Photo Gallery Link */}
         <motion.div

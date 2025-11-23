@@ -530,7 +530,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          className="border-2 border-dashed border-gray-300 rounded-lg p-16 min-h-[400px] flex items-center justify-center text-center hover:border-blue-400 transition cursor-pointer"
+          className="border-2 border-dashed border-gray-300 rounded-lg p-14 min-h-[340px] flex items-center justify-center text-center hover:border-blue-400 transition cursor-pointer"
         >
           <input
             type="file"
@@ -540,8 +540,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
             id="file-input"
           />
           <label htmlFor="file-input" className="cursor-pointer">
-            <div className="text-8xl mb-6">📷</div>
-            <p className="text-gray-600 mb-2 text-lg">Drop an image here or click to upload</p>
+            <div className="text-6xl mb-4">📷</div>
+            <p className="text-gray-600 mb-2">Drop an image here or click to upload</p>
             <p className="text-sm text-gray-500">Supported: JPG, PNG, HEIC</p>
           </label>
         </div>

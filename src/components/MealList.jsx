@@ -13,6 +13,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
   const [editNotes, setEditNotes] = useState('');
   const [editingComponentIndex, setEditingComponentIndex] = useState(null);
   const [replacingComponentIndex, setReplacingComponentIndex] = useState(null);
+  const [replacingSimpleMeal, setReplacingSimpleMeal] = useState(null);
   const [editMealType, setEditMealType] = useState('');
   const [editConsumedAt, setEditConsumedAt] = useState('');
   const [viewingPhotoUrl, setViewingPhotoUrl] = useState(null);
@@ -375,6 +376,44 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
     };
     setEditComponents(updated);
     setReplacingComponentIndex(null);
+  };
+
+  const handleReplaceSimpleMeal = async (newFoodData) => {
+    // Update the meal in the meals list
+    const meal = meals.find(m => m.id === replacingSimpleMeal);
+    if (!meal) return;
+
+    // Calculate new macros based on portion size
+    const multiplier = newFoodData.portion_size / 100;
+    const updatedMeal = {
+      ...meal,
+      meal_name: newFoodData.name,
+      portion_size: newFoodData.portion_size,
+      portion_unit: newFoodData.portion_unit,
+      total_calories: Math.round(newFoodData.base_calories * multiplier),
+      total_protein_g: parseFloat((newFoodData.base_protein_g * multiplier).toFixed(1)),
+      total_carbs_g: parseFloat((newFoodData.base_carbs_g * multiplier).toFixed(1)),
+      total_fat_g: parseFloat((newFoodData.base_fat_g * multiplier).toFixed(1)),
+      total_fiber_g: parseFloat((newFoodData.base_fiber_g * multiplier).toFixed(1))
+    };
+
+    // Persist to database
+    await supabase
+      .from('meals')
+      .update({
+        meal_name: updatedMeal.meal_name,
+        portion_size: updatedMeal.portion_size,
+        portion_unit: updatedMeal.portion_unit,
+        total_calories: updatedMeal.total_calories,
+        total_protein_g: updatedMeal.total_protein_g,
+        total_carbs_g: updatedMeal.total_carbs_g,
+        total_fat_g: updatedMeal.total_fat_g,
+        total_fiber_g: updatedMeal.total_fiber_g
+      })
+      .eq('id', meal.id);
+
+    setMeals(meals.map(m => m.id === meal.id ? updatedMeal : m));
+    setReplacingSimpleMeal(null);
   };
 
   const saveEdit = async (meal) => {
@@ -754,21 +793,31 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                   ))}
                 </div>
               ) : (
-                // Simple food - smart quantity input
-                <div>
-                  <label className={`block text-sm font-medium ${colors.textSecondary} mb-1`}>
-                    Count (g or x)
-                  </label>
-                  <input
-                    type="text"
-                    value={editQuantity}
-                    onChange={(e) => setEditQuantity(e.target.value)}
-                    placeholder="e.g., 150g or 2"
-                    className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-gray-900 rounded-lg focus:ring-2 focus:ring-opacity-50`}
-                  />
-                  <p className={`text-xs ${colors.textSecondary} mt-1`}>
-                    Enter grams (e.g., 150g) or multiplier (e.g., 2)
-                  </p>
+                // Simple food - smart quantity input with Replace button
+                <div className="space-y-3">
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setReplacingSimpleMeal(meal.id)}
+                      className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition font-medium"
+                    >
+                      🔄 Replace Food
+                    </button>
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium ${colors.textSecondary} mb-1`}>
+                      Count (g or x)
+                    </label>
+                    <input
+                      type="text"
+                      value={editQuantity}
+                      onChange={(e) => setEditQuantity(e.target.value)}
+                      placeholder="e.g., 150g or 2"
+                      className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-gray-900 rounded-lg focus:ring-2 focus:ring-opacity-50`}
+                    />
+                    <p className={`text-xs ${colors.textSecondary} mt-1`}>
+                      Enter grams (e.g., 150g) or multiplier (e.g., 2)
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -878,12 +927,25 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
         </div>
       ))}
 
-      {/* Replace Food Modal */}
+      {/* Replace Food Modal - for compound meal components */}
       {replacingComponentIndex !== null && editComponents[replacingComponentIndex] && (
         <ReplaceFoodModal
           food={editComponents[replacingComponentIndex]}
           onReplace={(newFoodData) => handleReplaceFood(replacingComponentIndex, newFoodData)}
           onClose={() => setReplacingComponentIndex(null)}
+        />
+      )}
+
+      {/* Replace Food Modal - for simple meals */}
+      {replacingSimpleMeal !== null && (
+        <ReplaceFoodModal
+          food={{
+            name: meals.find(m => m.id === replacingSimpleMeal)?.meal_name,
+            component_name: meals.find(m => m.id === replacingSimpleMeal)?.meal_name,
+            portion_size: meals.find(m => m.id === replacingSimpleMeal)?.portion_size || 100
+          }}
+          onReplace={handleReplaceSimpleMeal}
+          onClose={() => setReplacingSimpleMeal(null)}
         />
       )}
 

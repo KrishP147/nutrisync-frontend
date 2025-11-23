@@ -11,7 +11,7 @@ export default function Navigation() {
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/logging', label: 'Log Meals', icon: '🍽️' },
     { path: '/progress', label: 'Progress', icon: '📈' },
-    { path: '/analytics', label: 'Analytics', icon: '📉' },
+    { path: '/analytics', label: 'Analytics', icon: '📊' },
   ];
 
   return (

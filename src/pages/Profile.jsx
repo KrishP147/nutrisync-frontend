@@ -221,8 +221,15 @@ export default function Profile() {
       }
 
       const goals = calculateGoalsFromProfile(profile);
-      setCalculatedGoals(goals);
-      
+      const bmi = calculateBMI(profile.weight_kg, profile.height_cm);
+      const bmiCategory = getBMICategory(bmi);
+
+      setCalculatedGoals({
+        ...goals,
+        bmi: bmi.toFixed(1),
+        bmiCategory
+      });
+
       await updateGoals({
         calories: goals.calories,
         protein: goals.protein,

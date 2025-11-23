@@ -47,39 +47,34 @@ export default function MacroCircles() {
     return <div className="text-center py-8 text-gray-500">Loading...</div>;
   }
 
-  if (!summary || (summary.calories === 0 && summary.protein === 0)) {
-    return (
-      <div className="bg-white border-2 border-purple-500 rounded-xl p-8 text-center shadow-xl">
-        <p className="text-gray-600">No meals logged today. Start tracking!</p>
-      </div>
-    );
-  }
+  // Default to zeros if no data
+  const displaySummary = summary || { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
   const macros = [
     {
       name: 'Calories',
-      value: summary.calories,
+      value: displaySummary.calories,
       goal: goals.calories,
       color: '#22c55e',
       unit: ''
     },
     {
       name: 'Protein',
-      value: summary.protein,
+      value: displaySummary.protein,
       goal: goals.protein,
       color: '#1d4ed8',
       unit: 'g'
     },
     {
       name: 'Carbs',
-      value: summary.carbs,
+      value: displaySummary.carbs,
       goal: goals.carbs,
       color: '#f59e0b',
       unit: 'g'
     },
     {
       name: 'Fat',
-      value: summary.fat,
+      value: displaySummary.fat,
       goal: goals.fat,
       color: '#a855f7',
       unit: 'g'
