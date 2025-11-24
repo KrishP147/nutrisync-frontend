@@ -5,11 +5,41 @@ import MacroCircles from '../components/MacroCircles';
 import TodayPieChart from '../components/TodayPieChart';
 import Recommendations from '../components/Recommendations';
 import MealList from '../components/MealList';
+import NutritionByTimeHistogram from '../components/NutritionByTimeHistogram';
 import BackgroundCircles from '../components/ui/BackgroundCircles';
 import { motion } from 'motion/react';
 
 export default function DashboardNew() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [todaysMeals, setTodaysMeals] = useState([]);
+  const [loadingMeals, setLoadingMeals] = useState(true);
+
+  useEffect(() => {
+    fetchTodaysMeals();
+  }, [refreshTrigger]);
+
+  const fetchTodaysMeals = async () => {
+    setLoadingMeals(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const { data, error } = await supabase
+      .from('meals')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('consumed_at', today.toISOString())
+      .lt('consumed_at', tomorrow.toISOString())
+      .order('consumed_at', { ascending: true });
+
+    if (!error && data) {
+      setTodaysMeals(data);
+    }
+    setLoadingMeals(false);
+  };
 
   const handleMealChange = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -38,6 +68,19 @@ export default function DashboardNew() {
         >
           <MacroCircles key={refreshTrigger} />
         </motion.div>
+
+        {/* Nutrition by Time Histogram */}
+        {!loadingMeals && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <div className="bg-white border-2 border-purple-500 rounded-xl p-6 shadow-xl">
+              <NutritionByTimeHistogram meals={todaysMeals} />
+            </div>
+          </motion.div>
+        )}
 
         {/* Recommendations */}
         <motion.div

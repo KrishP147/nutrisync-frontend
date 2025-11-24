@@ -7,12 +7,14 @@ import 'react-circular-progressbar/dist/styles.css';
 import { motion } from 'motion/react';
 import BackgroundCircles from '../components/ui/BackgroundCircles';
 import MealList from '../components/MealList';
+import NutritionByTimeHistogram from '../components/NutritionByTimeHistogram';
 
 export default function DailyView() {
   const { date } = useParams(); // Date in format YYYY-MM-DD
   const navigate = useNavigate();
   const { goals } = useGoals();
   const [summary, setSummary] = useState(null);
+  const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -33,20 +35,24 @@ export default function DailyView() {
       .select('*')
       .eq('user_id', user.id)
       .gte('consumed_at', dayStart.toISOString())
-      .lte('consumed_at', dayEnd.toISOString());
+      .lte('consumed_at', dayEnd.toISOString())
+      .order('consumed_at', { ascending: true });
 
     if (data) {
+      setMeals(data);
       const totals = data.reduce((acc, meal) => ({
         calories: acc.calories + (meal.total_calories || 0),
         protein: acc.protein + (meal.total_protein_g || 0),
         carbs: acc.carbs + (meal.total_carbs_g || 0),
         fat: acc.fat + (meal.total_fat_g || 0),
-      }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+        fiber: acc.fiber + (meal.total_fiber_g || 0),
+      }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
 
       setSummary(totals);
     } else {
       // No meals for this day
-      setSummary({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+      setMeals([]);
+      setSummary({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
     }
     setLoading(false);
   };
@@ -103,6 +109,13 @@ export default function DailyView() {
       goal: goals.fat,
       color: '#a855f7',
       unit: 'g'
+    },
+    {
+      name: 'Fiber',
+      value: summary.fiber,
+      goal: goals.fiber,
+      color: '#800000',
+      unit: 'g'
     }
   ];
 
@@ -148,7 +161,7 @@ export default function DailyView() {
               </div>
             ) : null}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
               {macros.map((macro, index) => {
                 const actualPercentage = (macro.value / macro.goal) * 100;
                 const displayPercentage = Math.min(actualPercentage, 100);
@@ -212,11 +225,24 @@ export default function DailyView() {
           </div>
         </motion.div>
 
+        {/* Nutrition by Time Histogram */}
+        {meals.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <div className="bg-white border-2 border-purple-500 rounded-xl p-6 shadow-xl">
+              <NutritionByTimeHistogram meals={meals} />
+            </div>
+          </motion.div>
+        )}
+
         {/* Meals for this day */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
         >
           <h2 className="text-2xl font-bold text-black mb-4">Meals Logged</h2>
           <div className="bg-gradient-to-br from-blue-100 via-blue-50 to-sky-100 rounded-xl p-6 border-2 border-blue-400 shadow-xl max-h-[600px] overflow-y-auto custom-scrollbar-light">
