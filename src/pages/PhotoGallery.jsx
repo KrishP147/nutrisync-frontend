@@ -7,6 +7,7 @@ export default function PhotoGallery() {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewingPhoto, setViewingPhoto] = useState(null);
+  const [deletingPhotoId, setDeletingPhotoId] = useState(null);
 
   useEffect(() => {
     fetchPhotos();
@@ -39,6 +40,80 @@ export default function PhotoGallery() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const extractFilePathFromUrl = (url) => {
+    // Extract the file path from the Supabase storage URL
+    // URL format: https://[project].supabase.co/storage/v1/object/public/meal-photos/[user_id]/[timestamp].jpg
+    try {
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split('/');
+      const bucketIndex = pathParts.indexOf('meal-photos');
+      if (bucketIndex !== -1 && bucketIndex < pathParts.length - 1) {
+        // Get everything after 'meal-photos'
+        return pathParts.slice(bucketIndex + 1).join('/');
+      }
+      // Fallback: try to extract from the pathname directly
+      const match = url.match(/meal-photos\/(.+)$/);
+      return match ? match[1] : null;
+    } catch (err) {
+      console.error('Error extracting file path from URL:', err);
+      return null;
+    }
+  };
+
+  const handleDeletePhoto = async (meal) => {
+    if (!window.confirm(`Are you sure you want to delete this photo? This will remove the photo from storage but keep the meal record.`)) {
+      return;
+    }
+
+    setDeletingPhotoId(meal.id);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Extract file path from photo URL
+      const filePath = extractFilePathFromUrl(meal.photo_url);
+      
+      if (filePath) {
+        // Delete from Supabase Storage
+        const { error: storageError } = await supabase.storage
+          .from('meal-photos')
+          .remove([filePath]);
+
+        if (storageError) {
+          console.error('Error deleting photo from storage:', storageError);
+          // Continue to update meal record even if storage deletion fails
+        }
+      }
+
+      // Update meal record to remove photo_url
+      const { error: updateError } = await supabase
+        .from('meals')
+        .update({ photo_url: null })
+        .eq('id', meal.id)
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('Error updating meal record:', updateError);
+        alert('Failed to delete photo: ' + updateError.message);
+        setDeletingPhotoId(null);
+        return;
+      }
+
+      // Refresh the photo gallery
+      await fetchPhotos();
+      setDeletingPhotoId(null);
+      
+      // Close viewing modal if the deleted photo was being viewed
+      if (viewingPhoto && viewingPhoto.id === meal.id) {
+        setViewingPhoto(null);
+      }
+    } catch (err) {
+      console.error('Error deleting photo:', err);
+      alert('Failed to delete photo: ' + err.message);
+      setDeletingPhotoId(null);
+    }
   };
 
   if (loading) {
@@ -87,9 +162,11 @@ export default function PhotoGallery() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
                   className="relative group cursor-pointer"
-                  onClick={() => setViewingPhoto(meal)}
                 >
-                  <div className="aspect-square rounded-lg overflow-hidden border-2 border-purple-200 hover:border-purple-400 transition shadow-md hover:shadow-lg">
+                  <div 
+                    className="aspect-square rounded-lg overflow-hidden border-2 border-purple-200 hover:border-purple-400 transition shadow-md hover:shadow-lg"
+                    onClick={() => setViewingPhoto(meal)}
+                  >
                     <img
                       src={meal.photo_url}
                       alt={meal.meal_name}
@@ -100,6 +177,26 @@ export default function PhotoGallery() {
                     <p className="text-white text-xs font-semibold truncate">{meal.meal_name}</p>
                     <p className="text-white/80 text-xs">{formatDate(meal.consumed_at)}</p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeletePhoto(meal);
+                    }}
+                    disabled={deletingPhotoId === meal.id}
+                    className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Delete photo"
+                  >
+                    {deletingPhotoId === meal.id ? (
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
+                  </button>
                 </motion.div>
               ))}
             </div>
@@ -126,8 +223,37 @@ export default function PhotoGallery() {
                 onClick={(e) => e.stopPropagation()}
               />
               <div className="bg-white rounded-lg p-4 mt-4">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">{viewingPhoto.meal_name}</h3>
-                <p className="text-gray-600 mb-2">{formatDate(viewingPhoto.consumed_at)}</p>
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">{viewingPhoto.meal_name}</h3>
+                    <p className="text-gray-600">{formatDate(viewingPhoto.consumed_at)}</p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeletePhoto(viewingPhoto);
+                    }}
+                    disabled={deletingPhotoId === viewingPhoto.id}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {deletingPhotoId === viewingPhoto.id ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete Photo
+                      </>
+                    )}
+                  </button>
+                </div>
                 <div className="grid grid-cols-4 gap-2">
                   <div className="text-center">
                     <p className="text-sm text-gray-600">Calories</p>
