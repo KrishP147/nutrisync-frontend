@@ -91,7 +91,7 @@ export function adjustCaloriesForGoal(tdee, goalType, customAmount = null) {
  * @param {number} calories - Total daily calories
  * @param {number} weight_kg - Weight in kilograms
  * @param {string} goalType - 'lose', 'maintain', or 'gain'
- * @returns {Object} Macro targets {protein, carbs, fat}
+ * @returns {Object} Macro targets {protein, carbs, fat, fiber}
  */
 export function calculateMacros(calories, weight_kg, goalType) {
   // Protein: 1.8-2.2g per kg for muscle maintenance/growth
@@ -104,24 +104,28 @@ export function calculateMacros(calories, weight_kg, goalType) {
   } else {
     proteinPerKg = 2.0; // Maintenance
   }
-  
+
   const protein = Math.round(weight_kg * proteinPerKg);
   const proteinCalories = protein * 4; // 4 calories per gram of protein
-  
+
   // Fat: 25-30% of total calories (0.8-1g per kg)
   const fatPercentage = 0.27; // 27% of calories from fat
   const fatCalories = Math.round(calories * fatPercentage);
   const fat = Math.round(fatCalories / 9); // 9 calories per gram of fat
-  
+
   // Carbs: Fill remaining calories
   const remainingCalories = calories - proteinCalories - fatCalories;
   const carbs = Math.round(remainingCalories / 4); // 4 calories per gram of carbs
-  
+
+  // Fiber: 14g per 1000 calories (standard dietary recommendation)
+  const fiber = Math.round((calories / 1000) * 14);
+
   return {
     calories,
     protein,
     carbs,
-    fat
+    fat,
+    fiber
   };
 }
 

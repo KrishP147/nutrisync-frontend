@@ -16,7 +16,8 @@ export function GoalsProvider({ children }) {
     calories: 2000,
     protein: 150,
     carbs: 250,
-    fat: 67
+    fat: 67,
+    fiber: 28
   });
   const [loading, setLoading] = useState(true);
 
@@ -64,7 +65,8 @@ export function GoalsProvider({ children }) {
           calories: data.calories,
           protein: data.protein,
           carbs: data.carbs,
-          fat: data.fat
+          fat: data.fat,
+          fiber: data.fiber || 28
         };
         console.log('Goals fetched successfully:', fetchedGoals);
         setGoals(fetchedGoals);
@@ -98,7 +100,8 @@ export function GoalsProvider({ children }) {
           calories: newGoals.calories,
           protein: newGoals.protein,
           carbs: newGoals.carbs,
-          fat: newGoals.fat
+          fat: newGoals.fat,
+          fiber: newGoals.fiber
         }, {
           onConflict: 'user_id'
         })

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function DailySummary() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [todaysMeals, setTodaysMeals] = useState([]);
+  const [timeChartView, setTimeChartView] = useState('calories'); // 'calories', 'protein', 'carbs', 'fat', 'fiber'
 
   useEffect(() => {
     fetchTodaysSummary();
@@ -36,8 +39,38 @@ export default function DailySummary() {
       }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, mealCount: 0 });
 
       setSummary(totals);
+      setTodaysMeals(data);
     }
     setLoading(false);
+  };
+
+  const getNutritionByTimeData = () => {
+    if (!todaysMeals || todaysMeals.length === 0) return [];
+
+    // Group meals by hour with all macros
+    const nutritionByHour = todaysMeals.reduce((acc, meal) => {
+      const hour = new Date(meal.consumed_at).getHours();
+      if (!acc[hour]) {
+        acc[hour] = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+      }
+      acc[hour].calories += meal.total_calories || 0;
+      acc[hour].protein += meal.total_protein_g || 0;
+      acc[hour].carbs += meal.total_carbs_g || 0;
+      acc[hour].fat += meal.total_fat_g || 0;
+      acc[hour].fiber += meal.total_fiber_g || 0;
+      return acc;
+    }, {});
+
+    // Create data array for all 24 hours
+    return Array.from({ length: 24 }, (_, i) => ({
+      hour: i,
+      calories: Math.round(nutritionByHour[i]?.calories || 0),
+      protein: parseFloat((nutritionByHour[i]?.protein || 0).toFixed(1)),
+      carbs: parseFloat((nutritionByHour[i]?.carbs || 0).toFixed(1)),
+      fat: parseFloat((nutritionByHour[i]?.fat || 0).toFixed(1)),
+      fiber: parseFloat((nutritionByHour[i]?.fiber || 0).toFixed(1)),
+      label: `${i}:00`
+    }));
   };
 
   if (loading) {
@@ -85,8 +118,64 @@ export default function DailySummary() {
 
       <div className="mt-4 text-center">
         <p className="text-sm text-gray-600">
-          You've logged <span className="font-semibold">{summary.mealCount}</span> meals today
+          You've logged <span className="font-semibold">{summary.mealCount}</span> {summary.mealCount === 1 ? 'meal' : 'meals'} today
         </p>
+      </div>
+
+      {/* Nutrition by Time of Day Histogram */}
+      <div className="mt-6">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-lg font-semibold text-gray-800">Intake by Time of Day</h3>
+          <div className="flex gap-1">
+            {[
+              { key: 'calories', label: 'Cal', color: 'bg-green-600' },
+              { key: 'protein', label: 'P', color: 'bg-blue-600' },
+              { key: 'carbs', label: 'C', color: 'bg-orange-500' },
+              { key: 'fat', label: 'F', color: 'bg-purple-600' },
+              { key: 'fiber', label: 'Fb', color: 'bg-red-900' }
+            ].map(({ key, label, color }) => (
+              <button
+                key={key}
+                onClick={() => setTimeChartView(key)}
+                className={`px-2 py-1 rounded text-xs font-medium transition ${
+                  timeChartView === key
+                    ? `${color} text-white`
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart
+            data={getNutritionByTimeData()}
+            layout="horizontal"
+            margin={{ top: 10, right: 30, left: 40, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis type="number" tick={{ fontSize: 10 }} />
+            <YAxis
+              type="category"
+              dataKey="label"
+              tick={{ fontSize: 9 }}
+              width={40}
+            />
+            <Tooltip
+              formatter={(value) => {
+                if (timeChartView === 'calories') return [`${value} cal`, 'Calories'];
+                return [`${value}g`, timeChartView.charAt(0).toUpperCase() + timeChartView.slice(1)];
+              }}
+              labelFormatter={(label) => `Time: ${label}`}
+            />
+            {timeChartView === 'calories' && <Bar dataKey="calories" fill="#10b981" />}
+            {timeChartView === 'protein' && <Bar dataKey="protein" fill="#1d4ed8" />}
+            {timeChartView === 'carbs' && <Bar dataKey="carbs" fill="#f59e0b" />}
+            {timeChartView === 'fat' && <Bar dataKey="fat" fill="#a855f7" />}
+            {timeChartView === 'fiber' && <Bar dataKey="fiber" fill="#800000" />}
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

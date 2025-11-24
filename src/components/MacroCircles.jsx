@@ -36,7 +36,8 @@ export default function MacroCircles() {
         protein: acc.protein + (meal.total_protein_g || 0),
         carbs: acc.carbs + (meal.total_carbs_g || 0),
         fat: acc.fat + (meal.total_fat_g || 0),
-      }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+        fiber: acc.fiber + (meal.total_fiber_g || 0),
+      }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
 
       setSummary(totals);
     }
@@ -48,14 +49,14 @@ export default function MacroCircles() {
   }
 
   // Default to zeros if no data
-  const displaySummary = summary || { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  const displaySummary = summary || { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
   const macros = [
     {
       name: 'Calories',
       value: displaySummary.calories,
       goal: goals.calories,
-      color: '#22c55e',
+      color: '#10b981',
       unit: ''
     },
     {
@@ -78,6 +79,13 @@ export default function MacroCircles() {
       goal: goals.fat,
       color: '#a855f7',
       unit: 'g'
+    },
+    {
+      name: 'Fiber',
+      value: displaySummary.fiber,
+      goal: goals.fiber,
+      color: '#800000',
+      unit: 'g'
     }
   ];
 
@@ -85,7 +93,7 @@ export default function MacroCircles() {
     <div className="bg-white border-2 border-purple-500 rounded-xl p-8 shadow-xl">
       <h2 className="text-3xl font-bold text-black mb-8 text-center">Today's Progress</h2>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
         {macros.map((macro, index) => {
           const actualPercentage = (macro.value / macro.goal) * 100;
           const displayPercentage = Math.min(actualPercentage, 100);

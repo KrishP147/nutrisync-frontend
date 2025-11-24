@@ -64,7 +64,7 @@ export default function SetGoals() {
 
       {isEditing ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Calories
@@ -72,6 +72,7 @@ export default function SetGoals() {
               <input
                 type="number"
                 step="100"
+                min="0"
                 value={tempGoals.calories === 0 ? '' : tempGoals.calories}
                 onChange={(e) => setTempGoals({ ...tempGoals, calories: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
@@ -85,6 +86,7 @@ export default function SetGoals() {
               <input
                 type="number"
                 step="20"
+                min="0"
                 value={tempGoals.protein === 0 ? '' : tempGoals.protein}
                 onChange={(e) => setTempGoals({ ...tempGoals, protein: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
@@ -98,6 +100,7 @@ export default function SetGoals() {
               <input
                 type="number"
                 step="20"
+                min="0"
                 value={tempGoals.carbs === 0 ? '' : tempGoals.carbs}
                 onChange={(e) => setTempGoals({ ...tempGoals, carbs: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
@@ -111,8 +114,23 @@ export default function SetGoals() {
               <input
                 type="number"
                 step="20"
+                min="0"
                 value={tempGoals.fat === 0 ? '' : tempGoals.fat}
                 onChange={(e) => setTempGoals({ ...tempGoals, fat: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Fiber (g)
+              </label>
+              <input
+                type="number"
+                step="5"
+                min="0"
+                value={tempGoals.fiber === 0 ? '' : tempGoals.fiber}
+                onChange={(e) => setTempGoals({ ...tempGoals, fiber: parseInt(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />
             </div>
@@ -136,9 +154,9 @@ export default function SetGoals() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-white rounded-lg p-4 text-center border-2 border-purple-300">
-            <p className="text-3xl font-bold text-purple-600">{goals.calories}</p>
+            <p className="text-3xl font-bold text-green-600">{goals.calories}</p>
             <p className="text-sm text-gray-600 mt-1">Calories</p>
           </div>
 
@@ -155,6 +173,11 @@ export default function SetGoals() {
           <div className="bg-white rounded-lg p-4 text-center border-2 border-purple-300">
             <p className="text-3xl font-bold text-purple-600">{goals.fat}g</p>
             <p className="text-sm text-gray-600 mt-1">Fat</p>
+          </div>
+
+          <div className="bg-white rounded-lg p-4 text-center border-2 border-purple-300">
+            <p className="text-3xl font-bold text-red-900">{goals.fiber}g</p>
+            <p className="text-sm text-gray-600 mt-1">Fiber</p>
           </div>
         </div>
       )}

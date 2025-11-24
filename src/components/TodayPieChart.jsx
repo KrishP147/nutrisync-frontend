@@ -36,8 +36,9 @@ export default function TodayPieChart() {
         protein: acc.protein + (meal.total_protein_g || 0),
         carbs: acc.carbs + (meal.total_carbs_g || 0),
         fat: acc.fat + (meal.total_fat_g || 0),
+        fiber: acc.fiber + (meal.total_fiber_g || 0),
         calories: acc.calories + (meal.total_calories || 0),
-      }), { protein: 0, carbs: 0, fat: 0, calories: 0 });
+      }), { protein: 0, carbs: 0, fat: 0, fiber: 0, calories: 0 });
 
       setTodayData(totals);
     }
@@ -49,12 +50,13 @@ export default function TodayPieChart() {
   }
 
   // Default to zeros if no data
-  const displayData = todayData || { protein: 0, carbs: 0, fat: 0, calories: 0 };
+  const displayData = todayData || { protein: 0, carbs: 0, fat: 0, fiber: 0, calories: 0 };
 
   const pieData = [
     { name: 'Protein', value: parseFloat(displayData.protein.toFixed(1)), color: '#1d4ed8' },
     { name: 'Carbs', value: parseFloat(displayData.carbs.toFixed(1)), color: '#f59e0b' },
     { name: 'Fat', value: parseFloat(displayData.fat.toFixed(1)), color: '#a855f7' },
+    { name: 'Fiber', value: parseFloat(displayData.fiber.toFixed(1)), color: '#800000' },
   ].filter(item => item.value > 0);
 
   const hasData = pieData.length > 0;
@@ -139,6 +141,10 @@ export default function TodayPieChart() {
           <div className="flex items-center justify-between bg-purple-50 p-3 rounded-lg border-2 border-purple-300">
             <span className="text-gray-700">Fat</span>
             <span className="text-xl font-bold text-purple-600">{displayData.fat.toFixed(1)}g</span>
+          </div>
+          <div className="flex items-center justify-between bg-red-50 p-3 rounded-lg border-2 border-red-900">
+            <span className="text-gray-700">Fiber</span>
+            <span className="text-xl font-bold" style={{ color: '#800000' }}>{displayData.fiber.toFixed(1)}g</span>
           </div>
         </div>
       </div>
