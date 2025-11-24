@@ -89,7 +89,7 @@ export default function Recommendations() {
 
   return (
     <div className="bg-white border-2 border-purple-500 rounded-xl p-6 shadow-xl">
-      <h2 className="text-2xl font-bold text-black mb-4">Recommendations</h2>
+      <h2 className="text-2xl font-bold text-black mb-4">General Recommendations</h2>
 
       <div className="space-y-3">
         {recommendations.map((rec, index) => (

@@ -16,6 +16,7 @@ import DailyView from './pages/DailyView';
 import Privacy from './pages/Privacy';
 import Analytics from './pages/Analytics';
 import PhotoGallery from './pages/PhotoGallery';
+import RecommendationsPage from './pages/RecommendationsPage';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -67,6 +68,7 @@ function App() {
           <Route path="/daily-view/:date" element={session ? <DailyView /> : <Navigate to="/login" />} />
           <Route path="/analytics" element={session ? <Analytics /> : <Navigate to="/login" />} />
           <Route path="/gallery" element={session ? <PhotoGallery /> : <Navigate to="/login" />} />
+          <Route path="/recommendations" element={session ? <RecommendationsPage /> : <Navigate to="/login" />} />
           <Route path="/privacy" element={<Privacy />} />
         </Routes>
       </Router>

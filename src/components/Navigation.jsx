@@ -12,6 +12,7 @@ export default function Navigation() {
     { path: '/logging', label: 'Log Meals', icon: '🍽️' },
     { path: '/progress', label: 'Progress', icon: '📈' },
     { path: '/analytics', label: 'Analytics', icon: '📊' },
+    { path: '/recommendations', label: 'AI Tips', icon: '🤖' },
   ];
 
   return (
