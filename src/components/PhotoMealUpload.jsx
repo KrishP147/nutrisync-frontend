@@ -19,6 +19,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
   const [notes, setNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState(null);
   const [savePhoto, setSavePhoto] = useState(true);
+  const [customMealName, setCustomMealName] = useState('');
+  const [isNameManuallyEdited, setIsNameManuallyEdited] = useState(false);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -172,6 +174,11 @@ export default function PhotoMealUpload({ onMealAdded }) {
       setResult(resultData);
       setOriginalResult(JSON.parse(JSON.stringify(resultData))); // Deep copy for reset
       setEditableResult(resultData);
+      
+      // Initialize meal name
+      const initialName = transformedFoods.map(f => f.name).join(', ');
+      setCustomMealName(initialName);
+      setIsNameManuallyEdited(false);
     } catch (err) {
       setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to analyze image');
       console.error('Full error:', err);
@@ -181,20 +188,25 @@ export default function PhotoMealUpload({ onMealAdded }) {
   };
 
   const updateFoodQuantity = (index, inputValue) => {
-    const updated = { ...editableResult };
+    // Create deep copy to ensure React detects state change
+    const updated = {
+      ...editableResult,
+      foods: [...editableResult.foods]
+    };
     const food = updated.foods[index];
-
-    // Store the display value
-    updated.foods[index] = { ...food, portion_display: inputValue };
 
     // Handle empty input
     if (inputValue === '' || inputValue === null || inputValue === undefined) {
-      updated.foods[index].portion_size = 0;
-      updated.foods[index].calories = 0;
-      updated.foods[index].protein_g = 0;
-      updated.foods[index].carbs_g = 0;
-      updated.foods[index].fat_g = 0;
-      updated.foods[index].fiber_g = 0;
+      updated.foods[index] = {
+        ...food,
+        portion_display: inputValue,
+        portion_size: 0,
+        calories: 0,
+        protein_g: 0,
+        carbs_g: 0,
+        fat_g: 0,
+        fiber_g: 0
+      };
 
       // Recalculate totals
       updated.total_nutrition = {
@@ -228,13 +240,17 @@ export default function PhotoMealUpload({ onMealAdded }) {
     // Calculate multiplier relative to the base portion size
     const multiplier = portionSize / basePortionSize;
 
-    // Update portion size and recalculate macros
-    updated.foods[index].portion_size = portionSize;
-    updated.foods[index].calories = Math.round(food.base_calories * multiplier);
-    updated.foods[index].protein_g = parseFloat((food.base_protein_g * multiplier).toFixed(1));
-    updated.foods[index].carbs_g = parseFloat((food.base_carbs_g * multiplier).toFixed(1));
-    updated.foods[index].fat_g = parseFloat((food.base_fat_g * multiplier).toFixed(1));
-    updated.foods[index].fiber_g = parseFloat((food.base_fiber_g * multiplier).toFixed(1));
+    // Update food with new values (create new object to ensure React detects change)
+    updated.foods[index] = {
+      ...food,
+      portion_display: inputValue,
+      portion_size: portionSize,
+      calories: Math.round(food.base_calories * multiplier),
+      protein_g: parseFloat((food.base_protein_g * multiplier).toFixed(1)),
+      carbs_g: parseFloat((food.base_carbs_g * multiplier).toFixed(1)),
+      fat_g: parseFloat((food.base_fat_g * multiplier).toFixed(1)),
+      fiber_g: parseFloat((food.base_fiber_g * multiplier).toFixed(1))
+    };
 
     // Recalculate totals
     updated.total_nutrition = {
@@ -251,6 +267,32 @@ export default function PhotoMealUpload({ onMealAdded }) {
   const getTotalCompoundWeight = () => {
     if (!editableResult || !editableResult.foods) return 0;
     return editableResult.foods.reduce((sum, f) => sum + (f.portion_size || 100), 0);
+  };
+
+  // Generate dynamic meal name based on current foods and multiplier
+  const generateDynamicMealName = (result = editableResult, multiplier = mealMultiplier) => {
+    if (!result || !result.foods) return '';
+    
+    let baseName = result.foods.map(f => f.name).join(', ');
+    
+    // Add multiplier suffix if not 1
+    if (multiplier !== 1 && multiplier !== '' && multiplier !== '1') {
+      const containsLetters = /[a-zA-Z]/.test(String(multiplier));
+      baseName += containsLetters ? ` (${multiplier})` : ` (${multiplier}x)`;
+    }
+    
+    return baseName;
+  };
+
+  const resetMealName = () => {
+    const dynamicName = generateDynamicMealName();
+    setCustomMealName(dynamicName);
+    setIsNameManuallyEdited(false);
+  };
+
+  const handleMealNameChange = (value) => {
+    setCustomMealName(value);
+    setIsNameManuallyEdited(true);
   };
 
   const updateMealMultiplier = (inputValue) => {
@@ -311,6 +353,12 @@ export default function PhotoMealUpload({ onMealAdded }) {
     };
 
     setEditableResult(updated);
+    
+    // Auto-update meal name if not manually edited
+    if (!isNameManuallyEdited) {
+      const dynamicName = generateDynamicMealName(updated, mealMultiplier);
+      setCustomMealName(dynamicName);
+    }
   };
 
   const resetToOriginal = () => {
@@ -321,7 +369,11 @@ export default function PhotoMealUpload({ onMealAdded }) {
   };
 
   const updateFood = (index, field, value) => {
-    const updated = { ...editableResult };
+    // Create deep copy to ensure React detects state change
+    const updated = {
+      ...editableResult,
+      foods: [...editableResult.foods.map((f, i) => i === index ? { ...f } : f)]
+    };
     updated.foods[index][field] = value;
 
     // If updating base values, recalculate current values
@@ -342,6 +394,12 @@ export default function PhotoMealUpload({ onMealAdded }) {
     };
 
     setEditableResult(updated);
+    
+    // Auto-update meal name if not manually edited
+    if (!isNameManuallyEdited) {
+      const dynamicName = generateDynamicMealName(updated, mealMultiplier);
+      setCustomMealName(dynamicName);
+    }
   };
 
   const removeFood = (index) => {
@@ -358,6 +416,12 @@ export default function PhotoMealUpload({ onMealAdded }) {
     };
 
     setEditableResult(updated);
+    
+    // Auto-update meal name if not manually edited
+    if (!isNameManuallyEdited) {
+      const dynamicName = generateDynamicMealName(updated, mealMultiplier);
+      setCustomMealName(dynamicName);
+    }
   };
 
   const saveAsCustomFood = async (index) => {
@@ -391,9 +455,74 @@ export default function PhotoMealUpload({ onMealAdded }) {
         alert('Failed to save custom food: ' + error.message);
       } else {
         alert(`✅ "${foodName}" saved as custom food!`);
+
+        // Update the food name in the current meal
+        const updated = { ...editableResult, foods: [...editableResult.foods] };
+        updated.foods[index] = { ...updated.foods[index], name: foodName };
+        setEditableResult(updated);
+
+        // Update meal name if not manually edited
+        if (!isNameManuallyEdited) {
+          const dynamicName = generateDynamicMealName(updated, mealMultiplier);
+          setCustomMealName(dynamicName);
+        }
       }
     } catch (err) {
       alert('Failed to save custom food: ' + err.message);
+    }
+  };
+
+  const saveEntireMealAsCustomFood = async () => {
+    if (!editableResult || !editableResult.foods || editableResult.foods.length === 0) return;
+
+    const baseMealName = editableResult.foods.map(f => f.name).join(', ');
+    const foodName = prompt(`Save this entire meal as a reusable custom food? Enter a name:`, baseMealName);
+
+    if (!foodName) return; // User cancelled
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Calculate base nutrition values per 100g from current total
+      const totalWeight = editableResult.foods.reduce((sum, f) => sum + (f.portion_size || 100), 0);
+      const totalCalories = editableResult.foods.reduce((sum, f) => sum + (parseFloat(f.calories) || 0), 0);
+      const totalProtein = editableResult.foods.reduce((sum, f) => sum + (parseFloat(f.protein_g) || 0), 0);
+      const totalCarbs = editableResult.foods.reduce((sum, f) => sum + (parseFloat(f.carbs_g) || 0), 0);
+      const totalFat = editableResult.foods.reduce((sum, f) => sum + (parseFloat(f.fat_g) || 0), 0);
+      const totalFiber = editableResult.foods.reduce((sum, f) => sum + (parseFloat(f.fiber_g) || 0), 0);
+
+      // Convert to per 100g basis
+      const baseCalories = Math.round((totalCalories / totalWeight) * 100);
+      const baseProtein = parseFloat(((totalProtein / totalWeight) * 100).toFixed(1));
+      const baseCarbs = parseFloat(((totalCarbs / totalWeight) * 100).toFixed(1));
+      const baseFat = parseFloat(((totalFat / totalWeight) * 100).toFixed(1));
+      const baseFiber = parseFloat(((totalFiber / totalWeight) * 100).toFixed(1));
+
+      const { error } = await supabase
+        .from('user_foods')
+        .insert([{
+          user_id: user.id,
+          name: foodName,
+          base_calories: baseCalories,
+          base_protein_g: baseProtein,
+          base_carbs_g: baseCarbs,
+          base_fat_g: baseFat,
+          base_fiber_g: baseFiber,
+          source: 'photo_meal',
+          original_food_name: baseMealName
+        }]);
+
+      if (error) {
+        alert('Failed to save photo meal as custom food: ' + error.message);
+      } else {
+        alert(`✅ "${foodName}" saved as custom food!\n\nNutrition per 100g:\n${baseCalories} cal | ${baseProtein}g P | ${baseCarbs}g C | ${baseFat}g F | ${baseFiber}g Fiber`);
+
+        // Update the meal name to match the saved food name
+        setCustomMealName(foodName);
+        setIsNameManuallyEdited(true); // Mark as manually edited since user chose the name
+      }
+    } catch (err) {
+      alert('Failed to save photo meal: ' + err.message);
     }
   };
 
@@ -434,6 +563,12 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
     setEditableResult(updated);
     setShowFoodSearch(false);
+    
+    // Auto-update meal name if not manually edited
+    if (!isNameManuallyEdited) {
+      const dynamicName = generateDynamicMealName(updated, mealMultiplier);
+      setCustomMealName(dynamicName);
+    }
   };
 
   const saveMeal = async () => {
@@ -446,14 +581,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
       // Calculate aggregate portion info for display in title
       const totalPortionSize = editableResult.foods.reduce((sum, f) => sum + (f.portion_size || 100), 0);
 
-      // Generate meal name with multiplier suffix
-      let baseMealName = editableResult.foods.map(f => f.name).join(', ');
-
-      // Add multiplier suffix if not 1
-      if (mealMultiplier !== 1 && mealMultiplier !== '' && mealMultiplier !== '1') {
-        const containsLetters = /[a-zA-Z]/.test(String(mealMultiplier));
-        baseMealName += containsLetters ? ` (${mealMultiplier})` : ` (${mealMultiplier}x)`;
-      }
+      // Use custom meal name (user can edit this)
+      const baseMealName = customMealName || generateDynamicMealName();
 
       const { data: mealData, error: mealError } = await supabase
         .from('meals')
@@ -514,6 +643,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
       setNotes('');
       setPhotoUrl(null);
       setSavePhoto(true);
+      setCustomMealName('');
+      setIsNameManuallyEdited(false);
 
       if (onMealAdded) onMealAdded(mealData[0]);
     } catch (e) {
@@ -559,6 +690,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
                 setMealMultiplier(1);
                 setNotes('');
                 setPhotoUrl(null);
+                setCustomMealName('');
+                setIsNameManuallyEdited(false);
               }}
               className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition shadow-lg"
               title="Remove photo"
@@ -634,6 +767,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
                 setMealMultiplier(1);
                 setNotes('');
                 setPhotoUrl(null);
+                setCustomMealName('');
+                setIsNameManuallyEdited(false);
               }}
               className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition shadow-lg"
               title="Remove photo"
@@ -703,6 +838,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
                           <label className="text-xs text-gray-500 block mb-0.5">Calories</label>
                           <input
                             type="number"
+                            min="0"
                             value={food.base_calories}
                             onChange={(e) => updateFood(idx, 'base_calories', parseFloat(e.target.value) || 0)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -713,6 +849,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
                           <input
                             type="number"
                             step="0.1"
+                            min="0"
                             value={food.base_protein_g}
                             onChange={(e) => updateFood(idx, 'base_protein_g', parseFloat(e.target.value) || 0)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -723,6 +860,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
                           <input
                             type="number"
                             step="0.1"
+                            min="0"
                             value={food.base_carbs_g}
                             onChange={(e) => updateFood(idx, 'base_carbs_g', parseFloat(e.target.value) || 0)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -733,6 +871,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
                           <input
                             type="number"
                             step="0.1"
+                            min="0"
                             value={food.base_fat_g}
                             onChange={(e) => updateFood(idx, 'base_fat_g', parseFloat(e.target.value) || 0)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -743,6 +882,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
                           <input
                             type="number"
                             step="0.1"
+                            min="0"
                             value={food.base_fiber_g}
                             onChange={(e) => updateFood(idx, 'base_fiber_g', parseFloat(e.target.value) || 0)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -779,12 +919,20 @@ export default function PhotoMealUpload({ onMealAdded }) {
                             Base: {food.base_calories} cal per {food.base_portion_size || 100}{food.portion_unit} (enter {food.base_portion_size || 100}{food.portion_unit} or 1)
                           </p>
                         </div>
-                        <button
-                          onClick={() => setEditingIndex(idx)}
-                          className="text-sm text-blue-600 hover:text-blue-800"
-                        >
-                          Edit Manually
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveAsCustomFood(idx)}
+                            className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
+                          >
+                            ⭐ Save
+                          </button>
+                          <button
+                            onClick={() => setEditingIndex(idx)}
+                            className="text-sm text-blue-600 hover:text-blue-800"
+                          >
+                            Edit Manually
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -865,6 +1013,34 @@ export default function PhotoMealUpload({ onMealAdded }) {
             </div>
           )}
 
+          {/* Meal Name Editor */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Meal Name
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customMealName}
+                onChange={(e) => handleMealNameChange(e.target.value)}
+                placeholder="Enter meal name"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              />
+              <button
+                onClick={resetMealName}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition whitespace-nowrap"
+                title="Reset to dynamic name"
+              >
+                🔄 Reset
+              </button>
+            </div>
+            {isNameManuallyEdited && (
+              <p className="text-xs text-gray-500 mt-1">
+                Original: {generateDynamicMealName()}
+              </p>
+            )}
+          </div>
+
           {/* Meal Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -883,20 +1059,30 @@ export default function PhotoMealUpload({ onMealAdded }) {
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="space-y-2">
+            {/* Save as My Food button */}
             <button
-              onClick={saveMeal}
-              className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
+              onClick={saveEntireMealAsCustomFood}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2.5 rounded-lg hover:from-purple-600 hover:to-pink-600 transition shadow-md font-medium"
             >
-              ✅ Save Meal
+              ⭐ Save Entire Meal as My Food
             </button>
-            <button
-              onClick={resetToOriginal}
-              className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
-              title="Reset to AI-detected values"
-            >
-              🔄 Reset
-            </button>
+
+            <div className="flex gap-2">
+              <button
+                onClick={saveMeal}
+                className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
+              >
+                ✅ Save Meal
+              </button>
+              <button
+                onClick={resetToOriginal}
+                className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                title="Reset to AI-detected values"
+              >
+                🔄 Reset
+              </button>
+            </div>
           </div>
         </div>
       )}
