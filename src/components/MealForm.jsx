@@ -383,6 +383,7 @@ export default function MealForm({ onMealAdded }) {
                 </label>
                 <input
                   type="number"
+                  min="0"
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
                   placeholder="500"
@@ -398,6 +399,7 @@ export default function MealForm({ onMealAdded }) {
                 <input
                   type="number"
                   step="0.1"
+                  min="0"
                   value={protein}
                   onChange={(e) => setProtein(e.target.value)}
                   placeholder="30"
@@ -413,6 +415,7 @@ export default function MealForm({ onMealAdded }) {
                 <input
                   type="number"
                   step="0.1"
+                  min="0"
                   value={carbs}
                   onChange={(e) => setCarbs(e.target.value)}
                   placeholder="50"
@@ -428,6 +431,7 @@ export default function MealForm({ onMealAdded }) {
                 <input
                   type="number"
                   step="0.1"
+                  min="0"
                   value={fat}
                   onChange={(e) => setFat(e.target.value)}
                   placeholder="15"
@@ -443,6 +447,7 @@ export default function MealForm({ onMealAdded }) {
                 <input
                   type="number"
                   step="0.1"
+                  min="0"
                   value={fiber}
                   onChange={(e) => setFiber(e.target.value)}
                   placeholder="5"
