@@ -86,7 +86,27 @@ export default function UserProfile() {
         
         // Calculate goals when profile is loaded
         const goals = calculateGoalsFromProfile(profileData);
-        setCalculatedGoals(goals);
+        
+        // Include BMI in calculated goals if available
+        if (data.bmi) {
+          setCalculatedGoals({
+            ...goals,
+            bmi: data.bmi.toFixed(1),
+            bmiCategory: {
+              label: data.bmi_category,
+              color: getBMICategory(data.bmi).color
+            }
+          });
+        } else {
+          // Calculate BMI if not in database yet
+          const bmi = calculateBMI(data.weight_kg, data.height_cm);
+          const bmiCategory = getBMICategory(bmi);
+          setCalculatedGoals({
+            ...goals,
+            bmi: bmi.toFixed(1),
+            bmiCategory
+          });
+        }
       }
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -128,6 +148,10 @@ export default function UserProfile() {
         return;
       }
 
+      // Calculate BMI
+      const bmi = calculateBMI(parseFloat(profile.weight_kg), parseFloat(profile.height_cm));
+      const bmiCategory = getBMICategory(bmi);
+
       // Save or update profile
       const profileData = {
         user_id: user.id,
@@ -136,7 +160,9 @@ export default function UserProfile() {
         height_cm: parseFloat(profile.height_cm),
         weight_kg: parseFloat(profile.weight_kg),
         activity_level: profile.activity_level,
-        goal_type: profile.goal_type
+        goal_type: profile.goal_type,
+        bmi: parseFloat(bmi.toFixed(1)),
+        bmi_category: bmiCategory.label
       };
 
       // Only add calorie_adjustment if it's not maintain goal
@@ -170,18 +196,28 @@ export default function UserProfile() {
 
       // Calculate and save goals
       const goals = calculateGoalsFromProfile(profile);
-      setCalculatedGoals(goals);
+      
+      // Include BMI in calculated goals for display
+      setCalculatedGoals({
+        ...goals,
+        bmi: bmi.toFixed(1),
+        bmiCategory: bmiCategory
+      });
       
       // Update goals in context (saves to user_goals table)
       await updateGoals({
         calories: goals.calories,
         protein: goals.protein,
         carbs: goals.carbs,
-        fat: goals.fat
+        fat: goals.fat,
+        fiber: goals.fiber || 30
       });
 
       setHasProfile(true);
       alert('Profile saved and goals updated!');
+      
+      // Refetch profile to ensure BMI is persisted
+      await fetchProfile();
       setIsOpen(false);
     } catch (error) {
       console.error('Error in handleSaveProfile:', error);
@@ -274,12 +310,13 @@ export default function UserProfile() {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-8 max-w-2xl w-full shadow-2xl border-2 border-teal-500 my-8"
-          >
+        <div className="fixed inset-0 bg-black/50 z-[9999] overflow-y-auto">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-xl p-8 max-w-2xl w-full shadow-2xl border-2 border-teal-500 my-8 relative"
+            >
             <h2 className="text-2xl font-bold text-black mb-4">Your Profile</h2>
             <p className="text-gray-600 mb-6">
               Enter your details to automatically calculate your daily nutrition goals
@@ -543,6 +580,10 @@ export default function UserProfile() {
                         <span className="text-purple-700">Fat:</span>
                         <span className="font-bold text-purple-900 ml-2">{calculatedGoals.fat}g</span>
                       </div>
+                      <div>
+                        <span className="text-purple-700">Fiber:</span>
+                        <span className="font-bold text-purple-900 ml-2">{calculatedGoals.fiber}g</span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -566,6 +607,7 @@ export default function UserProfile() {
               </button>
             </div>
           </motion.div>
+          </div>
         </div>
       )}
     </div>

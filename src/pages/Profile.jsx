@@ -82,7 +82,27 @@ export default function Profile() {
 
         // Calculate goals
         const goals = calculateGoalsFromProfile(profileData);
-        setCalculatedGoals(goals);
+        
+        // Include BMI in calculated goals if available
+        if (data.bmi) {
+          setCalculatedGoals({
+            ...goals,
+            bmi: data.bmi.toFixed(1),
+            bmiCategory: {
+              label: data.bmi_category,
+              color: getBMICategory(data.bmi).color
+            }
+          });
+        } else {
+          // Calculate BMI if not in database yet
+          const bmi = calculateBMI(data.weight_kg, data.height_cm);
+          const bmiCategory = getBMICategory(bmi);
+          setCalculatedGoals({
+            ...goals,
+            bmi: bmi.toFixed(1),
+            bmiCategory
+          });
+        }
       }
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -183,6 +203,10 @@ export default function Profile() {
         return;
       }
 
+      // Calculate BMI before saving
+      const bmi = calculateBMI(profile.weight_kg, profile.height_cm);
+      const bmiCategory = getBMICategory(bmi);
+
       const profileData = {
         user_id: user.id,
         age: parseInt(profile.age),
@@ -190,7 +214,9 @@ export default function Profile() {
         height_cm: parseFloat(profile.height_cm),
         weight_kg: parseFloat(profile.weight_kg),
         activity_level: profile.activity_level,
-        goal_type: profile.goal_type
+        goal_type: profile.goal_type,
+        bmi: parseFloat(bmi.toFixed(1)),
+        bmi_category: bmiCategory.label
       };
 
       // Only add calorie_adjustment if it's not maintain goal
@@ -200,9 +226,11 @@ export default function Profile() {
 
       let error;
       if (hasProfile) {
+        // Remove user_id from update data since it's used in the WHERE clause
+        const { user_id, ...updateData } = profileData;
         const result = await supabase
           .from('user_profile')
-          .update(profileData)
+          .update(updateData)
           .eq('user_id', user.id);
         error = result.error;
       } else {
@@ -221,8 +249,6 @@ export default function Profile() {
       }
 
       const goals = calculateGoalsFromProfile(profile);
-      const bmi = calculateBMI(profile.weight_kg, profile.height_cm);
-      const bmiCategory = getBMICategory(bmi);
 
       setCalculatedGoals({
         ...goals,
@@ -234,11 +260,15 @@ export default function Profile() {
         calories: goals.calories,
         protein: goals.protein,
         carbs: goals.carbs,
-        fat: goals.fat
+        fat: goals.fat,
+        fiber: goals.fiber || 30
       });
 
       setHasProfile(true);
       alert('Profile saved and goals updated!');
+      
+      // Refetch profile to ensure BMI is persisted
+      await fetchProfile();
     } catch (error) {
       console.error('Error in handleSaveProfile:', error);
       alert('An unexpected error occurred. Please try again.');
@@ -545,6 +575,10 @@ export default function Profile() {
                       <div className="bg-white p-3 rounded-lg">
                         <span className="text-sm text-purple-700">Fat</span>
                         <p className="text-2xl font-bold text-purple-900">{calculatedGoals.fat}g</p>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg col-span-2">
+                        <span className="text-sm text-purple-700">Fiber</span>
+                        <p className="text-2xl font-bold text-purple-900">{calculatedGoals.fiber}g</p>
                       </div>
                     </div>
                   </div>
