@@ -17,6 +17,14 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
   const [editMealType, setEditMealType] = useState('');
   const [editConsumedAt, setEditConsumedAt] = useState('');
   const [viewingPhotoUrl, setViewingPhotoUrl] = useState(null);
+  const [editingSimpleMacros, setEditingSimpleMacros] = useState(false);
+  const [simpleMacros, setSimpleMacros] = useState({
+    base_calories: 0,
+    base_protein_g: 0,
+    base_carbs_g: 0,
+    base_fat_g: 0,
+    base_fiber_g: 0
+  });
 
   // Define color schemes based on variant
   const colorSchemes = {
@@ -147,10 +155,77 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
     }
   };
 
+  const handleDuplicate = async (meal) => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Create duplicate meal with current time
+    const duplicatedMeal = {
+      user_id: user.id,
+      meal_name: meal.meal_name,
+      meal_type: meal.meal_type,
+      consumed_at: new Date().toISOString(),
+      total_calories: meal.total_calories,
+      total_protein_g: meal.total_protein_g,
+      total_carbs_g: meal.total_carbs_g,
+      total_fat_g: meal.total_fat_g,
+      total_fiber_g: meal.total_fiber_g,
+      portion_size: meal.portion_size,
+      portion_unit: meal.portion_unit,
+      is_compound: meal.is_compound,
+      notes: meal.notes || null,
+      photo_url: null // Don't copy photo
+    };
+
+    const { data: newMeal, error } = await supabase
+      .from('meals')
+      .insert([duplicatedMeal])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error duplicating meal:', error);
+      alert('Failed to duplicate meal');
+      return;
+    }
+
+    // If compound meal, duplicate components
+    if (meal.is_compound) {
+      const components = await fetchMealComponents(meal.id);
+      if (components.length > 0) {
+        const duplicatedComponents = components.map(c => ({
+          meal_id: newMeal.id,
+          component_name: c.component_name,
+          portion_size: c.portion_size,
+          portion_unit: c.portion_unit,
+          calories: c.calories,
+          protein_g: c.protein_g,
+          carbs_g: c.carbs_g,
+          fat_g: c.fat_g,
+          fiber_g: c.fiber_g,
+          custom_food_id: c.custom_food_id || null
+        }));
+
+        await supabase
+          .from('meal_components')
+          .insert(duplicatedComponents);
+      }
+    }
+
+    // Refresh meals list
+    await fetchMeals();
+
+    // Immediately start editing the duplicated meal to allow time adjustment
+    const updatedMeal = { ...newMeal, is_compound: meal.is_compound };
+    startEditing(updatedMeal);
+
+    if (onMealUpdated) onMealUpdated();
+  };
+
   const startEditing = async (meal) => {
     setEditingMealId(meal.id);
     setEditNotes(meal.notes || '');
     setEditMealType(meal.meal_type);
+    setEditingSimpleMacros(false); // Reset macro editing state
 
     // Format datetime-local input value
     const date = new Date(meal.consumed_at);
@@ -213,6 +288,16 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
     } else {
       setEditComponents([]);
       setOriginalComponents([]);
+
+      // Calculate base macros for simple food
+      const baseMultiplier = meal.portion_size ? (meal.portion_size / 100) : 1;
+      setSimpleMacros({
+        base_calories: Math.round(meal.total_calories / baseMultiplier),
+        base_protein_g: parseFloat((meal.total_protein_g / baseMultiplier).toFixed(1)),
+        base_carbs_g: parseFloat((meal.total_carbs_g / baseMultiplier).toFixed(1)),
+        base_fat_g: parseFloat((meal.total_fat_g / baseMultiplier).toFixed(1)),
+        base_fiber_g: parseFloat((meal.total_fiber_g / baseMultiplier).toFixed(1))
+      });
     }
   };
 
@@ -327,6 +412,45 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
     setEditComponents(updated);
   };
 
+  const updateSimpleMacro = (field, value) => {
+    setSimpleMacros({
+      ...simpleMacros,
+      [field]: parseFloat(value) || 0
+    });
+  };
+
+  const saveSimpleFoodAsCustomFood = async (meal) => {
+    const foodName = prompt(`Save "${meal.meal_name}" as a reusable custom food? Enter a name:`, meal.meal_name);
+
+    if (!foodName) return; // User cancelled
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { error } = await supabase
+        .from('user_foods')
+        .insert([{
+          user_id: user.id,
+          name: foodName,
+          base_calories: simpleMacros.base_calories,
+          base_protein_g: simpleMacros.base_protein_g,
+          base_carbs_g: simpleMacros.base_carbs_g,
+          base_fat_g: simpleMacros.base_fat_g,
+          base_fiber_g: simpleMacros.base_fiber_g,
+          source: 'simple_meal',
+          original_food_name: meal.meal_name
+        }]);
+
+      if (error) {
+        alert('Failed to save simple food as custom food: ' + error.message);
+      } else {
+        alert(`✅ "${foodName}" saved as custom food!\n\nNutrition per 100g:\n${simpleMacros.base_calories} cal | ${simpleMacros.base_protein_g}g P | ${simpleMacros.base_carbs_g}g C | ${simpleMacros.base_fat_g}g F | ${simpleMacros.base_fiber_g}g Fiber`);
+      }
+    } catch (err) {
+      alert('Failed to save simple food: ' + err.message);
+    }
+  };
+
   const saveComponentAsCustomFood = async (index) => {
     const component = editComponents[index];
     const foodName = prompt(`Save "${component.component_name}" as custom food? Enter a name:`, component.component_name);
@@ -357,6 +481,68 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
       }
     } catch (err) {
       alert('Failed to save custom food: ' + err.message);
+    }
+  };
+
+  const saveCompoundMealAsCustomFood = async (meal) => {
+    const foodName = prompt(`Save "${meal.meal_name}" as a reusable custom food? Enter a name:`, meal.meal_name);
+
+    if (!foodName) return; // User cancelled
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Calculate base nutrition values per 100g from current total
+      const totalWeight = editComponents.reduce((sum, c) => sum + (c.portion_size || 100), 0);
+      const totalCalories = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_calories * multiplier);
+      }, 0);
+      const totalProtein = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_protein_g * multiplier);
+      }, 0);
+      const totalCarbs = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_carbs_g * multiplier);
+      }, 0);
+      const totalFat = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_fat_g * multiplier);
+      }, 0);
+      const totalFiber = editComponents.reduce((sum, c) => {
+        const multiplier = c.portion_size / 100;
+        return sum + (c.base_fiber_g * multiplier);
+      }, 0);
+
+      // Convert to per 100g basis
+      const baseCalories = Math.round((totalCalories / totalWeight) * 100);
+      const baseProtein = parseFloat(((totalProtein / totalWeight) * 100).toFixed(1));
+      const baseCarbs = parseFloat(((totalCarbs / totalWeight) * 100).toFixed(1));
+      const baseFat = parseFloat(((totalFat / totalWeight) * 100).toFixed(1));
+      const baseFiber = parseFloat(((totalFiber / totalWeight) * 100).toFixed(1));
+
+      const { error } = await supabase
+        .from('user_foods')
+        .insert([{
+          user_id: user.id,
+          name: foodName,
+          base_calories: baseCalories,
+          base_protein_g: baseProtein,
+          base_carbs_g: baseCarbs,
+          base_fat_g: baseFat,
+          base_fiber_g: baseFiber,
+          source: 'compound_meal',
+          original_food_name: meal.meal_name
+        }]);
+
+      if (error) {
+        alert('Failed to save compound meal as custom food: ' + error.message);
+      } else {
+        alert(`✅ "${foodName}" saved as custom food!\n\nNutrition per 100g:\n${baseCalories} cal | ${baseProtein}g P | ${baseCarbs}g C | ${baseFat}g F | ${baseFiber}g Fiber`);
+      }
+    } catch (err) {
+      alert('Failed to save compound meal: ' + err.message);
     }
   };
 
@@ -505,15 +691,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
         if (onMealUpdated) onMealUpdated();
       }
     } else {
-      // Simple food - use smart parsed portion size
-      // Get base values (assuming stored values are for portion_size or default 100g)
-      const baseMultiplier = meal.portion_size ? (meal.portion_size / 100) : 1;
-      const baseCalories = meal.total_calories / baseMultiplier;
-      const baseProtein = meal.total_protein_g / baseMultiplier;
-      const baseCarbs = meal.total_carbs_g / baseMultiplier;
-      const baseFat = meal.total_fat_g / baseMultiplier;
-      const baseFiber = meal.total_fiber_g / baseMultiplier;
-
+      // Simple food - use manually edited macros if available, otherwise calculate from base
       const multiplier = portionSize / 100;
 
       const { error } = await supabase
@@ -521,11 +699,11 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
         .update({
           portion_size: portionSize,
           portion_unit: 'g',
-          total_calories: Math.round(baseCalories * multiplier),
-          total_protein_g: parseFloat((baseProtein * multiplier).toFixed(1)),
-          total_carbs_g: parseFloat((baseCarbs * multiplier).toFixed(1)),
-          total_fat_g: parseFloat((baseFat * multiplier).toFixed(1)),
-          total_fiber_g: parseFloat((baseFiber * multiplier).toFixed(1)),
+          total_calories: Math.round(simpleMacros.base_calories * multiplier),
+          total_protein_g: parseFloat((simpleMacros.base_protein_g * multiplier).toFixed(1)),
+          total_carbs_g: parseFloat((simpleMacros.base_carbs_g * multiplier).toFixed(1)),
+          total_fat_g: parseFloat((simpleMacros.base_fat_g * multiplier).toFixed(1)),
+          total_fiber_g: parseFloat((simpleMacros.base_fiber_g * multiplier).toFixed(1)),
           notes: editNotes || null,
           meal_type: editMealType,
           consumed_at: new Date(editConsumedAt).toISOString(),
@@ -539,16 +717,17 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                 ...m,
                 portion_size: portionSize,
                 portion_unit: 'g',
-                total_calories: Math.round(baseCalories * multiplier),
-                total_protein_g: parseFloat((baseProtein * multiplier).toFixed(1)),
-                total_carbs_g: parseFloat((baseCarbs * multiplier).toFixed(1)),
-                total_fat_g: parseFloat((baseFat * multiplier).toFixed(1)),
-                total_fiber_g: parseFloat((baseFiber * multiplier).toFixed(1)),
+                total_calories: Math.round(simpleMacros.base_calories * multiplier),
+                total_protein_g: parseFloat((simpleMacros.base_protein_g * multiplier).toFixed(1)),
+                total_carbs_g: parseFloat((simpleMacros.base_carbs_g * multiplier).toFixed(1)),
+                total_fat_g: parseFloat((simpleMacros.base_fat_g * multiplier).toFixed(1)),
+                total_fiber_g: parseFloat((simpleMacros.base_fiber_g * multiplier).toFixed(1)),
               }
             : m
         ));
         setEditingMealId(null);
         setEditQuantity('1');
+        setEditingSimpleMacros(false);
         if (onMealUpdated) onMealUpdated();
       }
     }
@@ -646,6 +825,17 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                     <p className={`text-xs ${colors.textSecondary}`}>
                       Enter a number (e.g., 2) to multiply all portions, or grams (e.g., 250g) to scale to that weight
                     </p>
+                  </div>
+
+                  {/* Save Compound Meal as Custom Food */}
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => saveCompoundMealAsCustomFood(meal)}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-pink-600 transition text-sm font-medium shadow-md"
+                    >
+                      ⭐ Save Entire Meal as My Food
+                    </button>
                   </div>
 
                   <p className={`text-sm font-medium ${colors.textSecondary}`}>Edit Components:</p>
@@ -793,31 +983,150 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                   ))}
                 </div>
               ) : (
-                // Simple food - smart quantity input with Replace button
+                // Simple food - smart quantity input with Replace button and macro editing
                 <div className="space-y-3">
-                  <div className="flex justify-end">
+                  <div className="flex justify-between items-center">
                     <button
                       onClick={() => setReplacingSimpleMeal(meal.id)}
                       className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 transition font-medium"
                     >
                       🔄 Replace Food
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => saveSimpleFoodAsCustomFood(meal)}
+                      className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-medium shadow-md"
+                    >
+                      ⭐ Save as My Food
+                    </button>
                   </div>
-                  <div>
-                    <label className={`block text-sm font-medium ${colors.textSecondary} mb-1`}>
-                      Count (g or x)
-                    </label>
-                    <input
-                      type="text"
-                      value={editQuantity}
-                      onChange={(e) => setEditQuantity(e.target.value)}
-                      placeholder="e.g., 150g or 2"
-                      className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-gray-900 rounded-lg focus:ring-2 focus:ring-opacity-50`}
-                    />
-                    <p className={`text-xs ${colors.textSecondary} mt-1`}>
-                      Enter grams (e.g., 150g) or multiplier (e.g., 2)
-                    </p>
-                  </div>
+
+                  {editingSimpleMacros ? (
+                    // Macro editing mode
+                    <div className={`${colors.componentBg} p-3 rounded-lg border ${colors.componentBorder} space-y-2`}>
+                      <div className="flex justify-between items-center">
+                        <p className={`text-sm font-medium ${colors.textPrimary}`}>Edit Base Nutrition (per 100g)</p>
+                        <button
+                          onClick={() => setEditingSimpleMacros(false)}
+                          className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                        >
+                          Done Editing
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-5 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-300 block mb-0.5">Calories</label>
+                          <input
+                            type="number"
+                            value={simpleMacros.base_calories}
+                            onChange={(e) => updateSimpleMacro('base_calories', e.target.value)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-300 block mb-0.5">Protein (g)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={simpleMacros.base_protein_g}
+                            onChange={(e) => updateSimpleMacro('base_protein_g', e.target.value)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-300 block mb-0.5">Carbs (g)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={simpleMacros.base_carbs_g}
+                            onChange={(e) => updateSimpleMacro('base_carbs_g', e.target.value)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-300 block mb-0.5">Fat (g)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={simpleMacros.base_fat_g}
+                            onChange={(e) => updateSimpleMacro('base_fat_g', e.target.value)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-300 block mb-0.5">Fiber (g)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={simpleMacros.base_fiber_g}
+                            onChange={(e) => updateSimpleMacro('base_fiber_g', e.target.value)}
+                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                          />
+                        </div>
+                      </div>
+                      <div className={`${colors.inputBg} p-2 rounded border ${colors.inputBorder}`}>
+                        <p className={`text-xs ${colors.textSecondary}`}>
+                          Current total (with {editQuantity} portion): {Math.round(simpleMacros.base_calories * (parseFloat(editQuantity.replace(/[^\d.]/g, '')) || 1))} cal |
+                          {' '}{(simpleMacros.base_protein_g * (parseFloat(editQuantity.replace(/[^\d.]/g, '')) || 1)).toFixed(1)}g P |
+                          {' '}{(simpleMacros.base_carbs_g * (parseFloat(editQuantity.replace(/[^\d.]/g, '')) || 1)).toFixed(1)}g C |
+                          {' '}{(simpleMacros.base_fat_g * (parseFloat(editQuantity.replace(/[^\d.]/g, '')) || 1)).toFixed(1)}g F |
+                          {' '}{(simpleMacros.base_fiber_g * (parseFloat(editQuantity.replace(/[^\d.]/g, '')) || 1)).toFixed(1)}g Fiber
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    // Normal portion editing mode
+                    <div className="space-y-2">
+                      <div>
+                        <label className={`block text-sm font-medium ${colors.textSecondary} mb-1`}>
+                          Count (g or x)
+                        </label>
+                        <input
+                          type="text"
+                          value={editQuantity}
+                          onChange={(e) => setEditQuantity(e.target.value)}
+                          placeholder="e.g., 150g or 2"
+                          className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-gray-900 rounded-lg focus:ring-2 focus:ring-opacity-50`}
+                        />
+                        <p className={`text-xs ${colors.textSecondary} mt-1`}>
+                          Enter grams (e.g., 150g) or multiplier (e.g., 2)
+                        </p>
+                      </div>
+                      <div className={`${colors.componentBg} p-3 rounded-lg border ${colors.componentBorder}`}>
+                        <div className="flex justify-between items-center mb-2">
+                          <p className={`text-sm font-medium ${colors.textPrimary}`}>Base Nutrition (per 100g)</p>
+                          <button
+                            onClick={() => setEditingSimpleMacros(true)}
+                            className={`text-xs ${colors.accentColor} hover:opacity-80`}
+                          >
+                            Edit Manually
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                          <div>
+                            <p className="font-bold text-blue-600">{simpleMacros.base_calories}</p>
+                            <p className={`text-xs ${colors.textSecondary}`}>cal</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-green-600">{simpleMacros.base_protein_g}g</p>
+                            <p className={`text-xs ${colors.textSecondary}`}>P</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-yellow-600">{simpleMacros.base_carbs_g}g</p>
+                            <p className={`text-xs ${colors.textSecondary}`}>C</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-orange-600">{simpleMacros.base_fat_g}g</p>
+                            <p className={`text-xs ${colors.textSecondary}`}>F</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-purple-600">{simpleMacros.base_fiber_g}g</p>
+                            <p className={`text-xs ${colors.textSecondary}`}>Fiber</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -886,6 +1195,12 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                     className={`${colors.accentColor} hover:opacity-80 text-sm font-medium`}
                   >
                     Edit
+                  </button>
+                  <button
+                    onClick={() => handleDuplicate(meal)}
+                    className="text-green-400 hover:text-green-300 text-sm font-medium"
+                  >
+                    Duplicate
                   </button>
                   <button
                     onClick={() => handleDelete(meal.id)}
