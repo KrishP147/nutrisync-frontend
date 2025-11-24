@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import { supabase } from '../supabaseClient';
+import NutritionByTimeHistogram from './NutritionByTimeHistogram';
 
 export default function GitHubHeatmap({ data, goals }) {
   const [hoveredDay, setHoveredDay] = useState(null);
+  const [hoveredDayMeals, setHoveredDayMeals] = useState([]);
   const navigate = useNavigate();
 
   // Generate last 12 weeks of dates
@@ -81,9 +84,10 @@ export default function GitHubHeatmap({ data, goals }) {
         { name: 'Protein', value: 0, goal: goals.protein, percentage: 0, color: '#1d4ed8', unit: 'g' },
         { name: 'Carbs', value: 0, goal: goals.carbs, percentage: 0, color: '#f59e0b', unit: 'g' },
         { name: 'Fat', value: 0, goal: goals.fat, percentage: 0, color: '#a855f7', unit: 'g' },
+        { name: 'Fiber', value: 0, goal: goals.fiber, percentage: 0, color: '#800000', unit: 'g' },
       ];
     }
-    
+
     return [
       {
         name: 'Calories',
@@ -116,6 +120,14 @@ export default function GitHubHeatmap({ data, goals }) {
         percentage: Math.min((dayData.fat / goals.fat) * 100, 100),
         color: '#a855f7',
         unit: 'g'
+      },
+      {
+        name: 'Fiber',
+        value: dayData.fiber || 0,
+        goal: goals.fiber,
+        percentage: Math.min((dayData.fiber / goals.fiber) * 100, 100),
+        color: '#800000',
+        unit: 'g'
       }
     ];
   };
@@ -123,6 +135,34 @@ export default function GitHubHeatmap({ data, goals }) {
   const handleDayClick = (dateStr) => {
     navigate(`/daily-view/${dateStr}`);
   };
+
+  // Fetch meals for the hovered day
+  const fetchMealsForDay = async (dateStr) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const dayStart = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const dayEnd = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+    const { data } = await supabase
+      .from('meals')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('consumed_at', dayStart.toISOString())
+      .lte('consumed_at', dayEnd.toISOString())
+      .order('consumed_at', { ascending: true });
+
+    setHoveredDayMeals(data || []);
+  };
+
+  // Fetch meals when a day is hovered
+  useEffect(() => {
+    if (hoveredDay && hoveredDay.date) {
+      const dateStr = formatDateLocal(hoveredDay.date);
+      fetchMealsForDay(dateStr);
+    } else {
+      setHoveredDayMeals([]);
+    }
+  }, [hoveredDay]);
 
   return (
     <div className="p-4">
@@ -172,7 +212,7 @@ export default function GitHubHeatmap({ data, goals }) {
         </div>
       </div>
 
-      {/* Tooltip with Macro Circles */}
+      {/* Tooltip with Macro Circles and Histogram */}
       {hoveredDay && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -187,9 +227,9 @@ export default function GitHubHeatmap({ data, goals }) {
               day: 'numeric'
             })}
           </div>
-          
+
           {/* Macro Circles Grid */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-5 gap-4 mb-6">
             {getMacroData(hoveredDay.data).map((macro) => (
               <div key={macro.name} className="flex flex-col items-center">
                 <div className="w-20 h-20 mb-2">
@@ -213,12 +253,17 @@ export default function GitHubHeatmap({ data, goals }) {
             ))}
           </div>
 
+          {/* Nutrition By Time Histogram */}
+          <div className="mt-6 pt-6 border-t-2 border-purple-200">
+            <NutritionByTimeHistogram meals={hoveredDayMeals} />
+          </div>
+
           {!hoveredDay.data && (
             <div className="text-center text-gray-500 text-sm mt-4">
               No meals logged - Click to view day
             </div>
           )}
-          
+
           <div className="text-center mt-4 text-xs text-gray-600">
             Click to view full details
           </div>
