@@ -25,6 +25,8 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
     base_fat_g: 0,
     base_fiber_g: 0
   });
+  const [editMealName, setEditMealName] = useState('');
+  const [originalMealName, setOriginalMealName] = useState('');
 
   // Define color schemes based on variant
   const colorSchemes = {
@@ -227,6 +229,11 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
     setEditMealType(meal.meal_type);
     setEditingSimpleMacros(false); // Reset macro editing state
 
+    // Strip any existing portion suffix (e.g., "(2x)" or "(150g)") from meal name
+    const baseName = meal.meal_name.replace(/\s*\([0-9.]+[xg]*\)$/, '');
+    setEditMealName(baseName);
+    setOriginalMealName(baseName);
+
     // Format datetime-local input value
     const date = new Date(meal.consumed_at);
     const year = date.getFullYear();
@@ -308,6 +315,8 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
     setMealMultiplier(1);
     setOriginalComponents([]);
     setEditNotes('');
+    setEditMealName('');
+    setOriginalMealName('');
   };
 
   const getTotalCompoundWeight = () => {
@@ -408,14 +417,14 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
 
   const updateComponentNutrition = (index, field, value) => {
     const updated = [...editComponents];
-    updated[index][field] = parseFloat(value) || 0;
+    updated[index][field] = Math.max(0, parseFloat(value) || 0);
     setEditComponents(updated);
   };
 
   const updateSimpleMacro = (field, value) => {
     setSimpleMacros({
       ...simpleMacros,
-      [field]: parseFloat(value) || 0
+      [field]: Math.max(0, parseFloat(value) || 0)
     });
   };
 
@@ -659,10 +668,6 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
         return sum + (c.base_fiber_g * multiplier);
       }, 0);
 
-      // Generate meal name with multiplier suffix
-      // First remove any existing multiplier suffix from current name
-      let baseMealName = meal.meal_name.replace(/\s*\([0-9.]+[xg]*\)$/, '');
-
       // Calculate total portion size for compound meals
       const totalCompoundWeight = editComponents.reduce((sum, c) => sum + (c.portion_size || 100), 0);
 
@@ -670,7 +675,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
       const { error } = await supabase
         .from('meals')
         .update({
-          meal_name: baseMealName,
+          meal_name: editMealName,
           portion_size: totalCompoundWeight,
           portion_unit: 'g',
           total_calories: Math.round(totalCalories),
@@ -697,6 +702,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
       const { error } = await supabase
         .from('meals')
         .update({
+          meal_name: editMealName,
           portion_size: portionSize,
           portion_unit: 'g',
           total_calories: Math.round(simpleMacros.base_calories * multiplier),
@@ -765,7 +771,22 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
             // Edit Mode
             <div className="space-y-4">
               <div>
-                <h3 className={`text-lg font-semibold ${colors.textPrimary} mb-2`}>{meal.meal_name}</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={editMealName}
+                    onChange={(e) => setEditMealName(e.target.value)}
+                    placeholder="Meal name"
+                    className={`flex-1 text-lg font-semibold px-3 py-2 ${colors.inputBg} border-2 ${colors.inputBorder} text-gray-900 rounded-lg focus:ring-2 focus:ring-purple-500`}
+                  />
+                  <button
+                    onClick={() => setEditMealName(originalMealName)}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap"
+                    title="Reset to original name"
+                  >
+                    Reset
+                  </button>
+                </div>
               </div>
 
               {/* Meal Type and Time Selectors */}
@@ -774,12 +795,12 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                   <label className={`block text-sm font-medium ${colors.textPrimary} mb-2`}>
                     Meal Type
                   </label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {['breakfast', 'lunch', 'dinner', 'snack'].map((type) => (
                       <button
                         key={type}
                         onClick={() => setEditMealType(type)}
-                        className={`py-2 px-3 rounded-lg border-2 transition capitalize text-sm ${
+                        className={`py-2 px-2 rounded-lg border-2 transition capitalize text-xs sm:text-sm truncate ${
                           editMealType === type
                             ? 'border-purple-500 bg-purple-500 text-white font-semibold'
                             : 'border-gray-300 bg-white text-gray-700 hover:border-purple-300'
@@ -867,6 +888,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                               <label className="text-xs text-gray-300 block mb-0.5">Calories</label>
                               <input
                                 type="number"
+                                min="0"
                                 value={component.base_calories}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_calories', e.target.value)}
                                 className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -877,6 +899,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                               <input
                                 type="number"
                                 step="0.1"
+                                min="0"
                                 value={component.base_protein_g}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_protein_g', e.target.value)}
                                 className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -887,6 +910,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                               <input
                                 type="number"
                                 step="0.1"
+                                min="0"
                                 value={component.base_carbs_g}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_carbs_g', e.target.value)}
                                 className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -897,6 +921,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                               <input
                                 type="number"
                                 step="0.1"
+                                min="0"
                                 value={component.base_fat_g}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_fat_g', e.target.value)}
                                 className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -907,6 +932,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                               <input
                                 type="number"
                                 step="0.1"
+                                min="0"
                                 value={component.base_fiber_g}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_fiber_g', e.target.value)}
                                 className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -1018,6 +1044,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                           <label className="text-xs text-gray-300 block mb-0.5">Calories</label>
                           <input
                             type="number"
+                            min="0"
                             value={simpleMacros.base_calories}
                             onChange={(e) => updateSimpleMacro('base_calories', e.target.value)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -1028,6 +1055,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                           <input
                             type="number"
                             step="0.1"
+                            min="0"
                             value={simpleMacros.base_protein_g}
                             onChange={(e) => updateSimpleMacro('base_protein_g', e.target.value)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -1038,6 +1066,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                           <input
                             type="number"
                             step="0.1"
+                            min="0"
                             value={simpleMacros.base_carbs_g}
                             onChange={(e) => updateSimpleMacro('base_carbs_g', e.target.value)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -1048,6 +1077,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                           <input
                             type="number"
                             step="0.1"
+                            min="0"
                             value={simpleMacros.base_fat_g}
                             onChange={(e) => updateSimpleMacro('base_fat_g', e.target.value)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"
@@ -1058,6 +1088,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                           <input
                             type="number"
                             step="0.1"
+                            min="0"
                             value={simpleMacros.base_fiber_g}
                             onChange={(e) => updateSimpleMacro('base_fiber_g', e.target.value)}
                             className="w-full px-2 py-1 border rounded text-sm text-gray-900"

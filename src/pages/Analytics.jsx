@@ -575,7 +575,7 @@ export default function Analytics() {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">📊 Analytics & Insights</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Analytics & Insights</h1>
           <p className="text-gray-600">Discover your eating patterns and nutrition trends</p>
         </motion.div>
 
@@ -898,8 +898,9 @@ export default function Analytics() {
                     <label className="text-xs text-gray-600">Calories</label>
                     <input
                       type="number"
+                      min="0"
                       value={newFoodValues.base_calories}
-                      onChange={(e) => setNewFoodValues({...newFoodValues, base_calories: parseInt(e.target.value) || 0})}
+                      onChange={(e) => setNewFoodValues({...newFoodValues, base_calories: Math.max(0, parseInt(e.target.value) || 0)})}
                       className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900"
                     />
                   </div>
@@ -908,8 +909,9 @@ export default function Analytics() {
                     <input
                       type="number"
                       step="0.1"
+                      min="0"
                       value={newFoodValues.base_protein_g}
-                      onChange={(e) => setNewFoodValues({...newFoodValues, base_protein_g: parseFloat(e.target.value) || 0})}
+                      onChange={(e) => setNewFoodValues({...newFoodValues, base_protein_g: Math.max(0, parseFloat(e.target.value) || 0)})}
                       className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900"
                     />
                   </div>
@@ -918,8 +920,9 @@ export default function Analytics() {
                     <input
                       type="number"
                       step="0.1"
+                      min="0"
                       value={newFoodValues.base_carbs_g}
-                      onChange={(e) => setNewFoodValues({...newFoodValues, base_carbs_g: parseFloat(e.target.value) || 0})}
+                      onChange={(e) => setNewFoodValues({...newFoodValues, base_carbs_g: Math.max(0, parseFloat(e.target.value) || 0)})}
                       className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900"
                     />
                   </div>
@@ -928,8 +931,9 @@ export default function Analytics() {
                     <input
                       type="number"
                       step="0.1"
+                      min="0"
                       value={newFoodValues.base_fat_g}
-                      onChange={(e) => setNewFoodValues({...newFoodValues, base_fat_g: parseFloat(e.target.value) || 0})}
+                      onChange={(e) => setNewFoodValues({...newFoodValues, base_fat_g: Math.max(0, parseFloat(e.target.value) || 0)})}
                       className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900"
                     />
                   </div>
@@ -938,8 +942,9 @@ export default function Analytics() {
                     <input
                       type="number"
                       step="0.1"
+                      min="0"
                       value={newFoodValues.base_fiber_g}
-                      onChange={(e) => setNewFoodValues({...newFoodValues, base_fiber_g: parseFloat(e.target.value) || 0})}
+                      onChange={(e) => setNewFoodValues({...newFoodValues, base_fiber_g: Math.max(0, parseFloat(e.target.value) || 0)})}
                       className="w-full px-2 py-1 border border-gray-300 rounded text-gray-900"
                     />
                   </div>
@@ -1045,7 +1050,7 @@ export default function Analytics() {
                         {food.original_food_name && (
                           <p className="text-xs text-gray-500">Based on: {food.original_food_name}</p>
                         )}
-                        <div className="grid grid-cols-5 gap-2 mt-2 text-sm text-gray-700">
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2 text-sm text-gray-700">
                           <div><span className="font-semibold">{food.base_calories}</span> cal</div>
                           <div><span className="font-semibold">{food.base_protein_g}g</span> protein</div>
                           <div><span className="font-semibold">{food.base_carbs_g}g</span> carbs</div>

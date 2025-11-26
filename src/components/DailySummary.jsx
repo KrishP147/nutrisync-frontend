@@ -151,23 +151,24 @@ export default function DailySummary() {
         <ResponsiveContainer width="100%" height={400}>
           <BarChart
             data={getNutritionByTimeData()}
-            layout="horizontal"
-            margin={{ top: 10, right: 30, left: 40, bottom: 10 }}
+            margin={{ top: 10, right: 30, left: 20, bottom: 60 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" tick={{ fontSize: 10 }} />
-            <YAxis
-              type="category"
+            <XAxis
               dataKey="label"
               tick={{ fontSize: 9 }}
-              width={40}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+              interval={2}
             />
+            <YAxis tick={{ fontSize: 10 }} />
             <Tooltip
               formatter={(value) => {
                 if (timeChartView === 'calories') return [`${value} cal`, 'Calories'];
                 return [`${value}g`, timeChartView.charAt(0).toUpperCase() + timeChartView.slice(1)];
               }}
-              labelFormatter={(label) => `Time: ${label}`}
+              labelFormatter={(label) => `Time ${label}`}
             />
             {timeChartView === 'calories' && <Bar dataKey="calories" fill="#10b981" />}
             {timeChartView === 'protein' && <Bar dataKey="protein" fill="#1d4ed8" />}

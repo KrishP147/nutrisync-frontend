@@ -20,13 +20,13 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-2">
-            <img src="/assets/nutrisync-logo.png" alt="NutriSync Logo" className="h-8 w-8 sm:h-10 sm:w-10" />
-            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">NutriSync</span>
+          <Link to="/dashboard" className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+            <img src="/assets/nutrisync-logo.png" alt="NutriSync Logo" className="h-7 w-7 sm:h-10 sm:w-10" />
+            <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent whitespace-nowrap">NutriSync</span>
           </Link>
 
           {/* Nav Links + Logout */}
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 flex-shrink">
             {navItems.map((item) => (
               <Link
                 key={item.path}

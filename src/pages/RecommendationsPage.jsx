@@ -42,7 +42,27 @@ export default function RecommendationsPage() {
         "Take short movement breaks every hour. Even 2-3 minutes of stretching or walking helps circulation and focus.",
         "Prioritize protein at each meal to support muscle maintenance, satiety, and stable blood sugar levels.",
         "Get morning sunlight exposure to regulate your circadian rhythm and improve sleep quality at night.",
-        "Manage stress through deep breathing, meditation, or activities you enjoy. Chronic stress affects both mental and physical health."
+        "Manage stress through deep breathing, meditation, or activities you enjoy. Chronic stress affects both mental and physical health.",
+        "Track your daily nutrition to identify patterns. Awareness is the first step toward healthier eating habits.",
+        "Limit added sugars to less than 10% of daily calories. Excess sugar contributes to weight gain and energy crashes.",
+        "Include probiotic-rich foods like yogurt, kefir, and fermented vegetables to support gut health.",
+        "Stay consistent with meal timing. Regular eating patterns help regulate hunger hormones and metabolism.",
+        "Choose whole grains over refined grains for sustained energy and better nutrient density.",
+        "Add healthy fats like avocados, nuts, and olive oil to meals for nutrient absorption and satiety.",
+        "Prep meals in advance on weekends to make healthy eating easier during busy weekdays.",
+        "Cook at home more often to control ingredients, portions, and reduce sodium intake.",
+        "Use smaller plates to naturally control portion sizes without feeling deprived.",
+        "Stay active after meals. A 10-15 minute walk helps with digestion and blood sugar control.",
+        "Include lean protein sources at breakfast to reduce cravings throughout the day.",
+        "Limit alcohol consumption - it provides empty calories and can disrupt sleep quality.",
+        "Eat mindfully without screens. Focus on your food to improve digestion and satisfaction.",
+        "Plan your meals weekly to reduce decision fatigue and ensure balanced nutrition.",
+        "Gradually increase fiber intake to avoid digestive discomfort while improving gut health.",
+        "Stay hydrated before, during, and after exercise to maintain performance and recovery.",
+        "Don't skip meals - it can lead to overeating later and disrupt your metabolism.",
+        "Include omega-3 fatty acids from fish, flaxseeds, or walnuts for brain and heart health.",
+        "Listen to your body's hunger cues rather than eating by the clock or out of boredom.",
+        "Keep healthy snacks accessible - prep veggies, fruits, and nuts for easy grab-and-go options."
       ];
       setHealthTip(fallbackTips[Math.floor(Math.random() * fallbackTips.length)]);
     } finally {
@@ -471,7 +491,7 @@ export default function RecommendationsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8 text-center"
           >
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">🤖 AI Nutrition Recommendations</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">NutriSync AI</h1>
             <p className="text-gray-700">Personalized insights based on your goals and eating patterns</p>
           </motion.div>
 
@@ -482,20 +502,11 @@ export default function RecommendationsPage() {
             transition={{ delay: 0.1 }}
             className="bg-gradient-to-r from-blue-100 to-purple-100 border-2 border-blue-400 rounded-xl p-6 mb-8"
           >
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-xl font-bold text-gray-900">💡 Daily Wellness Tip</h3>
-              <button
-                onClick={generateRandomHealthTip}
-                disabled={generatingTip}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
-              >
-                {generatingTip ? '...' : '🔄 New Tip'}
-              </button>
-            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">💡 Daily Wellness Tip</h3>
             {generatingTip ? (
               <p className="text-gray-600 text-center py-4">Generating a personalized tip...</p>
             ) : (
-              <p className="text-gray-800">{healthTip}</p>
+              <p className="text-gray-800 leading-relaxed">{healthTip}</p>
             )}
           </motion.div>
 

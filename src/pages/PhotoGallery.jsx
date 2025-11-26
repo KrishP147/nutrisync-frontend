@@ -139,7 +139,7 @@ export default function PhotoGallery() {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">📸 Photo Gallery</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Photo Gallery</h1>
           <p className="text-gray-600">Browse all your meal photos</p>
         </motion.div>
 
@@ -219,7 +219,7 @@ export default function PhotoGallery() {
               <img
                 src={viewingPhoto.photo_url}
                 alt={viewingPhoto.meal_name}
-                className="w-full h-auto rounded-lg"
+                className="max-w-full max-h-[70vh] object-contain rounded-lg mx-auto"
                 onClick={(e) => e.stopPropagation()}
               />
               <div className="bg-white rounded-lg p-4 mt-4">

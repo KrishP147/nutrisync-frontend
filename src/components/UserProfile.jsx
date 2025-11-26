@@ -264,19 +264,20 @@ export default function UserProfile() {
   // Handle height input changes
   const handleHeightChange = (unit, value) => {
     if (unit === 'cm') {
-      const cm = parseFloat(value) || 0;
-      setDisplayHeight({ 
+      // Max height: 274cm (9 feet)
+      const cm = Math.min(274, Math.max(1, parseFloat(value) || 1));
+      setDisplayHeight({
         cm: value,
         ...cmToFeetInches(cm)
       });
       setProfile({ ...profile, height_cm: cm });
     } else if (unit === 'feet') {
       setDisplayHeight({ ...displayHeight, feet: value });
-      const cm = feetInchesToCm(value, displayHeight.inches);
+      const cm = Math.min(274, Math.max(1, feetInchesToCm(value, displayHeight.inches)));
       setProfile({ ...profile, height_cm: cm });
     } else if (unit === 'inches') {
       setDisplayHeight({ ...displayHeight, inches: value });
-      const cm = feetInchesToCm(displayHeight.feet, value);
+      const cm = Math.min(274, Math.max(1, feetInchesToCm(displayHeight.feet, value)));
       setProfile({ ...profile, height_cm: cm });
     }
   };
@@ -284,14 +285,16 @@ export default function UserProfile() {
   // Handle weight input changes
   const handleWeightChange = (unit, value) => {
     if (unit === 'kg') {
-      const kg = parseFloat(value) || 0;
+      // Max weight: 159kg (350 lbs)
+      const kg = Math.min(159, Math.max(1, parseFloat(value) || 1));
       setDisplayWeight({
         kg: value,
         lbs: kgToLbs(kg).toString()
       });
       setProfile({ ...profile, weight_kg: kg });
     } else if (unit === 'lbs') {
-      const lbs = parseFloat(value) || 0;
+      // Max weight: 350 lbs
+      const lbs = Math.min(350, Math.max(1, parseFloat(value) || 1));
       setDisplayWeight({
         lbs: value,
         kg: lbsToKg(lbs).toString()
@@ -330,8 +333,10 @@ export default function UserProfile() {
                   </label>
                   <input
                     type="number"
+                    min="1"
+                    max="180"
                     value={profile.age}
-                    onChange={(e) => setProfile({ ...profile, age: e.target.value })}
+                    onChange={(e) => setProfile({ ...profile, age: Math.min(180, Math.max(1, parseInt(e.target.value) || 1)) })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-black"
                     placeholder="25"
                     required
@@ -390,6 +395,8 @@ export default function UserProfile() {
                   <input
                     type="number"
                     step="0.1"
+                    min="1"
+                    max="274"
                     value={displayHeight.cm}
                     onChange={(e) => handleHeightChange('cm', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-black"
@@ -400,16 +407,20 @@ export default function UserProfile() {
                     <div>
                       <input
                         type="number"
+                        min="1"
+                        max="9"
                         value={displayHeight.feet}
                         onChange={(e) => handleHeightChange('feet', e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-black"
                         placeholder="5"
                       />
-                      <p className="text-xs text-gray-500 mt-1">feet</p>
+                      <p className="text-xs text-gray-500 mt-1">feet (max 9)</p>
                     </div>
                     <div>
                       <input
                         type="number"
+                        min="0"
+                        max="11"
                         value={displayHeight.inches}
                         onChange={(e) => handleHeightChange('inches', e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-black"
@@ -456,6 +467,8 @@ export default function UserProfile() {
                 <input
                   type="number"
                   step="0.1"
+                  min="1"
+                  max={weightUnit === 'kg' ? '159' : '350'}
                   value={weightUnit === 'kg' ? displayWeight.kg : displayWeight.lbs}
                   onChange={(e) => handleWeightChange(weightUnit, e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-black"

@@ -301,12 +301,12 @@ export default function Progress() {
         {/* Set Goals Component */}
         <SetGoals />
 
-        {/* GitHub-style Heatmap with Streak Counter */}
+        {/* GitHub-style Heatmap */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, duration: 0.6 }}
-          className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 mb-8 shadow-xl"
+          className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 mb-8 shadow-xl max-w-4xl mx-auto"
         >
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-black">Activity Heatmap</h2>
@@ -314,23 +314,7 @@ export default function Progress() {
               Each square represents a day. Hover over a day to see detailed breakdown.
             </p>
           </div>
-          <div className="flex items-center gap-8">
-            <div className="flex-1">
-              <GitHubHeatmap data={heatmapData} goals={goals} />
-            </div>
-            {stats && (
-              <div className="flex flex-col items-center justify-center px-8 border-l-2 border-purple-300">
-                <span className="text-6xl mb-2">🔥</span>
-                <p className="text-5xl font-black text-black leading-none mb-1">
-                  {stats.goalsMetStreak}
-                </p>
-                <p className="text-lg font-bold text-gray-800">Day Streak</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  {stats.goalsMetStreak > 0 ? 'Keep it up!' : 'Start your streak!'}
-                </p>
-              </div>
-            )}
-          </div>
+          <GitHubHeatmap data={heatmapData} goals={goals} />
         </motion.div>
 
         {/* Stats Overview */}

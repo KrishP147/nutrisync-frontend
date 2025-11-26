@@ -74,7 +74,7 @@ export default function SetGoals() {
                 step="100"
                 min="0"
                 value={tempGoals.calories === 0 ? '' : tempGoals.calories}
-                onChange={(e) => setTempGoals({ ...tempGoals, calories: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setTempGoals({ ...tempGoals, calories: Math.max(0, parseInt(e.target.value) || 0) })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />
             </div>
@@ -88,7 +88,7 @@ export default function SetGoals() {
                 step="20"
                 min="0"
                 value={tempGoals.protein === 0 ? '' : tempGoals.protein}
-                onChange={(e) => setTempGoals({ ...tempGoals, protein: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setTempGoals({ ...tempGoals, protein: Math.max(0, parseInt(e.target.value) || 0) })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />
             </div>
@@ -102,7 +102,7 @@ export default function SetGoals() {
                 step="20"
                 min="0"
                 value={tempGoals.carbs === 0 ? '' : tempGoals.carbs}
-                onChange={(e) => setTempGoals({ ...tempGoals, carbs: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setTempGoals({ ...tempGoals, carbs: Math.max(0, parseInt(e.target.value) || 0) })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />
             </div>
@@ -116,7 +116,7 @@ export default function SetGoals() {
                 step="20"
                 min="0"
                 value={tempGoals.fat === 0 ? '' : tempGoals.fat}
-                onChange={(e) => setTempGoals({ ...tempGoals, fat: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setTempGoals({ ...tempGoals, fat: Math.max(0, parseInt(e.target.value) || 0) })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />
             </div>
@@ -130,7 +130,7 @@ export default function SetGoals() {
                 step="5"
                 min="0"
                 value={tempGoals.fiber === 0 ? '' : tempGoals.fiber}
-                onChange={(e) => setTempGoals({ ...tempGoals, fiber: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setTempGoals({ ...tempGoals, fiber: Math.max(0, parseInt(e.target.value) || 0) })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
               />
             </div>
