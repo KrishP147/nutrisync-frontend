@@ -176,17 +176,51 @@ export default function Analytics() {
     const avgMealsPerDay = dailyStats.reduce((sum, d) => sum + d.mealCount, 0) / dailyStats.length;
     const avgCalPerMeal = dailyStats.reduce((sum, d) => sum + d.avgPerMeal, 0) / dailyStats.length;
 
-    if (avgMealsPerDay >= 5 && avgCalPerMeal < 400) return { primary: 'Grazer', description: '5+ small meals per day' };
-    if (avgMealsPerDay >= 3 && avgMealsPerDay <= 4 && avgCalPerMeal > 500) return { primary: 'Three Square Meals', description: '3-4 substantial meals per day' };
-    
-    const snackCount = mealsData.filter(m => m.meal_type === 'snack').length;
-    if (snackCount / mealsData.length >= 0.5) return { primary: 'Snack Lover', description: '50%+ of meals are snacks' };
+    // Check today's meal count for "6-7 meals" eater type (top priority)
+    const today = new Date().toDateString();
+    const todayMeals = mealsByDate[today] || [];
+    if (todayMeals.length >= 6 && todayMeals.length <= 7) {
+      return { primary: '6-7 meals', description: 'You ate between 6 and 7 meals today' };
+    }
 
-    const earlyBirdDays = dailyStats.filter(d => d.totalCals > 0 && d.earlyBirdCals / d.totalCals >= 0.5).length;
-    const nightOwlDays = dailyStats.filter(d => d.totalCals > 0 && d.nightOwlCals / d.totalCals >= 0.5).length;
+    // Create array of eater type checks and shuffle them
+    const eaterTypeChecks = [
+      () => {
+        if (avgMealsPerDay >= 5 && avgCalPerMeal < 400) return { primary: 'Grazer', description: '5+ small meals per day' };
+        return null;
+      },
+      () => {
+        if (avgMealsPerDay >= 3 && avgMealsPerDay <= 4 && avgCalPerMeal > 500) return { primary: 'Three Square Meals', description: '3-4 substantial meals per day' };
+        return null;
+      },
+      () => {
+        const snackCount = mealsData.filter(m => m.meal_type === 'snack').length;
+        if (snackCount / mealsData.length >= 0.5) return { primary: 'Snack Lover', description: '50%+ of meals are snacks' };
+        return null;
+      },
+      () => {
+        const earlyBirdDays = dailyStats.filter(d => d.totalCals > 0 && d.earlyBirdCals / d.totalCals >= 0.5).length;
+        if (earlyBirdDays / dailyStats.length >= 0.5) return { primary: 'Early Bird', description: 'Most calories before 11am' };
+        return null;
+      },
+      () => {
+        const nightOwlDays = dailyStats.filter(d => d.totalCals > 0 && d.nightOwlCals / d.totalCals >= 0.5).length;
+        if (nightOwlDays / dailyStats.length >= 0.5) return { primary: 'Night Owl', description: 'Most calories after 8pm' };
+        return null;
+      },
+    ];
 
-    if (earlyBirdDays / dailyStats.length >= 0.5) return { primary: 'Early Bird', description: 'Most calories before 11am' };
-    if (nightOwlDays / dailyStats.length >= 0.5) return { primary: 'Night Owl', description: 'Most calories after 8pm' };
+    // Shuffle the array
+    for (let i = eaterTypeChecks.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [eaterTypeChecks[i], eaterTypeChecks[j]] = [eaterTypeChecks[j], eaterTypeChecks[i]];
+    }
+
+    // Check each condition in shuffled order
+    for (const check of eaterTypeChecks) {
+      const result = check();
+      if (result) return result;
+    }
 
     return { primary: 'Balanced Eater', description: 'Evenly distributed meals' };
   };
@@ -237,20 +271,20 @@ export default function Analytics() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card p-5">
                 <p className="text-3xl font-mono font-bold text-primary-500">{stats.totalMeals}</p>
                 <p className="text-white/50 text-sm mt-1">Total Meals</p>
-              </motion.div>
+          </motion.div>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card p-5">
                 <p className="text-3xl font-mono font-bold text-secondary-400">{stats.avgCaloriesPerMeal}</p>
                 <p className="text-white/50 text-sm mt-1">Avg Cal/Meal</p>
-              </motion.div>
+        </motion.div>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="card p-5">
                 <p className="text-3xl font-mono font-bold text-amber-400">{stats.peakHour}</p>
                 <p className="text-white/50 text-sm mt-1">Peak Eating Time</p>
-              </motion.div>
+          </motion.div>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="card p-5 border-primary-700/30">
                 <p className="text-xl font-heading font-bold text-primary-500">{stats.eaterType.primary}</p>
                 <p className="text-white/50 text-xs mt-1">{stats.eaterType.description}</p>
-              </motion.div>
-            </div>
+          </motion.div>
+        </div>
 
             {/* Eating Times */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="card p-6">
@@ -285,9 +319,9 @@ export default function Analytics() {
                   <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} 
                     formatter={(value) => [`${value} ${value === 1 ? 'meal' : 'meals'} logged`]} />
                   <Bar dataKey="count" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </motion.div>
+              </BarChart>
+            </ResponsiveContainer>
+          </motion.div>
 
             {/* Meal Type Distribution */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="card p-6">
@@ -317,7 +351,7 @@ export default function Analytics() {
               <ChartErrorBoundary>
                 <MealTypeDistribution meals={meals} />
               </ChartErrorBoundary>
-            </motion.div>
+          </motion.div>
 
             {/* Weekly Pattern */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="card p-6">
@@ -349,7 +383,7 @@ export default function Analytics() {
                     {showInfoWeekly && (
                       <div className="absolute right-0 top-6 w-64 bg-black border border-white/10 rounded-lg p-3 text-xs text-white/70 z-20">
                         Shows your average nutrient intake for each day of the week. Use the buttons to switch between different nutrients.
-                      </div>
+                  </div>
                     )}
                   </div>
                 </div>
@@ -372,8 +406,8 @@ export default function Analytics() {
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-secondary-500/10 flex items-center justify-center">
                   <Waves size={20} className="text-secondary-400" strokeWidth={2} />
-                </div>
-                <div>
+                        </div>
+                        <div>
                   <h2 className="text-lg font-heading font-semibold text-white">Nutrient Flow</h2>
                   <p className="text-white/50 text-sm">Macro distribution over time</p>
                 </div>
@@ -394,10 +428,10 @@ export default function Analytics() {
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
                   <GitBranch size={20} className="text-amber-400" strokeWidth={2} />
-                </div>
-                <div>
+                        </div>
+                        <div>
                   <h2 className="text-lg font-heading font-semibold text-white">Calorie Flow</h2>
-                  <p className="text-white/50 text-sm">From meals to macros</p>
+                  <p className="text-white/50 text-sm">From meals to macros (Note: values measured in kcal)</p>
                 </div>
               </div>
               <ChartErrorBoundary>
@@ -410,8 +444,8 @@ export default function Analytics() {
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-secondary-500/10 flex items-center justify-center">
                   <Crosshair size={20} className="text-secondary-400" strokeWidth={2} />
-                </div>
-                <div>
+                        </div>
+                        <div>
                   <h2 className="text-lg font-heading font-semibold text-white">Meal Quality</h2>
                   <p className="text-white/50 text-sm">Nutrient density per meal</p>
                 </div>
@@ -426,12 +460,12 @@ export default function Analytics() {
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
                   <Triangle size={20} className="text-amber-400" strokeWidth={2} />
-                </div>
-                <div>
+                        </div>
+                        <div>
                   <h2 className="text-lg font-heading font-semibold text-white">Macro Ratios</h2>
                   <p className="text-white/50 text-sm">P/C/F balance per meal</p>
-                </div>
-              </div>
+                        </div>
+                      </div>
               <ChartErrorBoundary>
                 <MacroRatioTernary meals={meals} />
               </ChartErrorBoundary>
@@ -446,8 +480,8 @@ export default function Analytics() {
                 <div>
                   <h2 className="text-lg font-heading font-semibold text-white">Eating Schedule</h2>
                   <p className="text-white/50 text-sm">When you eat by hour and day</p>
-                </div>
-              </div>
+                      </div>
+                    </div>
               <ChartErrorBoundary>
                 <MealFrequencyHeatmap meals={meals} />
               </ChartErrorBoundary>
@@ -458,12 +492,12 @@ export default function Analytics() {
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
                   <LayoutGrid size={20} className="text-purple-400" strokeWidth={2} />
-                </div>
+                        </div>
                 <div>
                   <h2 className="text-lg font-heading font-semibold text-white">Food Categories</h2>
                   <p className="text-white/50 text-sm">What dominates your diet</p>
-                </div>
-              </div>
+                      </div>
+                    </div>
               <ChartErrorBoundary>
                 <MealCompositionTreeMap meals={meals} />
               </ChartErrorBoundary>
@@ -479,11 +513,11 @@ export default function Analytics() {
                   <h2 className="text-lg font-heading font-semibold text-white">Meal Hierarchy</h2>
                   <p className="text-white/50 text-sm">Meal type → Time → Food category</p>
                 </div>
-              </div>
+            </div>
               <ChartErrorBoundary>
                 <MealTimingSunburst meals={meals} />
               </ChartErrorBoundary>
-            </motion.div>
+        </motion.div>
 
             {/* 3D Nutrient Space */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.4 }} className="card p-6">
@@ -499,7 +533,7 @@ export default function Analytics() {
               <ChartErrorBoundary>
                 <MealNutrientSpace3D meals={meals} />
               </ChartErrorBoundary>
-            </motion.div>
+        </motion.div>
           </>
         )}
       </div>

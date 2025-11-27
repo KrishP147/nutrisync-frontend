@@ -104,7 +104,7 @@ export default function MealCompositionTreeMap({ meals }) {
     const displayName = node.data.displayName || node.data.name || node.id;
     
     return (
-      <div className="bg-black border border-white/10 rounded-lg px-3 py-2 shadow-xl z-[9999]" style={{ color: '#ffffff' }}>
+      <div className="bg-black border border-white/10 rounded-lg px-3 py-2 shadow-xl" style={{ color: '#ffffff', zIndex: 99999, position: 'relative' }}>
         <div className="font-medium mb-1" style={{ color: '#ffffff' }}>{displayName}</div>
         {node.value && (
           <div className="font-mono" style={{ color: '#ffffff' }}>{node.value} calories</div>
@@ -132,12 +132,12 @@ export default function MealCompositionTreeMap({ meals }) {
         )}
       </div>
 
-      <div className="overflow-x-auto -mx-4 px-4">
+      <div className="overflow-x-auto -mx-4 px-4" style={{ overflow: 'visible' }}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="h-80 mt-6"
-          style={{ overflow: 'visible', minWidth: isMobile ? '600px' : 'auto' }}
+          style={{ overflow: 'visible', minWidth: isMobile ? '600px' : 'auto', position: 'relative', zIndex: 1 }}
         >
           <ResponsiveTreeMap
             data={treeData}
@@ -146,17 +146,23 @@ export default function MealCompositionTreeMap({ meals }) {
             margin={{ top: 10, right: isMobile ? 50 : 10, bottom: 10, left: isMobile ? 50 : 10 }}
           labelSkipSize={80}
           label={e => {
-            // On mobile, show labels for larger boxes
+            // Dynamically limit text length based on rectangle size
             const width = e.width || 0;
             const height = e.height || 0;
             const area = width * height;
+            const minDimension = Math.min(width, height);
+            
             if (isMobile) {
               // Show labels on mobile for boxes with area > 5000
               if (area < 5000) return '';
-              return e.data.displayName || truncateName(e.id, 8);
+              // Calculate max length based on rectangle size
+              const maxLength = Math.max(8, Math.floor(minDimension / 8));
+              return e.data.displayName || truncateName(e.id, maxLength);
             }
             if (area < 3000) return '';
-            return e.data.displayName || truncateName(e.id);
+            // Calculate max length based on rectangle size - allow more text for larger boxes
+            const maxLength = Math.max(12, Math.floor(minDimension / 6));
+            return e.data.displayName || truncateName(e.id, maxLength);
           }}
           labelTextColor="#ffffff"
           parentLabelPosition={isMobile ? "top" : "left"}
@@ -172,23 +178,24 @@ export default function MealCompositionTreeMap({ meals }) {
           onClick={(node) => {
             // Tooltip will show on hover/click automatically
           }}
-          theme={{
-            labels: {
-              text: {
-                fontFamily: 'Plus Jakarta Sans',
-                fontSize: 9,
-                fontWeight: 500,
+            theme={{
+              labels: {
+                text: {
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontSize: 9,
+                  fontWeight: 500,
+                }
+              },
+              tooltip: {
+                container: {
+                  background: 'transparent',
+                  boxShadow: 'none',
+                  padding: 0,
+                  zIndex: 99999,
+                  position: 'relative',
+                }
               }
-            },
-            tooltip: {
-              container: {
-                background: 'transparent',
-                boxShadow: 'none',
-                padding: 0,
-                zIndex: 9999,
-              }
-            }
-          }}
+            }}
           animate={true}
           motionConfig="gentle"
         />
