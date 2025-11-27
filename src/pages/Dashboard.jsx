@@ -82,11 +82,11 @@ export default function Dashboard() {
       goal: goals?.calories || 2000,
       unit: 'kcal',
       icon: Flame,
-      color: 'primary',
-      bgColor: 'bg-primary-700/10',
-      textColor: 'text-primary-500',
-      borderColor: 'border-primary-700/30',
-      barColor: 'bg-primary-700'
+      color: 'green',
+      bgColor: 'bg-green-500/10',
+      textColor: 'text-green-500',
+      borderColor: 'border-green-500/30',
+      barColor: 'bg-green-500'
     },
     {
       label: 'Protein',
@@ -94,11 +94,11 @@ export default function Dashboard() {
       goal: goals?.protein || 150,
       unit: 'g',
       icon: Beef,
-      color: 'secondary',
-      bgColor: 'bg-secondary-500/10',
-      textColor: 'text-secondary-400',
-      borderColor: 'border-secondary-500/30',
-      barColor: 'bg-secondary-500'
+      color: 'red',
+      bgColor: 'bg-red-500/10',
+      textColor: 'text-red-500',
+      borderColor: 'border-red-500/30',
+      barColor: 'bg-red-500'
     },
     {
       label: 'Carbs',
@@ -106,11 +106,11 @@ export default function Dashboard() {
       goal: goals?.carbs || 250,
       unit: 'g',
       icon: Wheat,
-      color: 'amber',
-      bgColor: 'bg-amber-500/10',
-      textColor: 'text-amber-400',
-      borderColor: 'border-amber-500/30',
-      barColor: 'bg-amber-500'
+      color: 'yellow',
+      bgColor: 'bg-yellow-500/10',
+      textColor: 'text-yellow-500',
+      borderColor: 'border-yellow-500/30',
+      barColor: 'bg-yellow-500'
     },
     {
       label: 'Fat',
@@ -120,7 +120,7 @@ export default function Dashboard() {
       icon: Droplets,
       color: 'purple',
       bgColor: 'bg-purple-500/10',
-      textColor: 'text-purple-400',
+      textColor: 'text-purple-500',
       borderColor: 'border-purple-500/30',
       barColor: 'bg-purple-500'
     }

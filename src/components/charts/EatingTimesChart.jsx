@@ -1,8 +1,17 @@
 import { ResponsiveBar } from '@nivo/bar';
 import { motion } from 'motion/react';
+import { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 
 export default function EatingTimesChart({ meals, selectedView = 'calories' }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   // Process meals into hourly buckets
   const hourlyData = Array.from({ length: 24 }, (_, i) => ({
     hour: i,
@@ -34,10 +43,10 @@ export default function EatingTimesChart({ meals, selectedView = 'calories' }) {
   );
 
   const viewConfig = {
-    calories: { key: 'calories', color: '#047857', label: 'Calories' },
-    protein: { key: 'protein', color: '#0ea5e9', label: 'Protein' },
-    carbs: { key: 'carbs', color: '#f59e0b', label: 'Carbs' },
-    fat: { key: 'fat', color: '#a855f7', label: 'Fat' },
+    calories: { key: 'calories', color: '#22c55e', label: 'Calories' }, // Green
+    protein: { key: 'protein', color: '#ef4444', label: 'Protein' }, // Red
+    carbs: { key: 'carbs', color: '#eab308', label: 'Carbs' }, // Yellow
+    fat: { key: 'fat', color: '#a855f7', label: 'Fat' }, // Purple
   };
 
   const config = viewConfig[selectedView];
@@ -75,7 +84,7 @@ export default function EatingTimesChart({ meals, selectedView = 'calories' }) {
           data={filteredData}
           keys={[config.key]}
           indexBy="label"
-          margin={{ top: 10, right: 10, bottom: 40, left: 50 }}
+          margin={{ top: 10, right: 10, bottom: isMobile ? 60 : 40, left: isMobile ? 40 : 50 }}
           padding={0.3}
           valueScale={{ type: 'linear' }}
           indexScale={{ type: 'band', round: true }}
@@ -87,8 +96,10 @@ export default function EatingTimesChart({ meals, selectedView = 'calories' }) {
           axisBottom={{
             tickSize: 0,
             tickPadding: 10,
-            tickRotation: -45,
-            tickValues: filteredData.filter((_, i) => i % 2 === 0).map(d => d.label),
+            tickRotation: isMobile ? -45 : -45,
+            tickValues: isMobile 
+              ? filteredData.filter((_, i) => i % 4 === 0).map(d => d.label) // Show every 4th hour on mobile
+              : filteredData.filter((_, i) => i % 2 === 0).map(d => d.label), // Show every 2nd hour on desktop
           }}
           axisLeft={{
             tickSize: 0,

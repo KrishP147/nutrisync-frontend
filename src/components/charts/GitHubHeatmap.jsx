@@ -186,19 +186,19 @@ export default function GitHubHeatmap({ data, goals }) {
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-white/50">Calories:</span>
-              <span className="font-mono text-primary-500">{Math.round(hoveredDay.data.calories)}</span>
+              <span className="font-mono text-green-500">{Math.round(hoveredDay.data.calories)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-white/50">Protein:</span>
-              <span className="font-mono text-secondary-400">{hoveredDay.data.protein.toFixed(1)}g</span>
+              <span className="font-mono text-red-500">{hoveredDay.data.protein.toFixed(1)}g</span>
             </div>
             <div className="flex justify-between">
               <span className="text-white/50">Carbs:</span>
-              <span className="font-mono text-amber-400">{hoveredDay.data.carbs.toFixed(1)}g</span>
+              <span className="font-mono text-yellow-500">{hoveredDay.data.carbs.toFixed(1)}g</span>
             </div>
             <div className="flex justify-between">
               <span className="text-white/50">Fat:</span>
-              <span className="font-mono text-purple-400">{hoveredDay.data.fat.toFixed(1)}g</span>
+              <span className="font-mono text-purple-500">{hoveredDay.data.fat.toFixed(1)}g</span>
             </div>
           </div>
           <p className="text-xs text-white/40 mt-2 text-center">Click to view details</p>

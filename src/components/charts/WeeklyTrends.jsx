@@ -12,13 +12,21 @@ export default function WeeklyTrends() {
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState('calories');
   const [showInfo, setShowInfo] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const views = [
-    { key: 'calories', label: 'Calories', icon: Flame, color: '#047857', unit: 'kcal' },
-    { key: 'protein', label: 'Protein', icon: Beef, color: '#0ea5e9', unit: 'g' },
-    { key: 'carbs', label: 'Carbs', icon: Wheat, color: '#f59e0b', unit: 'g' },
-    { key: 'fat', label: 'Fat', icon: Droplets, color: '#a855f7', unit: 'g' },
-    { key: 'fiber', label: 'Fiber', icon: Leaf, color: '#22c55e', unit: 'g' },
+    { key: 'calories', label: 'Calories', icon: Flame, color: '#22c55e', unit: 'kcal' }, // Green
+    { key: 'protein', label: 'Protein', icon: Beef, color: '#ef4444', unit: 'g' }, // Red
+    { key: 'carbs', label: 'Carbs', icon: Wheat, color: '#eab308', unit: 'g' }, // Yellow
+    { key: 'fat', label: 'Fat', icon: Droplets, color: '#a855f7', unit: 'g' }, // Purple
+    { key: 'fiber', label: 'Fiber', icon: Leaf, color: '#3b82f6', unit: 'g' }, // Blue
   ];
 
   useEffect(() => {
@@ -191,9 +199,17 @@ export default function WeeklyTrends() {
 
       {weekData.length > 0 ? (
         <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={weekData}>
+          <LineChart data={weekData} margin={{ top: 10, right: 10, left: 0, bottom: isMobile ? 50 : 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-            <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" fontSize={12} />
+            <XAxis 
+              dataKey="date" 
+              stroke="rgba(255,255,255,0.5)" 
+              fontSize={isMobile ? 9 : 12}
+              interval={isMobile ? 1 : 0}
+              angle={isMobile ? -45 : 0}
+              textAnchor={isMobile ? 'end' : 'middle'}
+              height={isMobile ? 60 : 30}
+            />
             <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} />
             <Tooltip
               contentStyle={{

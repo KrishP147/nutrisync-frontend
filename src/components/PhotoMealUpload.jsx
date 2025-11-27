@@ -738,7 +738,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
                 <button
                   key={type}
                   onClick={() => setMealType(type)}
-                  className={`py-2 px-4 rounded-lg border-2 transition capitalize ${
+                  className={`py-2 px-2 sm:px-4 rounded-lg border-2 transition capitalize text-xs sm:text-sm ${
                     mealType === type
                       ? 'border-primary-700 bg-primary-700/20 text-primary-700 font-semibold'
                       : 'border-[#1a1a1a] hover:border-primary-700/50 text-white'
@@ -861,60 +861,62 @@ export default function PhotoMealUpload({ onMealAdded }) {
                         className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-white bg-black"
                       />
                       <p className="text-xs text-white/60 font-medium">Edit base nutrition values (per 100{food.portion_unit}):</p>
-                      <div className="grid grid-cols-5 gap-2">
-                        <div>
-                          <label className="text-xs text-white/60 block mb-0.5">Calories</label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={food.base_calories}
-                            onChange={(e) => updateFood(idx, 'base_calories', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-white/60 block mb-0.5">Protein (g)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={food.base_protein_g}
-                            onChange={(e) => updateFood(idx, 'base_protein_g', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-white/60 block mb-0.5">Carbs (g)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={food.base_carbs_g}
-                            onChange={(e) => updateFood(idx, 'base_carbs_g', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-white/60 block mb-0.5">Fat (g)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={food.base_fat_g}
-                            onChange={(e) => updateFood(idx, 'base_fat_g', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-white/60 block mb-0.5">Fiber (g)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={food.base_fiber_g}
-                            onChange={(e) => updateFood(idx, 'base_fiber_g', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
-                          />
+                      <div className="overflow-x-auto -mx-3 px-3">
+                        <div className="grid grid-cols-5 gap-2 min-w-[500px] sm:min-w-0">
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-white/60 block mb-0.5">Calories</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={food.base_calories}
+                              onChange={(e) => updateFood(idx, 'base_calories', parseFloat(e.target.value) || 0)}
+                              className="w-full px-1 sm:px-2 py-1 border border-[#1a1a1a] rounded-lg text-xs sm:text-sm text-white bg-black"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-white/60 block mb-0.5">Protein (g)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={food.base_protein_g}
+                              onChange={(e) => updateFood(idx, 'base_protein_g', parseFloat(e.target.value) || 0)}
+                              className="w-full px-1 sm:px-2 py-1 border border-[#1a1a1a] rounded-lg text-xs sm:text-sm text-white bg-black"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-white/60 block mb-0.5">Carbs (g)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={food.base_carbs_g}
+                              onChange={(e) => updateFood(idx, 'base_carbs_g', parseFloat(e.target.value) || 0)}
+                              className="w-full px-1 sm:px-2 py-1 border border-[#1a1a1a] rounded-lg text-xs sm:text-sm text-white bg-black"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-white/60 block mb-0.5">Fat (g)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={food.base_fat_g}
+                              onChange={(e) => updateFood(idx, 'base_fat_g', parseFloat(e.target.value) || 0)}
+                              className="w-full px-1 sm:px-2 py-1 border border-[#1a1a1a] rounded-lg text-xs sm:text-sm text-white bg-black"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-white/60 block mb-0.5">Fiber (g)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={food.base_fiber_g}
+                              onChange={(e) => updateFood(idx, 'base_fiber_g', parseFloat(e.target.value) || 0)}
+                              className="w-full px-1 sm:px-2 py-1 border border-[#1a1a1a] rounded-lg text-xs sm:text-sm text-white bg-black"
+                            />
+                          </div>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -963,45 +965,45 @@ export default function PhotoMealUpload({ onMealAdded }) {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <label className="text-sm text-white/60 w-24">Count (g or x):</label>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <div className="flex-1 w-full sm:w-auto">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-1">
+                            <label className="text-xs sm:text-sm text-white/60 sm:w-24">Count (g or x):</label>
                             <input
                               type="text"
                               value={food.portion_display}
                               onChange={(e) => updateFoodQuantity(idx, e.target.value)}
                               placeholder="e.g., 150g or 2"
-                              className="flex-1 px-3 py-1 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 text-sm text-white bg-black"
+                              className="flex-1 w-full sm:w-auto px-2 sm:px-3 py-1 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 text-xs sm:text-sm text-white bg-black"
                             />
                           </div>
-                          <p className="text-xs text-white/60 ml-24">
+                          <p className="text-[10px] sm:text-xs text-white/60 sm:ml-24">
                             <span className="font-semibold text-primary-700">{food.base_portion_size || 100}g = 1</span> • Total: {Math.round(food.portion_size)}g
                           </p>
                         </div>
                       </div>
 
                       <div className="bg-[#0a0a0a] p-2 rounded-lg text-sm">
-                        <div className="grid grid-cols-5 gap-1 text-center">
-                          <div>
-                            <p className="font-bold font-mono text-secondary-500">{food.calories}</p>
-                            <p className="text-xs text-white/60">cal</p>
+                        <div className="grid grid-cols-5 gap-1 text-center overflow-x-auto">
+                          <div className="min-w-[60px]">
+                            <p className="font-bold font-mono text-green-500 text-xs sm:text-sm">{food.calories}</p>
+                            <p className="text-[10px] sm:text-xs text-white/60">cal</p>
                           </div>
-                          <div>
-                            <p className="font-bold font-mono text-primary-700">{food.protein_g}g</p>
-                            <p className="text-xs text-white/60">P</p>
+                          <div className="min-w-[60px]">
+                            <p className="font-bold font-mono text-red-500 text-xs sm:text-sm">{food.protein_g}g</p>
+                            <p className="text-[10px] sm:text-xs text-white/60">P</p>
                           </div>
-                          <div>
-                            <p className="font-bold font-mono text-amber-500">{food.carbs_g}g</p>
-                            <p className="text-xs text-white/60">C</p>
+                          <div className="min-w-[60px]">
+                            <p className="font-bold font-mono text-yellow-500 text-xs sm:text-sm">{food.carbs_g}g</p>
+                            <p className="text-[10px] sm:text-xs text-white/60">C</p>
                           </div>
-                          <div>
-                            <p className="font-bold font-mono text-amber-500">{food.fat_g}g</p>
-                            <p className="text-xs text-white/60">F</p>
+                          <div className="min-w-[60px]">
+                            <p className="font-bold font-mono text-purple-500 text-xs sm:text-sm">{food.fat_g}g</p>
+                            <p className="text-[10px] sm:text-xs text-white/60">F</p>
                           </div>
-                          <div>
-                            <p className="font-bold font-mono text-primary-700">{food.fiber_g}g</p>
-                            <p className="text-xs text-white/60">Fiber</p>
+                          <div className="min-w-[60px]">
+                            <p className="font-bold font-mono text-blue-500 text-xs sm:text-sm">{food.fiber_g}g</p>
+                            <p className="text-[10px] sm:text-xs text-white/60">Fiber</p>
                           </div>
                         </div>
                       </div>
@@ -1012,26 +1014,28 @@ export default function PhotoMealUpload({ onMealAdded }) {
             </ul>
           </div>
 
-          <div className="grid grid-cols-5 gap-2">
-            <div className="text-center p-3 bg-secondary-500/10 rounded-lg border border-secondary-500/30">
-              <p className="text-xl font-bold font-mono text-secondary-500">{Math.round(editableResult.total_nutrition.calories)}</p>
-              <p className="text-xs text-white/60">Calories</p>
-            </div>
-            <div className="text-center p-3 bg-primary-700/10 rounded-lg border border-primary-700/30">
-              <p className="text-xl font-bold font-mono text-primary-700">{editableResult.total_nutrition.protein_g.toFixed(1)}g</p>
-              <p className="text-xs text-white/60">Protein</p>
-            </div>
-            <div className="text-center p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
-              <p className="text-xl font-bold font-mono text-amber-500">{editableResult.total_nutrition.carbs_g.toFixed(1)}g</p>
-              <p className="text-xs text-white/60">Carbs</p>
-            </div>
-            <div className="text-center p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
-              <p className="text-xl font-bold font-mono text-amber-500">{editableResult.total_nutrition.fat_g.toFixed(1)}g</p>
-              <p className="text-xs text-white/60">Fat</p>
-            </div>
-            <div className="text-center p-3 bg-primary-700/10 rounded-lg border border-primary-700/30">
-              <p className="text-xl font-bold font-mono text-primary-700">{editableResult.total_nutrition.fiber_g.toFixed(1)}g</p>
-              <p className="text-xs text-white/60">Fiber</p>
+          <div className="overflow-x-auto -mx-4 px-4">
+            <div className="grid grid-cols-5 gap-2 min-w-[500px] sm:min-w-0">
+              <div className="text-center p-2 sm:p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+                <p className="text-lg sm:text-xl font-bold font-mono text-green-500">{Math.round(editableResult.total_nutrition.calories)}</p>
+                <p className="text-[10px] sm:text-xs text-white/60">Calories</p>
+              </div>
+              <div className="text-center p-2 sm:p-3 bg-red-500/10 rounded-lg border border-red-500/30">
+                <p className="text-lg sm:text-xl font-bold font-mono text-red-500">{editableResult.total_nutrition.protein_g.toFixed(1)}g</p>
+                <p className="text-[10px] sm:text-xs text-white/60">Protein</p>
+              </div>
+              <div className="text-center p-2 sm:p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+                <p className="text-lg sm:text-xl font-bold font-mono text-yellow-500">{editableResult.total_nutrition.carbs_g.toFixed(1)}g</p>
+                <p className="text-[10px] sm:text-xs text-white/60">Carbs</p>
+              </div>
+              <div className="text-center p-2 sm:p-3 bg-purple-500/10 rounded-lg border border-purple-500/30">
+                <p className="text-lg sm:text-xl font-bold font-mono text-purple-500">{editableResult.total_nutrition.fat_g.toFixed(1)}g</p>
+                <p className="text-[10px] sm:text-xs text-white/60">Fat</p>
+              </div>
+              <div className="text-center p-2 sm:p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                <p className="text-lg sm:text-xl font-bold font-mono text-blue-500">{editableResult.total_nutrition.fiber_g.toFixed(1)}g</p>
+                <p className="text-[10px] sm:text-xs text-white/60">Fiber</p>
+              </div>
             </div>
           </div>
 

@@ -853,60 +853,62 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                             </div>
                           </div>
                           <p className={`text-xs ${colors.textSecondary}`}>Edit base nutrition values (per 100{component.portion_unit}):</p>
-                          <div className="grid grid-cols-5 gap-2">
-                            <div>
-                              <label className="text-xs text-gray-300 block mb-0.5">Calories</label>
-                              <input
-                                type="number"
-                                min="0"
-                                value={component.base_calories}
-                                onChange={(e) => updateComponentNutrition(idx, 'base_calories', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-white"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-gray-300 block mb-0.5">Protein (g)</label>
-                              <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={component.base_protein_g}
-                                onChange={(e) => updateComponentNutrition(idx, 'base_protein_g', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-white"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-gray-300 block mb-0.5">Carbs (g)</label>
-                              <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={component.base_carbs_g}
-                                onChange={(e) => updateComponentNutrition(idx, 'base_carbs_g', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-white"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-gray-300 block mb-0.5">Fat (g)</label>
-                              <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={component.base_fat_g}
-                                onChange={(e) => updateComponentNutrition(idx, 'base_fat_g', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-white"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs text-gray-300 block mb-0.5">Fiber (g)</label>
-                              <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={component.base_fiber_g}
-                                onChange={(e) => updateComponentNutrition(idx, 'base_fiber_g', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-white"
-                              />
+                          <div className="overflow-x-auto -mx-3 px-3">
+                            <div className="grid grid-cols-5 gap-2 min-w-[500px] sm:min-w-0">
+                              <div>
+                                <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Calories</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={component.base_calories}
+                                  onChange={(e) => updateComponentNutrition(idx, 'base_calories', e.target.value)}
+                                  className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Protein (g)</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  value={component.base_protein_g}
+                                  onChange={(e) => updateComponentNutrition(idx, 'base_protein_g', e.target.value)}
+                                  className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Carbs (g)</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  value={component.base_carbs_g}
+                                  onChange={(e) => updateComponentNutrition(idx, 'base_carbs_g', e.target.value)}
+                                  className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Fat (g)</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  value={component.base_fat_g}
+                                  onChange={(e) => updateComponentNutrition(idx, 'base_fat_g', e.target.value)}
+                                  className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Fiber (g)</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  value={component.base_fiber_g}
+                                  onChange={(e) => updateComponentNutrition(idx, 'base_fiber_g', e.target.value)}
+                                  className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -948,27 +950,27 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                                 className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-white rounded-lg focus:ring-2 focus:ring-opacity-50 text-sm`}
                               />
                             </div>
-                            <div className="flex-1 ml-2">
-                              <div className="grid grid-cols-5 gap-1 text-center text-xs">
-                                <div>
-                                  <p className="font-bold text-blue-600">{Math.round(component.base_calories * (component.portion_size / 100))}</p>
-                                  <p className={`text-xs ${colors.textSecondary}`}>cal</p>
+                            <div className="flex-1 ml-2 overflow-x-auto">
+                              <div className="grid grid-cols-5 gap-1 text-center text-[10px] sm:text-xs min-w-[250px]">
+                                <div className="min-w-[50px]">
+                                  <p className="font-bold text-green-500 text-xs sm:text-sm">{Math.round(component.base_calories * (component.portion_size / 100))}</p>
+                                  <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>cal</p>
                                 </div>
-                                <div>
-                                  <p className="font-bold text-green-600">{(component.base_protein_g * (component.portion_size / 100)).toFixed(1)}g</p>
-                                  <p className={`text-xs ${colors.textSecondary}`}>P</p>
+                                <div className="min-w-[50px]">
+                                  <p className="font-bold text-red-500 text-xs sm:text-sm">{(component.base_protein_g * (component.portion_size / 100)).toFixed(1)}g</p>
+                                  <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>P</p>
                                 </div>
-                                <div>
-                                  <p className="font-bold text-yellow-600">{(component.base_carbs_g * (component.portion_size / 100)).toFixed(1)}g</p>
-                                  <p className={`text-xs ${colors.textSecondary}`}>C</p>
+                                <div className="min-w-[50px]">
+                                  <p className="font-bold text-yellow-500 text-xs sm:text-sm">{(component.base_carbs_g * (component.portion_size / 100)).toFixed(1)}g</p>
+                                  <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>C</p>
                                 </div>
-                                <div>
-                                  <p className="font-bold text-orange-600">{(component.base_fat_g * (component.portion_size / 100)).toFixed(1)}g</p>
-                                  <p className={`text-xs ${colors.textSecondary}`}>F</p>
+                                <div className="min-w-[50px]">
+                                  <p className="font-bold text-purple-500 text-xs sm:text-sm">{(component.base_fat_g * (component.portion_size / 100)).toFixed(1)}g</p>
+                                  <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>F</p>
                                 </div>
-                                <div>
-                                  <p className="font-bold text-red-400">{(component.base_fiber_g * (component.portion_size / 100)).toFixed(1)}g</p>
-                                  <p className={`text-xs ${colors.textSecondary}`}>Fiber</p>
+                                <div className="min-w-[50px]">
+                                  <p className="font-bold text-blue-500 text-xs sm:text-sm">{(component.base_fiber_g * (component.portion_size / 100)).toFixed(1)}g</p>
+                                  <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>Fiber</p>
                                 </div>
                               </div>
                             </div>
@@ -1009,60 +1011,62 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                           Done Editing
                         </button>
                       </div>
-                      <div className="grid grid-cols-5 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-300 block mb-0.5">Calories</label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={simpleMacros.base_calories}
-                            onChange={(e) => updateSimpleMacro('base_calories', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-300 block mb-0.5">Protein (g)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={simpleMacros.base_protein_g}
-                            onChange={(e) => updateSimpleMacro('base_protein_g', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-300 block mb-0.5">Carbs (g)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={simpleMacros.base_carbs_g}
-                            onChange={(e) => updateSimpleMacro('base_carbs_g', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-300 block mb-0.5">Fat (g)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={simpleMacros.base_fat_g}
-                            onChange={(e) => updateSimpleMacro('base_fat_g', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-300 block mb-0.5">Fiber (g)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={simpleMacros.base_fiber_g}
-                            onChange={(e) => updateSimpleMacro('base_fiber_g', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-white"
-                          />
+                      <div className="overflow-x-auto -mx-3 px-3">
+                        <div className="grid grid-cols-5 gap-2 min-w-[500px] sm:min-w-0">
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Calories</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={simpleMacros.base_calories}
+                              onChange={(e) => updateSimpleMacro('base_calories', e.target.value)}
+                              className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Protein (g)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={simpleMacros.base_protein_g}
+                              onChange={(e) => updateSimpleMacro('base_protein_g', e.target.value)}
+                              className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Carbs (g)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={simpleMacros.base_carbs_g}
+                              onChange={(e) => updateSimpleMacro('base_carbs_g', e.target.value)}
+                              className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Fat (g)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={simpleMacros.base_fat_g}
+                              onChange={(e) => updateSimpleMacro('base_fat_g', e.target.value)}
+                              className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] sm:text-xs text-gray-300 block mb-0.5">Fiber (g)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={simpleMacros.base_fiber_g}
+                              onChange={(e) => updateSimpleMacro('base_fiber_g', e.target.value)}
+                              className="w-full px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm text-white"
+                            />
+                          </div>
                         </div>
                       </div>
                       <div className={`${colors.inputBg} p-2 rounded border ${colors.inputBorder}`}>
@@ -1103,26 +1107,28 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                             Edit Manually
                           </button>
                         </div>
-                        <div className="grid grid-cols-5 gap-2 text-center text-xs">
-                          <div>
-                            <p className="font-bold text-blue-600">{simpleMacros.base_calories}</p>
-                            <p className={`text-xs ${colors.textSecondary}`}>cal</p>
-                          </div>
-                          <div>
-                            <p className="font-bold text-green-600">{simpleMacros.base_protein_g}g</p>
-                            <p className={`text-xs ${colors.textSecondary}`}>P</p>
-                          </div>
-                          <div>
-                            <p className="font-bold text-yellow-600">{simpleMacros.base_carbs_g}g</p>
-                            <p className={`text-xs ${colors.textSecondary}`}>C</p>
-                          </div>
-                          <div>
-                            <p className="font-bold text-orange-600">{simpleMacros.base_fat_g}g</p>
-                            <p className={`text-xs ${colors.textSecondary}`}>F</p>
-                          </div>
-                          <div>
-                            <p className="font-bold text-red-400">{simpleMacros.base_fiber_g}g</p>
-                            <p className={`text-xs ${colors.textSecondary}`}>Fiber</p>
+                        <div className="overflow-x-auto -mx-3 px-3">
+                          <div className="grid grid-cols-5 gap-2 text-center text-xs min-w-[300px] sm:min-w-0">
+                            <div className="min-w-[50px]">
+                              <p className="font-bold text-green-500 text-xs sm:text-sm">{simpleMacros.base_calories}</p>
+                              <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>cal</p>
+                            </div>
+                            <div className="min-w-[50px]">
+                              <p className="font-bold text-red-500 text-xs sm:text-sm">{simpleMacros.base_protein_g}g</p>
+                              <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>P</p>
+                            </div>
+                            <div className="min-w-[50px]">
+                              <p className="font-bold text-yellow-500 text-xs sm:text-sm">{simpleMacros.base_carbs_g}g</p>
+                              <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>C</p>
+                            </div>
+                            <div className="min-w-[50px]">
+                              <p className="font-bold text-purple-500 text-xs sm:text-sm">{simpleMacros.base_fat_g}g</p>
+                              <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>F</p>
+                            </div>
+                            <div className="min-w-[50px]">
+                              <p className="font-bold text-blue-500 text-xs sm:text-sm">{simpleMacros.base_fiber_g}g</p>
+                              <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>Fiber</p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1166,17 +1172,17 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
             </div>
           ) : (
             // View Mode - Horizontal Rectangular Layout
-            <div className="flex gap-4 p-4">
+            <div className="flex flex-col sm:flex-row gap-4 p-3 sm:p-4">
               {/* Photo on left - rectangular */}
               {meal.photo_url && (
                 <button
                   onClick={() => setViewingPhotoUrl(meal.photo_url)}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 self-start"
                 >
                   <img
                     src={meal.photo_url}
                     alt="Meal photo"
-                    className="w-32 h-24 rounded-lg object-cover border border-white/10 hover:border-primary-700 transition cursor-pointer"
+                    className="w-24 h-20 sm:w-32 sm:h-24 rounded-lg object-cover border border-white/10 hover:border-primary-700 transition cursor-pointer"
                   />
                 </button>
               )}
@@ -1202,22 +1208,22 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex gap-2 sm:ml-4 mt-2 sm:mt-0">
                     <button
                       onClick={() => startEditing(meal)}
-                      className={`${colors.accentColor} hover:opacity-80 text-sm font-medium`}
+                      className={`${colors.accentColor} hover:opacity-80 text-xs sm:text-sm font-medium`}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDuplicate(meal)}
-                      className="text-secondary-500 hover:opacity-80 text-sm font-medium"
+                      className="text-secondary-500 hover:opacity-80 text-xs sm:text-sm font-medium"
                     >
                       Duplicate
                     </button>
                     <button
                       onClick={() => handleDelete(meal.id)}
-                      className="text-red-500 hover:opacity-80 text-sm font-medium"
+                      className="text-red-500 hover:opacity-80 text-xs sm:text-sm font-medium"
                     >
                       Delete
                     </button>
@@ -1225,27 +1231,27 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                 </div>
 
                 {/* Nutrition Stats - Horizontal */}
-                <div className="flex items-center gap-6">
-                  <div>
-                    <p className={`text-2xl font-mono font-bold ${colors.accentColor}`}>{meal.total_calories}</p>
-                    <p className={`text-xs ${colors.textSecondary}`}>Calories</p>
+                <div className="flex items-center gap-3 sm:gap-6 overflow-x-auto pb-2">
+                  <div className="min-w-[60px] sm:min-w-0">
+                    <p className="text-xl sm:text-2xl font-mono font-bold text-green-500">{meal.total_calories}</p>
+                    <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>Calories</p>
                   </div>
-                  <div>
-                    <p className="text-2xl font-mono font-bold text-primary-700">{meal.total_protein_g}g</p>
-                    <p className={`text-xs ${colors.textSecondary}`}>Protein</p>
+                  <div className="min-w-[60px] sm:min-w-0">
+                    <p className="text-xl sm:text-2xl font-mono font-bold text-red-500">{meal.total_protein_g}g</p>
+                    <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>Protein</p>
                   </div>
-                  <div>
-                    <p className="text-2xl font-mono font-bold text-amber-500">{meal.total_carbs_g}g</p>
-                    <p className={`text-xs ${colors.textSecondary}`}>Carbs</p>
+                  <div className="min-w-[60px] sm:min-w-0">
+                    <p className="text-xl sm:text-2xl font-mono font-bold text-yellow-500">{meal.total_carbs_g}g</p>
+                    <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>Carbs</p>
                   </div>
-                  <div>
-                    <p className="text-2xl font-mono font-bold text-secondary-500">{meal.total_fat_g}g</p>
-                    <p className={`text-xs ${colors.textSecondary}`}>Fat</p>
+                  <div className="min-w-[60px] sm:min-w-0">
+                    <p className="text-xl sm:text-2xl font-mono font-bold text-purple-500">{meal.total_fat_g}g</p>
+                    <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>Fat</p>
                   </div>
                   {meal.total_fiber_g > 0 && (
-                    <div>
-                      <p className="text-2xl font-mono font-bold text-white/60">{meal.total_fiber_g}g</p>
-                      <p className={`text-xs ${colors.textSecondary}`}>Fiber</p>
+                    <div className="min-w-[60px] sm:min-w-0">
+                      <p className="text-xl sm:text-2xl font-mono font-bold text-blue-500">{meal.total_fiber_g}g</p>
+                      <p className={`text-[10px] sm:text-xs ${colors.textSecondary}`}>Fiber</p>
                     </div>
                   )}
                 </div>

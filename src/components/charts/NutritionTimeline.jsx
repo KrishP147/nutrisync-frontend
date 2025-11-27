@@ -1,9 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Flame, Beef, Wheat, Droplets, Leaf } from 'lucide-react';
 
 export default function NutritionTimeline({ meals = [] }) {
   const [viewMode, setViewMode] = useState('calories');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const histogramData = useMemo(() => {
     // Create 24 half-hour time slots (12:00 AM to 11:30 PM)
@@ -46,12 +54,12 @@ export default function NutritionTimeline({ meals = [] }) {
 
   const getBarColor = () => {
     switch (viewMode) {
-      case 'calories': return '#047857';
-      case 'protein': return '#0ea5e9';
-      case 'carbs': return '#f59e0b';
-      case 'fat': return '#a855f7';
-      case 'fiber': return '#22c55e';
-      default: return '#047857';
+      case 'calories': return '#22c55e'; // Green
+      case 'protein': return '#ef4444'; // Red
+      case 'carbs': return '#eab308'; // Yellow
+      case 'fat': return '#a855f7'; // Purple
+      case 'fiber': return '#3b82f6'; // Blue
+      default: return '#22c55e';
     }
   };
 
@@ -67,11 +75,11 @@ export default function NutritionTimeline({ meals = [] }) {
   };
 
   const modes = [
-    { key: 'calories', label: 'Calories', icon: Flame, color: 'primary' },
-    { key: 'protein', label: 'Protein', icon: Beef, color: 'secondary' },
-    { key: 'carbs', label: 'Carbs', icon: Wheat, color: 'amber' },
+    { key: 'calories', label: 'Calories', icon: Flame, color: 'green' },
+    { key: 'protein', label: 'Protein', icon: Beef, color: 'red' },
+    { key: 'carbs', label: 'Carbs', icon: Wheat, color: 'yellow' },
     { key: 'fat', label: 'Fat', icon: Droplets, color: 'purple' },
-    { key: 'fiber', label: 'Fiber', icon: Leaf, color: 'green' },
+    { key: 'fiber', label: 'Fiber', icon: Leaf, color: 'blue' },
   ];
 
   const hasData = meals.length > 0;
@@ -86,7 +94,7 @@ export default function NutritionTimeline({ meals = [] }) {
             onClick={() => setViewMode(key)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
               viewMode === key
-                ? `bg-${color === 'primary' ? 'primary-700' : color === 'secondary' ? 'secondary-500' : color === 'amber' ? 'amber-500' : color === 'purple' ? 'purple-500' : 'green-500'} text-white`
+                ? `bg-${color}-500 text-white`
                 : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
             }`}
           >
@@ -99,14 +107,17 @@ export default function NutritionTimeline({ meals = [] }) {
       {/* Chart */}
       {hasData ? (
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={histogramData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <BarChart data={histogramData} margin={{ top: 10, right: 10, left: 0, bottom: isMobile ? 50 : 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
             <XAxis
               dataKey="time"
               stroke="rgba(255,255,255,0.5)"
-              fontSize={10}
-              interval={3}
+              fontSize={isMobile ? 8 : 10}
+              interval={isMobile ? 7 : 3}
               tickFormatter={(value) => value.split(':')[0] + ':00'}
+              angle={isMobile ? -45 : 0}
+              textAnchor={isMobile ? 'end' : 'middle'}
+              height={isMobile ? 60 : 30}
             />
             <YAxis
               stroke="rgba(255,255,255,0.5)"

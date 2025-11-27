@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Waves, Info } from 'lucide-react';
 
-const STREAM_COLORS = ['#0ea5e9', '#f59e0b', '#a855f7', '#22c55e']; // Sky blue, Amber, Purple, Green
+const STREAM_COLORS = ['#ef4444', '#eab308', '#a855f7', '#3b82f6']; // Red (Protein), Yellow (Carbs), Purple (Fat), Blue (Fiber)
 
 export default function NutrientStreamGraph({ data }) {
   const [showInfo, setShowInfo] = useState(false);
@@ -61,14 +61,24 @@ export default function NutrientStreamGraph({ data }) {
         <ResponsiveStream
           data={streamData}
           keys={keys}
-          margin={{ top: 20, right: 20, bottom: 50, left: 60 }}
+          margin={{ top: 20, right: 20, bottom: isMobile ? 70 : 50, left: isMobile ? 40 : 60 }}
           axisTop={null}
           axisRight={null}
           axisBottom={{
             tickSize: 0,
             tickPadding: 10,
             tickValues: isMobile ? 3 : undefined, // Show only 3 labels on mobile
-            format: (i) => data[i]?.date || data[i]?.day || '',
+            format: (i) => {
+              const dateStr = data[i]?.date || data[i]?.day || '';
+              // On mobile, show shorter format
+              if (isMobile && dateStr) {
+                // If it's a date like "Jan 15", show just "15"
+                const match = dateStr.match(/\d+/);
+                return match ? match[0] : dateStr.substring(0, 3);
+              }
+              return dateStr;
+            },
+            tickRotation: isMobile ? -45 : 0,
           }}
           axisLeft={{
             tickSize: 0,

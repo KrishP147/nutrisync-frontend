@@ -70,19 +70,19 @@ export default function DailyView() {
   };
 
   const macroCards = summary ? [
-    { label: 'Calories', value: Math.round(summary.calories), goal: goals?.calories || 2000, unit: 'kcal', icon: Flame, color: 'primary', barColor: 'bg-primary-700' },
-    { label: 'Protein', value: Math.round(summary.protein), goal: goals?.protein || 150, unit: 'g', icon: Beef, color: 'secondary', barColor: 'bg-secondary-500' },
-    { label: 'Carbs', value: Math.round(summary.carbs), goal: goals?.carbs || 250, unit: 'g', icon: Wheat, color: 'amber', barColor: 'bg-amber-500' },
-    { label: 'Fat', value: Math.round(summary.fat), goal: goals?.fat || 65, unit: 'g', icon: Droplets, color: 'blue', barColor: 'bg-blue-500' },
-    { label: 'Fiber', value: Math.round(summary.fiber), goal: goals?.fiber || 30, unit: 'g', icon: Leaf, color: 'green', barColor: 'bg-green-500' },
+    { label: 'Calories', value: Math.round(summary.calories), goal: goals?.calories || 2000, unit: 'kcal', icon: Flame, color: 'green', barColor: 'bg-green-500' },
+    { label: 'Protein', value: Math.round(summary.protein), goal: goals?.protein || 150, unit: 'g', icon: Beef, color: 'red', barColor: 'bg-red-500' },
+    { label: 'Carbs', value: Math.round(summary.carbs), goal: goals?.carbs || 250, unit: 'g', icon: Wheat, color: 'yellow', barColor: 'bg-yellow-500' },
+    { label: 'Fat', value: Math.round(summary.fat), goal: goals?.fat || 65, unit: 'g', icon: Droplets, color: 'purple', barColor: 'bg-purple-500' },
+    { label: 'Fiber', value: Math.round(summary.fiber), goal: goals?.fiber || 30, unit: 'g', icon: Leaf, color: 'blue', barColor: 'bg-blue-500' },
   ] : [];
 
   const colorStyles = {
-    primary: { bg: 'bg-primary-700/10', text: 'text-primary-500', border: 'border-primary-700/30' },
-    secondary: { bg: 'bg-secondary-500/10', text: 'text-secondary-400', border: 'border-secondary-500/30' },
-    amber: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
-    blue: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
-    green: { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/30' },
+    green: { bg: 'bg-green-500/10', text: 'text-green-500', border: 'border-green-500/30' },
+    red: { bg: 'bg-red-500/10', text: 'text-red-500', border: 'border-red-500/30' },
+    yellow: { bg: 'bg-yellow-500/10', text: 'text-yellow-500', border: 'border-yellow-500/30' },
+    purple: { bg: 'bg-purple-500/10', text: 'text-purple-500', border: 'border-purple-500/30' },
+    blue: { bg: 'bg-blue-500/10', text: 'text-blue-500', border: 'border-blue-500/30' },
   };
 
   if (loading) {

@@ -222,19 +222,23 @@ export default function Logging() {
           {creatingFood && (
             <div className="bg-[#0a0a0a] border border-white/10 rounded-lg p-4 mb-6">
               <h3 className="font-medium text-white mb-4">Create New Food</h3>
-              <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
+              <div className="space-y-3 mb-4">
                 <input type="text" placeholder="Food name" value={newFoodValues.name} onChange={(e) => setNewFoodValues({ ...newFoodValues, name: e.target.value })}
-                  className="input col-span-2 lg:col-span-1" />
-                <input type="number" placeholder="Calories" min="0" value={newFoodValues.base_calories} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_calories: e.target.value })}
-                  className="input" />
-                <input type="number" placeholder="Protein" min="0" step="0.1" value={newFoodValues.base_protein_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_protein_g: e.target.value })}
-                  className="input" />
-                <input type="number" placeholder="Carbs" min="0" step="0.1" value={newFoodValues.base_carbs_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_carbs_g: e.target.value })}
-                  className="input" />
-                <input type="number" placeholder="Fat" min="0" step="0.1" value={newFoodValues.base_fat_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_fat_g: e.target.value })}
-                  className="input" />
-                <input type="number" placeholder="Fiber" min="0" step="0.1" value={newFoodValues.base_fiber_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_fiber_g: e.target.value })}
-                  className="input" />
+                  className="input w-full" />
+                <div className="overflow-x-auto -mx-4 px-4">
+                  <div className="grid grid-cols-5 gap-2 min-w-[500px] sm:min-w-0">
+                    <input type="number" placeholder="Calories" min="0" value={newFoodValues.base_calories} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_calories: e.target.value })}
+                      className="input text-center text-xs sm:text-sm" />
+                    <input type="number" placeholder="Protein" min="0" step="0.1" value={newFoodValues.base_protein_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_protein_g: e.target.value })}
+                      className="input text-center text-xs sm:text-sm" />
+                    <input type="number" placeholder="Carbs" min="0" step="0.1" value={newFoodValues.base_carbs_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_carbs_g: e.target.value })}
+                      className="input text-center text-xs sm:text-sm" />
+                    <input type="number" placeholder="Fat" min="0" step="0.1" value={newFoodValues.base_fat_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_fat_g: e.target.value })}
+                      className="input text-center text-xs sm:text-sm" />
+                    <input type="number" placeholder="Fiber" min="0" step="0.1" value={newFoodValues.base_fiber_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_fiber_g: e.target.value })}
+                      className="input text-center text-xs sm:text-sm" />
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button onClick={handleCreateFood} className="btn-primary"><Save size={16} /> Save</button>
@@ -252,13 +256,15 @@ export default function Logging() {
                 <div key={food.id} className="bg-[#0a0a0a] border border-white/5 rounded-lg p-4">
                   {editingFood === food.id ? (
                     <div className="space-y-3">
-                      <input type="text" value={editValues.name} onChange={(e) => setEditValues({ ...editValues, name: e.target.value })} className="input" />
-                      <div className="grid grid-cols-5 gap-2">
-                        <input type="number" min="0" value={editValues.base_calories} onChange={(e) => setEditValues({ ...editValues, base_calories: e.target.value })} className="input text-center" placeholder="Cal" />
-                        <input type="number" min="0" step="0.1" value={editValues.base_protein_g} onChange={(e) => setEditValues({ ...editValues, base_protein_g: e.target.value })} className="input text-center" placeholder="P" />
-                        <input type="number" min="0" step="0.1" value={editValues.base_carbs_g} onChange={(e) => setEditValues({ ...editValues, base_carbs_g: e.target.value })} className="input text-center" placeholder="C" />
-                        <input type="number" min="0" step="0.1" value={editValues.base_fat_g} onChange={(e) => setEditValues({ ...editValues, base_fat_g: e.target.value })} className="input text-center" placeholder="F" />
-                        <input type="number" min="0" step="0.1" value={editValues.base_fiber_g} onChange={(e) => setEditValues({ ...editValues, base_fiber_g: e.target.value })} className="input text-center" placeholder="Fiber" />
+                      <input type="text" value={editValues.name} onChange={(e) => setEditValues({ ...editValues, name: e.target.value })} className="input w-full" />
+                      <div className="overflow-x-auto -mx-4 px-4">
+                        <div className="grid grid-cols-5 gap-2 min-w-[500px] sm:min-w-0">
+                          <input type="number" min="0" value={editValues.base_calories} onChange={(e) => setEditValues({ ...editValues, base_calories: e.target.value })} className="input text-center text-xs sm:text-sm" placeholder="Cal" />
+                          <input type="number" min="0" step="0.1" value={editValues.base_protein_g} onChange={(e) => setEditValues({ ...editValues, base_protein_g: e.target.value })} className="input text-center text-xs sm:text-sm" placeholder="P" />
+                          <input type="number" min="0" step="0.1" value={editValues.base_carbs_g} onChange={(e) => setEditValues({ ...editValues, base_carbs_g: e.target.value })} className="input text-center text-xs sm:text-sm" placeholder="C" />
+                          <input type="number" min="0" step="0.1" value={editValues.base_fat_g} onChange={(e) => setEditValues({ ...editValues, base_fat_g: e.target.value })} className="input text-center text-xs sm:text-sm" placeholder="F" />
+                          <input type="number" min="0" step="0.1" value={editValues.base_fiber_g} onChange={(e) => setEditValues({ ...editValues, base_fiber_g: e.target.value })} className="input text-center text-xs sm:text-sm" placeholder="Fiber" />
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => handleSaveFood(food.id)} className="btn-primary text-sm"><Save size={14} /> Save</button>

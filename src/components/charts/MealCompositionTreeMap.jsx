@@ -107,10 +107,10 @@ export default function MealCompositionTreeMap({ meals }) {
       <div className="bg-black border border-white/10 rounded-lg px-3 py-2 shadow-xl z-[9999]">
         <div className="font-medium text-white mb-1">{displayName}</div>
         {node.value && (
-          <div className="font-mono text-primary-500">{node.value} calories</div>
+          <div className="font-mono text-white">{node.value} calories</div>
         )}
         {node.data.name && node.data.name !== displayName && (
-          <div className="text-xs text-white/50 mt-1">{node.data.name}</div>
+          <div className="text-xs text-white/70 mt-1">{node.data.name}</div>
         )}
       </div>
     );
@@ -155,7 +155,8 @@ export default function MealCompositionTreeMap({ meals }) {
           }}
           labelTextColor="#ffffff"
           parentLabelPosition={isMobile ? "top" : "left"}
-          parentLabelTextColor="#ffffff"
+          parentLabelTextColor={isMobile ? "transparent" : "#ffffff"}
+          parentLabelPadding={isMobile ? 0 : 4}
           colors={(node) => node.data.color || '#6b7280'}
           borderWidth={2}
           borderColor="rgba(0,0,0,0.5)"
