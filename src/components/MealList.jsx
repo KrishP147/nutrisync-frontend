@@ -741,17 +741,17 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
             // Edit Mode
             <div className="space-y-4 p-4">
               <div>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 overflow-x-auto">
                   <input
                     type="text"
                     value={editMealName}
                     onChange={(e) => setEditMealName(e.target.value)}
                     placeholder="Meal name"
-                    className={`flex-1 text-lg font-semibold px-3 py-2 ${colors.inputBg} border-2 ${colors.inputBorder} text-white rounded-lg focus:ring-2 focus:ring-primary-700`}
+                    className={`flex-1 min-w-0 text-base sm:text-lg font-semibold px-3 py-2 ${colors.inputBg} border-2 ${colors.inputBorder} text-white rounded-lg focus:ring-2 focus:ring-primary-700`}
                   />
                   <button
                     onClick={() => setEditMealName(originalMealName)}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap"
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap flex-shrink-0"
                     title="Reset to original name"
                   >
                     Reset

@@ -1,20 +1,29 @@
 import { ResponsiveSunburst } from '@nivo/sunburst';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Sun, Info } from 'lucide-react';
 
 const MEAL_TYPE_COLORS = {
-  'Breakfast': '#f59e0b',
-  'Lunch': '#10b981',
-  'Dinner': '#3b82f6',
-  'Snack': '#a855f7',
+  'Breakfast': '#f59e0b', // Amber
+  'Lunch': '#10b981',     // Green
+  'Dinner': '#3b82f6',    // Blue
+  'Snack': '#a855f7',     // Purple
 };
 
 const TIME_COLORS = {
-  'Morning': '#fbbf24',
-  'Afternoon': '#34d399',
-  'Evening': '#60a5fa',
-  'Night': '#8b5cf6',
+  'Morning': '#fbbf24',   // Yellow
+  'Afternoon': '#34d399',  // Teal
+  'Evening': '#60a5fa',   // Light Blue
+  'Night': '#991b1b',      // Maroon (replaced purple to avoid duplicate with Snack)
+};
+
+const FOOD_CATEGORY_COLORS = {
+  'Protein': '#ef4444',   // Red
+  'Grains': '#eab308',     // Yellow
+  'Vegetables': '#22c55e', // Green
+  'Fruits': '#f97316',     // Orange
+  'Dairy': '#06b6d4',      // Cyan
+  'Other': '#991b1b',      // Maroon
 };
 
 // Categorize food by keywords
@@ -38,6 +47,14 @@ const getTimeOfDay = (hour) => {
 export default function MealTimingSunburst({ meals }) {
   const [showInfo, setShowInfo] = useState(false);
   const [hoveredArc, setHoveredArc] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const sunburstData = useMemo(() => {
     if (!meals || meals.length === 0) return null;
@@ -72,11 +89,11 @@ export default function MealTimingSunburst({ meals }) {
         name: time,
         color: TIME_COLORS[time] || '#6b7280',
         children: Object.entries(timeData.categories)
-          .filter(([_, cal]) => cal > 0)
+          .filter(([category, cal]) => cal > 0 && category !== 'Other')
           .map(([category, calories]) => ({
             name: category,
             value: Math.round(calories),
-            color: MEAL_TYPE_COLORS[mealType] || '#6b7280',
+            color: FOOD_CATEGORY_COLORS[category] || '#6b7280',
           }))
       })).filter(t => t.children.length > 0)
     })).filter(m => m.children.length > 0);
@@ -112,14 +129,48 @@ export default function MealTimingSunburst({ meals }) {
         )}
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        {Object.entries(MEAL_TYPE_COLORS).map(([type, color]) => (
-          <div key={type} className="flex items-center gap-1.5 text-xs text-white/60">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-            <span>{type}</span>
+      {/* Legends */}
+      <div className="space-y-3 mb-4">
+        {/* Meal Type Legend */}
+        <div>
+          <p className="text-xs text-white/40 mb-2">Meal Type</p>
+          <div className="flex flex-wrap gap-3">
+            {Object.entries(MEAL_TYPE_COLORS).map(([type, color]) => (
+              <div key={type} className="flex items-center gap-1.5 text-xs text-white/60">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                <span>{type}</span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+        
+        {/* Time of Day Legend */}
+        <div>
+          <p className="text-xs text-white/40 mb-2">Time of Day</p>
+          <div className="flex flex-wrap gap-3">
+            {Object.entries(TIME_COLORS).map(([time, color]) => (
+              <div key={time} className="flex items-center gap-1.5 text-xs text-white/60">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                <span>{time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Food Category Legend */}
+        <div>
+          <p className="text-xs text-white/40 mb-2">Food Category</p>
+          <div className="flex flex-wrap gap-3">
+            {Object.entries(FOOD_CATEGORY_COLORS)
+              .filter(([category]) => category !== 'Other')
+              .map(([category, color]) => (
+                <div key={category} className="flex items-center gap-1.5 text-xs text-white/60">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                  <span>{category}</span>
+                </div>
+              ))}
+          </div>
+        </div>
       </div>
 
       <motion.div

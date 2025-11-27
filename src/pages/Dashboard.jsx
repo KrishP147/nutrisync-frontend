@@ -221,13 +221,18 @@ export default function Dashboard() {
             className="space-y-6"
           >
             {/* Fiber Card */}
-            <div className="card p-5">
+            <div className="card p-5 border-blue-500/30 border">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-white/60 font-medium">Fiber</span>
-                <span className="text-xs text-white/40">{getProgress(totals.fiber, goals?.fiber || 30)}%</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <span className="text-blue-500 text-xs font-bold">F</span>
+                  </div>
+                  <span className="text-white/60 font-medium">Fiber</span>
+                </div>
+                <span className="text-xs text-blue-500">{getProgress(totals.fiber, goals?.fiber || 30)}%</span>
               </div>
               <div className="flex items-baseline gap-2 mb-3">
-                <span className="text-2xl font-mono font-bold text-white">{Math.round(totals.fiber)}</span>
+                <span className="text-2xl font-mono font-bold text-blue-500">{Math.round(totals.fiber)}</span>
                 <span className="text-white/40">/ {goals?.fiber || 30}g</span>
               </div>
               <div className="progress-bar">
@@ -235,7 +240,7 @@ export default function Dashboard() {
                   initial={{ width: 0 }}
                   animate={{ width: `${getProgress(totals.fiber, goals?.fiber || 30)}%` }}
                   transition={{ duration: 0.8 }}
-                  className="progress-fill bg-white/30"
+                  className="progress-fill bg-blue-500"
                 />
               </div>
             </div>

@@ -205,7 +205,14 @@ export default function PhotoMealUpload({ onMealAdded }) {
       setCustomMealName(initialName);
       setIsNameManuallyEdited(false);
     } catch (err) {
-      setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to analyze image');
+      let errorMessage = err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to analyze image';
+      
+      // Replace timeout errors with user-friendly message
+      if (errorMessage.toLowerCase().includes('timeout') || errorMessage.toLowerCase().includes('60000')) {
+        errorMessage = 'Please try again. The request took too long to process.';
+      }
+      
+      setError(errorMessage);
       console.error('Full error:', err);
     } finally {
       setAnalyzing(false);

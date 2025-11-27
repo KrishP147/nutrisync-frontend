@@ -104,13 +104,13 @@ export default function MealCompositionTreeMap({ meals }) {
     const displayName = node.data.displayName || node.data.name || node.id;
     
     return (
-      <div className="bg-black border border-white/10 rounded-lg px-3 py-2 shadow-xl z-[9999]">
-        <div className="font-medium text-white mb-1">{displayName}</div>
+      <div className="bg-black border border-white/10 rounded-lg px-3 py-2 shadow-xl z-[9999]" style={{ color: '#ffffff' }}>
+        <div className="font-medium mb-1" style={{ color: '#ffffff' }}>{displayName}</div>
         {node.value && (
-          <div className="font-mono text-white">{node.value} calories</div>
+          <div className="font-mono" style={{ color: '#ffffff' }}>{node.value} calories</div>
         )}
         {node.data.name && node.data.name !== displayName && (
-          <div className="text-xs text-white/70 mt-1">{node.data.name}</div>
+          <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>{node.data.name}</div>
         )}
       </div>
     );
@@ -132,17 +132,18 @@ export default function MealCompositionTreeMap({ meals }) {
         )}
       </div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="h-80 mt-6"
-        style={{ overflow: 'visible' }}
-      >
-        <ResponsiveTreeMap
-          data={treeData}
-          identity="name"
-          value="value"
-          margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+      <div className="overflow-x-auto -mx-4 px-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="h-80 mt-6"
+          style={{ overflow: 'visible', minWidth: isMobile ? '600px' : 'auto' }}
+        >
+          <ResponsiveTreeMap
+            data={treeData}
+            identity="name"
+            value="value"
+            margin={{ top: 10, right: isMobile ? 50 : 10, bottom: 10, left: isMobile ? 50 : 10 }}
           labelSkipSize={80}
           label={e => {
             // On mobile, don't show labels on the chart itself - only in tooltip
@@ -157,6 +158,7 @@ export default function MealCompositionTreeMap({ meals }) {
           parentLabelPosition={isMobile ? "top" : "left"}
           parentLabelTextColor={isMobile ? "transparent" : "#ffffff"}
           parentLabelPadding={isMobile ? 0 : 4}
+          parentLabelSize={isMobile ? 0 : undefined}
           colors={(node) => node.data.color || '#6b7280'}
           borderWidth={2}
           borderColor="rgba(0,0,0,0.5)"
@@ -182,7 +184,8 @@ export default function MealCompositionTreeMap({ meals }) {
           animate={true}
           motionConfig="gentle"
         />
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }

@@ -366,7 +366,7 @@ export default function Analytics() {
                   <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} />
                   <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
                   <Bar dataKey={getWeeklyDataKey()}
-                    fill={weeklyPatternView === 'calories' ? '#047857' : weeklyPatternView === 'protein' ? '#0ea5e9' : weeklyPatternView === 'carbs' ? '#f59e0b' : weeklyPatternView === 'fat' ? '#a855f7' : '#22c55e'}
+                    fill={weeklyPatternView === 'calories' ? '#22c55e' : weeklyPatternView === 'protein' ? '#ef4444' : weeklyPatternView === 'carbs' ? '#eab308' : weeklyPatternView === 'fat' ? '#a855f7' : '#3b82f6'}
                     radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
