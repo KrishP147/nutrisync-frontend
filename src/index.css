@@ -323,18 +323,8 @@ div[style*="pointer-events: none"][style*="position: absolute"] {
   overflow: visible !important;
 }
 
-/* Completely hide Nivo pie chart tooltips */
-.nivo-pie-tooltip,
-[class*="nivo-pie"] [class*="tooltip"],
-svg[class*="nivo"] [class*="tooltip"],
-div[class*="nivo"] [class*="tooltip"],
-div[style*="position: absolute"][style*="pointer-events: none"],
-div[style*="position: absolute"][style*="z-index"] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  height: 0 !important;
-  width: 0 !important;
-  overflow: hidden !important;
+/* Nivo chart tooltip overrides - ensure tooltips are visible above containers */
+.nivo-tooltip-container {
+  z-index: 9999 !important;
 }
+

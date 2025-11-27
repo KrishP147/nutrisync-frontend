@@ -26,7 +26,8 @@ import {
   MealCompositionTreeMap,
   MacroRatioTernary,
   MealTimingSunburst,
-  MealNutrientSpace3D
+  MealNutrientSpace3D,
+  MealTypeDistribution
 } from '../components/charts';
 import { useGoals } from '../contexts/GoalsContext';
 import ChartErrorBoundary from '../components/ChartErrorBoundary';
@@ -313,15 +314,9 @@ export default function Analytics() {
                   )}
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={stats.mealTypeData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" label={({ name, percentage }) => `${name} ${percentage}%`}>
-                    {stats.mealTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-                    formatter={(value) => [`${value} ${value === 1 ? 'meal' : 'meals'} logged`]} />
-                </PieChart>
-              </ResponsiveContainer>
+              <ChartErrorBoundary>
+                <MealTypeDistribution meals={meals} />
+              </ChartErrorBoundary>
             </motion.div>
 
             {/* Weekly Pattern */}

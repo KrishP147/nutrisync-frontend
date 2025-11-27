@@ -146,24 +146,32 @@ export default function MealCompositionTreeMap({ meals }) {
             margin={{ top: 10, right: isMobile ? 50 : 10, bottom: 10, left: isMobile ? 50 : 10 }}
           labelSkipSize={80}
           label={e => {
-            // On mobile, don't show labels on the chart itself - only in tooltip
-            if (isMobile) return '';
+            // On mobile, show labels for larger boxes
             const width = e.width || 0;
             const height = e.height || 0;
             const area = width * height;
+            if (isMobile) {
+              // Show labels on mobile for boxes with area > 5000
+              if (area < 5000) return '';
+              return e.data.displayName || truncateName(e.id, 8);
+            }
             if (area < 3000) return '';
             return e.data.displayName || truncateName(e.id);
           }}
           labelTextColor="#ffffff"
           parentLabelPosition={isMobile ? "top" : "left"}
-          parentLabelTextColor={isMobile ? "transparent" : "#ffffff"}
-          parentLabelPadding={isMobile ? 0 : 4}
-          parentLabelSize={isMobile ? 0 : undefined}
+          parentLabelTextColor={isMobile ? "#ffffff" : "#ffffff"}
+          parentLabelPadding={isMobile ? 2 : 4}
+          parentLabelSize={isMobile ? 10 : undefined}
           colors={(node) => node.data.color || '#6b7280'}
           borderWidth={2}
           borderColor="rgba(0,0,0,0.5)"
           nodeOpacity={0.9}
           tooltip={CustomTooltip}
+          isInteractive={true}
+          onClick={(node) => {
+            // Tooltip will show on hover/click automatically
+          }}
           theme={{
             labels: {
               text: {
