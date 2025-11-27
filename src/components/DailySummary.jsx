@@ -79,60 +79,60 @@ export default function DailySummary() {
 
   if (!summary || summary.mealCount === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-6 text-center text-white/60">
         No meals logged today. Start by adding your first meal!
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Today's Summary</h2>
+    <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-6">
+      <h2 className="text-2xl font-heading font-bold text-white mb-6">Today's Summary</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="text-center p-4 bg-blue-50 rounded-lg">
-          <p className="text-3xl font-bold text-blue-600">{summary.calories}</p>
-          <p className="text-sm text-gray-600 mt-1">Calories</p>
+        <div className="text-center p-4 bg-black rounded-lg border border-white/10">
+          <p className="text-3xl font-mono font-bold text-primary-700">{summary.calories}</p>
+          <p className="text-sm text-white/60 mt-1">Calories</p>
         </div>
 
-        <div className="text-center p-4 bg-green-50 rounded-lg">
-          <p className="text-3xl font-bold text-green-600">{summary.protein.toFixed(1)}g</p>
-          <p className="text-sm text-gray-600 mt-1">Protein</p>
+        <div className="text-center p-4 bg-black rounded-lg border border-white/10">
+          <p className="text-3xl font-mono font-bold text-primary-700">{summary.protein.toFixed(1)}g</p>
+          <p className="text-sm text-white/60 mt-1">Protein</p>
         </div>
 
-        <div className="text-center p-4 bg-yellow-50 rounded-lg">
-          <p className="text-3xl font-bold text-yellow-600">{summary.carbs.toFixed(1)}g</p>
-          <p className="text-sm text-gray-600 mt-1">Carbs</p>
+        <div className="text-center p-4 bg-black rounded-lg border border-white/10">
+          <p className="text-3xl font-mono font-bold text-amber-500">{summary.carbs.toFixed(1)}g</p>
+          <p className="text-sm text-white/60 mt-1">Carbs</p>
         </div>
 
-        <div className="text-center p-4 bg-orange-50 rounded-lg">
-          <p className="text-3xl font-bold text-orange-600">{summary.fat.toFixed(1)}g</p>
-          <p className="text-sm text-gray-600 mt-1">Fat</p>
+        <div className="text-center p-4 bg-black rounded-lg border border-white/10">
+          <p className="text-3xl font-mono font-bold text-secondary-500">{summary.fat.toFixed(1)}g</p>
+          <p className="text-sm text-white/60 mt-1">Fat</p>
         </div>
 
-        <div className="text-center p-4 bg-purple-50 rounded-lg">
-          <p className="text-3xl font-bold text-purple-600">{summary.fiber.toFixed(1)}g</p>
-          <p className="text-sm text-gray-600 mt-1">Fiber</p>
+        <div className="text-center p-4 bg-black rounded-lg border border-white/10">
+          <p className="text-3xl font-mono font-bold text-white/60">{summary.fiber.toFixed(1)}g</p>
+          <p className="text-sm text-white/60 mt-1">Fiber</p>
         </div>
       </div>
 
       <div className="mt-4 text-center">
-        <p className="text-sm text-gray-600">
-          You've logged <span className="font-semibold">{summary.mealCount}</span> {summary.mealCount === 1 ? 'meal' : 'meals'} today
+        <p className="text-sm text-white/60">
+          You've logged <span className="font-semibold text-white">{summary.mealCount}</span> {summary.mealCount === 1 ? 'meal' : 'meals'} today
         </p>
       </div>
 
       {/* Nutrition by Time of Day Histogram */}
       <div className="mt-6">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-semibold text-gray-800">Intake by Time of Day</h3>
+          <h3 className="text-lg font-heading font-semibold text-white">Intake by Time of Day</h3>
           <div className="flex gap-1">
             {[
-              { key: 'calories', label: 'Cal', color: 'bg-green-600' },
-              { key: 'protein', label: 'P', color: 'bg-blue-600' },
-              { key: 'carbs', label: 'C', color: 'bg-orange-500' },
-              { key: 'fat', label: 'F', color: 'bg-purple-600' },
-              { key: 'fiber', label: 'Fb', color: 'bg-red-900' }
+              { key: 'calories', label: 'Cal', color: 'bg-primary-700' },
+              { key: 'protein', label: 'P', color: 'bg-primary-700' },
+              { key: 'carbs', label: 'C', color: 'bg-amber-500' },
+              { key: 'fat', label: 'F', color: 'bg-secondary-500' },
+              { key: 'fiber', label: 'Fb', color: 'bg-white/60' }
             ].map(({ key, label, color }) => (
               <button
                 key={key}
@@ -140,7 +140,7 @@ export default function DailySummary() {
                 className={`px-2 py-1 rounded text-xs font-medium transition ${
                   timeChartView === key
                     ? `${color} text-white`
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10'
                 }`}
               >
                 {label}
@@ -148,35 +148,40 @@ export default function DailySummary() {
             ))}
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart
-            data={getNutritionByTimeData()}
-            margin={{ top: 10, right: 30, left: 20, bottom: 60 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="label"
-              tick={{ fontSize: 9 }}
-              angle={-45}
-              textAnchor="end"
-              height={60}
-              interval={2}
-            />
-            <YAxis tick={{ fontSize: 10 }} />
-            <Tooltip
-              formatter={(value) => {
-                if (timeChartView === 'calories') return [`${value} cal`, 'Calories'];
-                return [`${value}g`, timeChartView.charAt(0).toUpperCase() + timeChartView.slice(1)];
-              }}
-              labelFormatter={(label) => `Time ${label}`}
-            />
-            {timeChartView === 'calories' && <Bar dataKey="calories" fill="#10b981" />}
-            {timeChartView === 'protein' && <Bar dataKey="protein" fill="#1d4ed8" />}
-            {timeChartView === 'carbs' && <Bar dataKey="carbs" fill="#f59e0b" />}
-            {timeChartView === 'fat' && <Bar dataKey="fat" fill="#a855f7" />}
-            {timeChartView === 'fiber' && <Bar dataKey="fiber" fill="#800000" />}
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="bg-black border border-white/10 rounded-lg p-4">
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart
+              data={getNutritionByTimeData()}
+              margin={{ top: 10, right: 30, left: 20, bottom: 60 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 9, fill: '#a3a3a3' }}
+                angle={-45}
+                textAnchor="end"
+                height={60}
+                interval={2}
+                stroke="#1a1a1a"
+              />
+              <YAxis tick={{ fontSize: 10, fill: '#a3a3a3' }} stroke="#1a1a1a" />
+              <Tooltip
+                formatter={(value) => {
+                  if (timeChartView === 'calories') return [`${value} cal`, 'Calories'];
+                  return [`${value}g`, timeChartView.charAt(0).toUpperCase() + timeChartView.slice(1)];
+                }}
+                labelFormatter={(label) => `Time ${label}`}
+                contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '8px' }}
+                labelStyle={{ color: '#ffffff' }}
+              />
+              {timeChartView === 'calories' && <Bar dataKey="calories" fill="#047857" />}
+              {timeChartView === 'protein' && <Bar dataKey="protein" fill="#047857" />}
+              {timeChartView === 'carbs' && <Bar dataKey="carbs" fill="#f59e0b" />}
+              {timeChartView === 'fat' && <Bar dataKey="fat" fill="#0ea5e9" />}
+              {timeChartView === 'fiber' && <Bar dataKey="fiber" fill="#a3a3a3" />}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

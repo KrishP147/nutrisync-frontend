@@ -1,187 +1,154 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { useState } from 'react';
 import { useGoals } from '../contexts/GoalsContext';
+import { motion, AnimatePresence } from 'motion/react';
+import { Target, ChevronDown, ChevronUp, Save, X } from 'lucide-react';
 import UserProfile from './UserProfile';
 
 export default function SetGoals() {
-  const { goals, updateGoals, loading } = useGoals();
-  const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [tempGoals, setTempGoals] = useState(goals);
-
-  // Update tempGoals when goals change from context
-  useEffect(() => {
-    setTempGoals(goals);
-  }, [goals]);
+  const { goals, updateGoals } = useGoals();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [tempGoals, setTempGoals] = useState({
+    calories: goals.calories || 2000,
+    protein: goals.protein || 150,
+    carbs: goals.carbs || 250,
+    fat: goals.fat || 65,
+    fiber: goals.fiber || 30,
+  });
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      const success = await updateGoals(tempGoals);
-      
-      if (success) {
-        setIsEditing(false);
-      } else {
-        alert('Failed to save goals. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error in handleSave:', error);
-      alert('An unexpected error occurred. Please try again.');
-    } finally {
-      setSaving(false);
-    }
+    await updateGoals(tempGoals);
+    setIsExpanded(false);
   };
 
   const handleCancel = () => {
-    setTempGoals(goals);
-    setIsEditing(false);
+    setTempGoals({
+      calories: goals.calories || 2000,
+      protein: goals.protein || 150,
+      carbs: goals.carbs || 250,
+      fat: goals.fat || 65,
+      fiber: goals.fiber || 30,
+    });
+    setIsExpanded(false);
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-500 rounded-xl p-6 shadow-xl mb-8"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-2xl font-bold text-black">Daily Goals</h2>
-          <p className="text-sm text-gray-600 mt-1">Set your daily nutrition targets manually or calculate from profile</p>
-        </div>
-        {!isEditing && (
-          <div className="flex gap-2">
-            <UserProfile />
-            <button
-              onClick={() => setIsEditing(true)}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-medium"
-            >
-              ✏️ Edit Manually
-            </button>
+    <div className="card overflow-hidden">
+      {/* Header - Always visible */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full p-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-primary-700/10 flex items-center justify-center">
+            <Target size={20} className="text-primary-500" strokeWidth={2} />
           </div>
+          <div className="text-left">
+            <h3 className="font-heading font-semibold text-white">Daily Goals</h3>
+            <p className="text-white/50 text-sm">
+              {goals.calories} kcal | {goals.protein}g P | {goals.carbs}g C | {goals.fat}g F | {goals.fiber}g Fiber
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <UserProfile />
+          <div className={`w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+            <ChevronDown size={18} className="text-white/60" />
+          </div>
+        </div>
+      </button>
+
+      {/* Expanded Content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="p-5 pt-0 border-t border-white/10">
+              <p className="text-white/50 text-sm mb-6">
+                Set your daily nutrition targets manually, or use the Profile button above to calculate them automatically.
+              </p>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                {/* Calories */}
+                <div>
+                  <label className="input-label">Calories</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={tempGoals.calories}
+                    onChange={(e) => setTempGoals({ ...tempGoals, calories: parseInt(e.target.value) || 0 })}
+                    className="input text-center font-mono"
+                  />
+                </div>
+
+                {/* Protein */}
+                <div>
+                  <label className="input-label">Protein (g)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={tempGoals.protein}
+                    onChange={(e) => setTempGoals({ ...tempGoals, protein: parseInt(e.target.value) || 0 })}
+                    className="input text-center font-mono"
+                  />
+                </div>
+
+                {/* Carbs */}
+                <div>
+                  <label className="input-label">Carbs (g)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={tempGoals.carbs}
+                    onChange={(e) => setTempGoals({ ...tempGoals, carbs: parseInt(e.target.value) || 0 })}
+                    className="input text-center font-mono"
+                  />
+                </div>
+
+                {/* Fat */}
+                <div>
+                  <label className="input-label">Fat (g)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={tempGoals.fat}
+                    onChange={(e) => setTempGoals({ ...tempGoals, fat: parseInt(e.target.value) || 0 })}
+                    className="input text-center font-mono"
+                  />
+                </div>
+
+                {/* Fiber */}
+                <div>
+                  <label className="input-label">Fiber (g)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={tempGoals.fiber}
+                    onChange={(e) => setTempGoals({ ...tempGoals, fiber: parseInt(e.target.value) || 0 })}
+                    className="input text-center font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button onClick={handleSave} className="btn-primary">
+                  <Save size={18} />
+                  Save Goals
+                </button>
+                <button onClick={handleCancel} className="btn-ghost">
+                  <X size={18} />
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </motion.div>
         )}
-      </div>
-
-      {isEditing ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Calories
-              </label>
-              <input
-                type="number"
-                step="100"
-                min="0"
-                value={tempGoals.calories === 0 ? '' : tempGoals.calories}
-                onChange={(e) => setTempGoals({ ...tempGoals, calories: Math.max(0, parseInt(e.target.value) || 0) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Protein (g)
-              </label>
-              <input
-                type="number"
-                step="20"
-                min="0"
-                value={tempGoals.protein === 0 ? '' : tempGoals.protein}
-                onChange={(e) => setTempGoals({ ...tempGoals, protein: Math.max(0, parseInt(e.target.value) || 0) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Carbs (g)
-              </label>
-              <input
-                type="number"
-                step="20"
-                min="0"
-                value={tempGoals.carbs === 0 ? '' : tempGoals.carbs}
-                onChange={(e) => setTempGoals({ ...tempGoals, carbs: Math.max(0, parseInt(e.target.value) || 0) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fat (g)
-              </label>
-              <input
-                type="number"
-                step="20"
-                min="0"
-                value={tempGoals.fat === 0 ? '' : tempGoals.fat}
-                onChange={(e) => setTempGoals({ ...tempGoals, fat: Math.max(0, parseInt(e.target.value) || 0) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fiber (g)
-              </label>
-              <input
-                type="number"
-                step="5"
-                min="0"
-                value={tempGoals.fiber === 0 ? '' : tempGoals.fiber}
-                onChange={(e) => setTempGoals({ ...tempGoals, fiber: Math.max(0, parseInt(e.target.value) || 0) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-black"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={handleCancel}
-              disabled={saving}
-              className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? 'Saving...' : 'Save Goals'}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-white rounded-lg p-4 text-center border-2 border-purple-300">
-            <p className="text-3xl font-bold text-green-600">{goals.calories}</p>
-            <p className="text-sm text-gray-600 mt-1">Calories</p>
-          </div>
-
-          <div className="bg-white rounded-lg p-4 text-center border-2 border-purple-300">
-            <p className="text-3xl font-bold text-blue-600">{goals.protein}g</p>
-            <p className="text-sm text-gray-600 mt-1">Protein</p>
-          </div>
-
-          <div className="bg-white rounded-lg p-4 text-center border-2 border-purple-300">
-            <p className="text-3xl font-bold text-orange-500">{goals.carbs}g</p>
-            <p className="text-sm text-gray-600 mt-1">Carbs</p>
-          </div>
-
-          <div className="bg-white rounded-lg p-4 text-center border-2 border-purple-300">
-            <p className="text-3xl font-bold text-purple-600">{goals.fat}g</p>
-            <p className="text-sm text-gray-600 mt-1">Fat</p>
-          </div>
-
-          <div className="bg-white rounded-lg p-4 text-center border-2 border-purple-300">
-            <p className="text-3xl font-bold text-red-900">{goals.fiber}g</p>
-            <p className="text-sm text-gray-600 mt-1">Fiber</p>
-          </div>
-        </div>
-      )}
-    </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
-

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
-import BubbleBackground from '../components/ui/BubbleBackground';
+import { motion } from 'motion/react';
+import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -14,7 +15,6 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     
-    // Basic email validation
     if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       setError('Please enter a valid email address');
       return;
@@ -61,7 +61,6 @@ export default function Login() {
       if (error) {
         setError(error.message);
       }
-      // No navigation needed - Supabase handles OAuth redirect
     } catch {
       setError('Failed to connect to Google. Please try again.');
     } finally {
@@ -70,100 +69,146 @@ export default function Login() {
   };
 
   return (
-    <BubbleBackground interactive={true}>
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white/95 backdrop-blur-sm border-2 border-teal-300 p-8 rounded-2xl shadow-2xl max-w-md w-full">
-        <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold text-black mb-2">Welcome Back</h1>
-          <div className="w-16 h-1 bg-green-500 mx-auto mb-4"></div>
-          <p className="text-gray-700">Log in to continue to NutriSync</p>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-black bg-white"
-              required
-            />
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <Link
-                to="/forgot-password"
-                className="text-sm text-teal-600 hover:underline"
-              >
-                Forgot Password?
-              </Link>
-            </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-black bg-white"
-              required
-            />
-          </div>
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="remember"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
-              Remember me
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition disabled:opacity-50 font-medium shadow-lg hover:shadow-xl"
-          >
-            {loading ? 'Logging in...' : 'Log In'}
-          </button>
-        </form>
-
-        <div className="my-6 flex items-center">
-          <div className="flex-1 border-t border-gray-300"></div>
-          <span className="px-4 text-sm text-gray-500">or</span>
-          <div className="flex-1 border-t border-gray-300"></div>
-        </div>
-
-        <button
-          onClick={handleGoogleLogin}
-          className="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2"
+    <div className="min-h-screen bg-black flex">
+      {/* Left side - Form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
         >
-          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-          Continue with Google
-        </button>
-
-        <p className="mt-6 text-center text-sm text-gray-700">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-teal-600 hover:underline font-medium">
-            Sign up
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3 mb-12">
+            <div className="w-10 h-10 rounded-lg bg-primary-700 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">N</span>
+            </div>
+            <span className="text-xl font-heading font-bold text-white">NutriSync</span>
           </Link>
-        </p>
+
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-heading font-bold text-white mb-2">Welcome back</h1>
+            <p className="text-white/50">Sign in to continue tracking your nutrition</p>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-6"
+            >
+              <AlertCircle size={20} />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="input-label">Email</label>
+              <div className="relative">
+                <Mail size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input pl-12"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-white/70">Password</label>
+                <Link to="/forgot-password" className="text-sm text-primary-500 hover:text-primary-400">
+                  Forgot Password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input pl-12"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="remember"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-white/20 bg-surface-300 text-primary-700 focus:ring-primary-700 focus:ring-offset-black"
+              />
+              <label htmlFor="remember" className="text-sm text-white/60">
+                Remember me for 30 days
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full py-3 text-base"
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+              {!loading && <ArrowRight size={18} />}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 my-8">
+            <div className="flex-1 h-px bg-white/10" />
+            <span className="text-sm text-white/40">or continue with</span>
+            <div className="flex-1 h-px bg-white/10" />
+          </div>
+
+          {/* Google Login */}
+          <button
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="btn-outline w-full py-3"
+          >
+            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+            Continue with Google
+          </button>
+
+          {/* Sign up link */}
+          <p className="mt-8 text-center text-white/50">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-primary-500 hover:text-primary-400 font-medium">
+              Sign up
+            </Link>
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Right side - Image/Branding */}
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0 bg-surface-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-700/20 via-transparent to-secondary-500/20" />
+          <div className="absolute inset-0 flex items-center justify-center p-12">
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-2xl bg-primary-700 flex items-center justify-center mx-auto mb-8">
+                <span className="text-4xl font-bold text-white">N</span>
+              </div>
+              <h2 className="text-3xl font-heading font-bold text-white mb-4">
+                Track Your Nutrition
+              </h2>
+              <p className="text-white/50 text-lg max-w-sm">
+                Professional-grade meal tracking and analysis to help you achieve your health goals
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-    </BubbleBackground>
+    </div>
   );
 }

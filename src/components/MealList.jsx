@@ -28,50 +28,20 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
   const [editMealName, setEditMealName] = useState('');
   const [originalMealName, setOriginalMealName] = useState('');
 
-  // Define color schemes based on variant
-  const colorSchemes = {
-    'purple': {
-      cardBg: 'bg-purple-900/90',
-      cardBorder: 'border-purple-500',
-      textPrimary: 'text-white',
-      textSecondary: 'text-purple-200',
-      inputBg: 'bg-purple-700',
-      inputBorder: 'border-purple-500',
-      componentBg: 'bg-purple-800',
-      componentBorder: 'border-purple-600',
-      accentColor: 'text-purple-300',
-      buttonPrimary: 'bg-purple-600 hover:bg-purple-700',
-      buttonSecondary: 'bg-purple-800 hover:bg-purple-700',
-    },
-    'light-purple': {
-      cardBg: 'bg-gradient-to-br from-purple-100 to-fuchsia-100',
-      cardBorder: 'border-purple-300',
-      textPrimary: 'text-gray-900',
-      textSecondary: 'text-gray-700',
-      inputBg: 'bg-purple-50',
-      inputBorder: 'border-purple-200',
-      componentBg: 'bg-purple-50',
-      componentBorder: 'border-purple-200',
-      accentColor: 'text-purple-800',
-      buttonPrimary: 'bg-purple-500 hover:bg-purple-600',
-      buttonSecondary: 'bg-purple-300 hover:bg-purple-400',
-    },
-    'light-green': {
-      cardBg: 'bg-gradient-to-br from-green-100 to-emerald-100',
-      cardBorder: 'border-green-300',
-      textPrimary: 'text-gray-900',
-      textSecondary: 'text-gray-700',
-      inputBg: 'bg-green-50',
-      inputBorder: 'border-green-200',
-      componentBg: 'bg-green-50',
-      componentBorder: 'border-green-200',
-      accentColor: 'text-green-800',
-      buttonPrimary: 'bg-green-500 hover:bg-green-600',
-      buttonSecondary: 'bg-green-300 hover:bg-green-400',
-    }
+  // Dark theme color scheme
+  const colors = {
+    cardBg: 'bg-[#0a0a0a]',
+    cardBorder: 'border-[#1a1a1a]',
+    textPrimary: 'text-white',
+    textSecondary: 'text-white/60',
+    inputBg: 'bg-black',
+    inputBorder: 'border-[#1a1a1a]',
+    componentBg: 'bg-black',
+    componentBorder: 'border-[#1a1a1a]',
+    accentColor: 'text-primary-700',
+    buttonPrimary: 'bg-primary-700 hover:bg-primary-600',
+    buttonSecondary: 'bg-white/5 hover:bg-white/10',
   };
-
-  const colors = colorSchemes[variant] || colorSchemes.purple;
 
   useEffect(() => {
     fetchMeals();
@@ -755,7 +725,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
 
   if (meals.length === 0) {
     return (
-      <div className={`${colors.cardBg} border-2 ${colors.cardBorder} rounded-xl p-8 text-center shadow-md`}>
+      <div className={`${colors.cardBg} border ${colors.cardBorder} rounded-lg p-8 text-center`}>
         <p className={colors.textSecondary}>
           {specificDate ? 'Nothing was logged today.' : 'No meals logged yet. Start by adding your first meal!'}
         </p>
@@ -764,12 +734,12 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {meals.map((meal) => (
-        <div key={meal.id} className={`${colors.cardBg} border-2 ${colors.cardBorder} rounded-xl p-6 hover:shadow-lg transition shadow-md`}>
+        <div key={meal.id} className={`${colors.cardBg} border ${colors.cardBorder} rounded-lg overflow-hidden hover:border-primary-700/50 transition-all`}>
           {editingMealId === meal.id ? (
             // Edit Mode
-            <div className="space-y-4">
+            <div className="space-y-4 p-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <input
@@ -1195,80 +1165,99 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
               </div>
             </div>
           ) : (
-            // View Mode
-            <>
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-start gap-3 flex-1">
-                  {/* Photo thumbnail */}
-                  {meal.photo_url && (
-                    <button
-                      onClick={() => setViewingPhotoUrl(meal.photo_url)}
-                      className="flex-shrink-0"
-                    >
-                      <img
-                        src={meal.photo_url}
-                        alt="Meal photo"
-                        className="w-12 h-12 rounded-lg object-cover border-2 border-purple-400 hover:border-purple-300 transition cursor-pointer"
-                      />
-                    </button>
-                  )}
-                  <div>
-                    <h3 className={`text-lg font-semibold ${colors.textPrimary}`}>{formatMealTitle(meal)}</h3>
-                    <p className={`text-sm ${colors.textSecondary}`}>
-                      {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)} • {formatDate(meal.consumed_at)}
-                      {meal.is_compound && <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded font-semibold">Compound</span>}
+            // View Mode - Horizontal Rectangular Layout
+            <div className="flex gap-4 p-4">
+              {/* Photo on left - rectangular */}
+              {meal.photo_url && (
+                <button
+                  onClick={() => setViewingPhotoUrl(meal.photo_url)}
+                  className="flex-shrink-0"
+                >
+                  <img
+                    src={meal.photo_url}
+                    alt="Meal photo"
+                    className="w-32 h-24 rounded-lg object-cover border border-white/10 hover:border-primary-700 transition cursor-pointer"
+                  />
+                </button>
+              )}
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                {/* Header */}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`text-lg font-heading font-semibold ${colors.textPrimary} truncate`}>
+                      {formatMealTitle(meal)}
+                    </h3>
+                    <p className={`text-sm ${colors.textSecondary} flex items-center gap-2 mt-1`}>
+                      <span className="capitalize">{meal.meal_type}</span>
+                      <span>•</span>
+                      <span>{formatDate(meal.consumed_at)}</span>
+                      {meal.is_compound && (
+                        <span className="ml-2 text-xs bg-secondary-500 text-white px-2 py-0.5 rounded font-semibold">
+                          Compound
+                        </span>
+                      )}
                     </p>
                   </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => startEditing(meal)}
-                    className={`${colors.accentColor} hover:opacity-80 text-sm font-medium`}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDuplicate(meal)}
-                    className="text-green-400 hover:text-green-300 text-sm font-medium"
-                  >
-                    Duplicate
-                  </button>
-                  <button
-                    onClick={() => handleDelete(meal.id)}
-                    className="text-red-400 hover:text-red-300 text-sm font-medium"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-4 gap-4 mt-4">
-                <div className="text-center">
-                  <p className={`text-2xl font-bold ${colors.accentColor}`}>{meal.total_calories}</p>
-                  <p className={`text-xs ${colors.textSecondary}`}>Calories</p>
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 ml-4">
+                    <button
+                      onClick={() => startEditing(meal)}
+                      className={`${colors.accentColor} hover:opacity-80 text-sm font-medium`}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDuplicate(meal)}
+                      className="text-secondary-500 hover:opacity-80 text-sm font-medium"
+                    >
+                      Duplicate
+                    </button>
+                    <button
+                      onClick={() => handleDelete(meal.id)}
+                      className="text-red-500 hover:opacity-80 text-sm font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{meal.total_protein_g}g</p>
-                  <p className={`text-xs ${colors.textSecondary}`}>Protein</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-orange-300">{meal.total_carbs_g}g</p>
-                  <p className={`text-xs ${colors.textSecondary}`}>Carbs</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-400">{meal.total_fat_g}g</p>
-                  <p className={`text-xs ${colors.textSecondary}`}>Fat</p>
-                </div>
-              </div>
 
-              {/* Display Notes */}
-              {meal.notes && (
-                <div className={`mt-4 ${colors.componentBg} border ${colors.componentBorder} rounded-lg p-3`}>
-                  <p className={`text-xs font-semibold ${colors.textSecondary} mb-1`}>📝 Notes:</p>
-                  <p className={`text-sm ${colors.textPrimary} italic`}>{meal.notes}</p>
+                {/* Nutrition Stats - Horizontal */}
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className={`text-2xl font-mono font-bold ${colors.accentColor}`}>{meal.total_calories}</p>
+                    <p className={`text-xs ${colors.textSecondary}`}>Calories</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-mono font-bold text-primary-700">{meal.total_protein_g}g</p>
+                    <p className={`text-xs ${colors.textSecondary}`}>Protein</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-mono font-bold text-amber-500">{meal.total_carbs_g}g</p>
+                    <p className={`text-xs ${colors.textSecondary}`}>Carbs</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-mono font-bold text-secondary-500">{meal.total_fat_g}g</p>
+                    <p className={`text-xs ${colors.textSecondary}`}>Fat</p>
+                  </div>
+                  {meal.total_fiber_g > 0 && (
+                    <div>
+                      <p className="text-2xl font-mono font-bold text-white/60">{meal.total_fiber_g}g</p>
+                      <p className={`text-xs ${colors.textSecondary}`}>Fiber</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </>
+
+                {/* Notes */}
+                {meal.notes && (
+                  <div className="mt-3 pt-3 border-t border-white/5">
+                    <p className={`text-sm ${colors.textSecondary} italic`}>{meal.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       ))}

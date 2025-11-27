@@ -11,6 +11,12 @@
   },
   "dependencies": {
     "@lucide/lab": "^0.1.2",
+    "@nivo/bar": "^0.99.0",
+    "@nivo/calendar": "^0.99.0",
+    "@nivo/core": "^0.99.0",
+    "@nivo/line": "^0.99.0",
+    "@nivo/pie": "^0.99.0",
+    "@nivo/radar": "^0.99.0",
     "@supabase/supabase-js": "^2.79.0",
     "axios": "^1.13.2",
     "browser-image-compression": "^2.0.2",

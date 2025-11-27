@@ -1,167 +1,279 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
-import BubbleBackground from '../components/ui/BubbleBackground';
+import { motion } from 'motion/react';
+import { Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function Register() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        setError(null);
-
-        if (password !== confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-
-        if (password.length < 8) {
-            setError('Password must be at least 8 characters long');
-            return;
-        }
-
-        // Require at least one special character (non-alphanumeric).
-        // Use regex.test — String.includes doesn't accept regex.
-        if (!/[^A-Za-z0-9]/.test(password)) {
-            setError('Password must include at least one special character');
-            return;
-        }
-
-        setLoading(true);
-        try {
-                    const { error: signUpError } = await supabase.auth.signUp({
-                email,
-                password,
-            });
-
-            if (signUpError) {
-                setError(signUpError.message);
-                setLoading(false);
-            } else {
-                alert('Registration successful! Please check your email to confirm your account.');
-                navigate('/login');
-            }
-
-            /*// On success, you might want to require email confirmation.
-            // Redirecting to dashboard for now.
-            navigate('/dashboard'); */
-
-        } catch (err) {
-            setError(err.message || 'An unexpected error occurred');
-        } finally {
-            setLoading(false);
-        }
+  const validatePassword = (pwd) => {
+    const checks = {
+      length: pwd.length >= 8,
+      uppercase: /[A-Z]/.test(pwd),
+      lowercase: /[a-z]/.test(pwd),
+      number: /[0-9]/.test(pwd),
     };
+    return checks;
+  };
 
-    const handleGoogleSignup = async () => {
-        setLoading(true);
-        setError(null);
+  const passwordChecks = validatePassword(password);
+  const isPasswordValid = Object.values(passwordChecks).every(Boolean);
 
-        try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: window.location.origin + '/dashboard'
-                }
-            });
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
+    if (!isPasswordValid) {
+      setError('Please meet all password requirements');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
 
-            if (error) {
-                setError(error.message);
-            }
-            // No navigation needed - Supabase handles OAuth redirect
-        } catch {
-            setError('Failed to connect to Google. Please try again.');
-        } finally {
-            setLoading(false);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setSuccess(true);
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/dashboard'
         }
-    };
+      });
+      
+      if (error) {
+        setError(error.message);
+      }
+    } catch {
+      setError('Failed to connect to Google. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  if (success) {
     return (
-        <BubbleBackground interactive={true}>
-            <div className="min-h-screen flex items-center justify-center p-4">
-                <div className="bg-white/95 backdrop-blur-sm border-2 border-teal-300 p-8 rounded-2xl shadow-2xl max-w-md w-full">
-                    <div className="text-center mb-6">
-                        <h1 className="text-4xl font-bold text-black mb-2">Create an account</h1>
-                        <div className="w-16 h-1 bg-teal-500 mx-auto mb-4"></div>
-                        <p className="text-gray-700">Start tracking your nutrition today with NutriSync</p>
-                    </div>
-
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleRegister} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black bg-white"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black bg-white"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black bg-white"
-                            required
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition disabled:opacity-50 font-medium shadow-lg hover:shadow-xl"
-                    >
-                        {loading ? 'Creating account...' : 'Sign Up'}
-                    </button>
-                </form>
-
-                <div className="my-6 flex items-center">
-                    <div className="flex-1 border-t border-gray-300"></div>
-                    <span className="px-4 text-sm text-gray-500">or</span>
-                    <div className="flex-1 border-t border-gray-300"></div>
-                </div>
-
-                <button
-                    onClick={handleGoogleSignup}
-                    className="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2"
-                >
-                    <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                    Continue with Google
-                </button>
-
-                <p className="mt-6 text-center text-sm text-gray-700">
-                    Already have an account?{' '}
-                    <Link to="/login" className="text-teal-600 hover:underline font-medium">
-                        Log in
-                    </Link>
-                </p>
-                </div>
-            </div>
-        </BubbleBackground>
+      <div className="min-h-screen bg-black flex items-center justify-center p-8">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="card p-12 max-w-md w-full text-center"
+        >
+          <div className="w-16 h-16 rounded-full bg-primary-700/20 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 size={32} className="text-primary-500" />
+          </div>
+          <h2 className="text-2xl font-heading font-bold text-white mb-4">Check your email</h2>
+          <p className="text-white/60 mb-8">
+            We've sent a confirmation link to <span className="text-white">{email}</span>. Click the link to activate your account.
+          </p>
+          <Link to="/login" className="btn-primary w-full">
+            Back to Sign In
+          </Link>
+        </motion.div>
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-black flex">
+      {/* Left side - Image/Branding */}
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0 bg-surface-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-secondary-500/20 via-transparent to-primary-700/20" />
+          <div className="absolute inset-0 flex items-center justify-center p-12">
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-2xl bg-primary-700 flex items-center justify-center mx-auto mb-8">
+                <span className="text-4xl font-bold text-white">N</span>
+              </div>
+              <h2 className="text-3xl font-heading font-bold text-white mb-4">
+                Start Your Journey
+              </h2>
+              <p className="text-white/50 text-lg max-w-sm">
+                Join thousands of users tracking their nutrition with professional precision
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right side - Form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3 mb-12">
+            <div className="w-10 h-10 rounded-lg bg-primary-700 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">N</span>
+            </div>
+            <span className="text-xl font-heading font-bold text-white">NutriSync</span>
+          </Link>
+
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-heading font-bold text-white mb-2">Create account</h1>
+            <p className="text-white/50">Start tracking your nutrition today</p>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-6"
+            >
+              <AlertCircle size={20} />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleRegister} className="space-y-5">
+            <div>
+              <label className="input-label">Email</label>
+              <div className="relative">
+                <Mail size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input pl-12"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="input-label">Password</label>
+              <div className="relative">
+                <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input pl-12"
+                  placeholder="Create a password"
+                  required
+                />
+              </div>
+              
+              {/* Password requirements */}
+              {password && (
+                <div className="mt-3 space-y-1.5">
+                  {[
+                    { key: 'length', label: 'At least 8 characters' },
+                    { key: 'uppercase', label: 'One uppercase letter' },
+                    { key: 'lowercase', label: 'One lowercase letter' },
+                    { key: 'number', label: 'One number' },
+                  ].map(({ key, label }) => (
+                    <div key={key} className="flex items-center gap-2 text-xs">
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                        passwordChecks[key] ? 'bg-primary-700/20 text-primary-500' : 'bg-white/5 text-white/30'
+                      }`}>
+                        {passwordChecks[key] && <CheckCircle2 size={12} />}
+                      </div>
+                      <span className={passwordChecks[key] ? 'text-white/60' : 'text-white/40'}>
+                        {label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="input-label">Confirm Password</label>
+              <div className="relative">
+                <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="input pl-12"
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-red-400 text-xs mt-2">Passwords do not match</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || !isPasswordValid}
+              className="btn-primary w-full py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Creating account...' : 'Create Account'}
+              {!loading && <ArrowRight size={18} />}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 my-8">
+            <div className="flex-1 h-px bg-white/10" />
+            <span className="text-sm text-white/40">or continue with</span>
+            <div className="flex-1 h-px bg-white/10" />
+          </div>
+
+          {/* Google Signup */}
+          <button
+            onClick={handleGoogleSignup}
+            disabled={loading}
+            className="btn-outline w-full py-3"
+          >
+            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+            Continue with Google
+          </button>
+
+          {/* Sign in link */}
+          <p className="mt-8 text-center text-white/50">
+            Already have an account?{' '}
+            <Link to="/login" className="text-primary-500 hover:text-primary-400 font-medium">
+              Sign in
+            </Link>
+          </p>
+        </motion.div>
+      </div>
+    </div>
+  );
 }

@@ -1,33 +1,47 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import Navigation from '../components/Navigation';
+import { motion } from 'motion/react';
+import { 
+  Flame, 
+  Beef, 
+  Wheat, 
+  Droplets, 
+  Leaf,
+  Target,
+  TrendingUp,
+  Calendar,
+  Zap
+} from 'lucide-react';
+import Sidebar from '../components/layout/Sidebar';
 import GitHubHeatmap from '../components/GitHubHeatmap';
 import WeeklyTrends from '../components/WeeklyTrends';
 import SetGoals from '../components/SetGoals';
-import UserProfile from '../components/UserProfile';
-import AuroraBackground from '../components/ui/AuroraBackground';
 import { useGoals } from '../contexts/GoalsContext';
 import { 
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, RadarChart, PolarGrid, 
+  BarChart, Bar, RadarChart, PolarGrid, 
   PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, 
   CartesianGrid, Tooltip, ResponsiveContainer, Legend 
 } from 'recharts';
-import { motion } from 'motion/react';
 
 export default function Progress() {
   const { goals } = useGoals();
   const [heatmapData, setHeatmapData] = useState({});
-  const [lineChartData, setLineChartData] = useState([]);
   const [barChartData, setBarChartData] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [barChartView, setBarChartView] = useState('all'); // 'all', 'protein', 'carbs', 'fat', 'fiber', 'calories'
+  const [barChartView, setBarChartView] = useState('all');
 
   useEffect(() => {
     fetchProgressData();
-  }, [goals]); // Re-fetch when goals change
+  }, [goals]);
 
-  // Check and record achievement for today
+  const formatDateLocal = (dateObj) => {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const checkAndRecordAchievement = async (heatmap, goals) => {
     const today = new Date();
     const todayStr = formatDateLocal(today);
@@ -43,7 +57,6 @@ export default function Progress() {
       fiber: goals.fiber || 30,
     };
 
-    // Check if all goals were met
     const caloriesMet = todayData.calories >= safeGoals.calories * 0.9 && todayData.calories <= safeGoals.calories * 1.1;
     const proteinMet = todayData.protein >= safeGoals.protein;
     const carbsMet = todayData.carbs >= safeGoals.carbs * 0.9;
@@ -53,7 +66,6 @@ export default function Progress() {
     if (caloriesMet && proteinMet && carbsMet && fatMet && fiberMet) {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Record achievement (upsert - insert or update if exists)
       await supabase
         .from('daily_achievements')
         .upsert({
@@ -75,19 +87,10 @@ export default function Progress() {
     }
   };
 
-  // Helper to format date as YYYY-MM-DD in local time
-  const formatDateLocal = (dateObj) => {
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const fetchProgressData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Get last 90 days
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - 90);
 
@@ -109,7 +112,6 @@ export default function Progress() {
   };
 
   const processData = async (meals) => {
-    // Use default goals if not loaded
     const safeGoals = {
       calories: goals?.calories || 2000,
       protein: goals?.protein || 150,
@@ -120,15 +122,6 @@ export default function Progress() {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Helper to format date as YYYY-MM-DD in local time
-    const formatDateLocal = (dateObj) => {
-      const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    // Process for heatmap
     const heatmap = {};
 
     meals.forEach(meal => {
@@ -136,13 +129,7 @@ export default function Progress() {
       const date = formatDateLocal(dateObj);
 
       if (!heatmap[date]) {
-        heatmap[date] = {
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fat: 0,
-          fiber: 0,
-        };
+        heatmap[date] = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
       }
 
       heatmap[date].calories += meal.total_calories || 0;
@@ -153,30 +140,8 @@ export default function Progress() {
     });
 
     setHeatmapData(heatmap);
-
-    // Check and record achievement for today
     await checkAndRecordAchievement(heatmap, goals);
 
-    // Process for line chart (last 30 days)
-    const last30Days = Object.entries(heatmap)
-      .slice(-30)
-      .map(([date, data]) => {
-        const [year, month, day] = date.split('-').map(Number);
-        const dateObj = new Date(year, month - 1, day);
-        return {
-          date: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          calories: data.calories,
-          protein: data.protein.toFixed(1),
-          carbs: data.carbs.toFixed(1),
-          fat: data.fat.toFixed(1),
-          proteinPercent: ((data.protein / safeGoals.protein) * 100).toFixed(0),
-          caloriesPercent: ((data.calories / safeGoals.calories) * 100).toFixed(0),
-        };
-      });
-
-    setLineChartData(last30Days);
-
-    // Process for bar chart (last 7 days)
     const last7Days = Object.entries(heatmap)
       .slice(-7)
       .map(([date, data]) => {
@@ -194,20 +159,12 @@ export default function Progress() {
 
     setBarChartData(last7Days);
 
-    // Calculate stats
     const totalDays = Object.keys(heatmap).length;
 
     if (totalDays === 0) {
       setStats({
-        avgCalories: '0',
-        avgProtein: '0',
-        avgCarbs: '0',
-        avgFat: '0',
-        avgFiber: '0',
-        proteinGoalRate: '0',
-        calorieGoalRate: '0',
-        goalsMetStreak: 0,
-        totalDays: 0,
+        avgCalories: '0', avgProtein: '0', avgCarbs: '0', avgFat: '0', avgFiber: '0',
+        proteinGoalRate: '0', calorieGoalRate: '0', goalsMetStreak: 0, totalDays: 0,
       });
       return;
     }
@@ -223,7 +180,6 @@ export default function Progress() {
       day => day.calories >= safeGoals.calories * 0.9 && day.calories <= safeGoals.calories * 1.1
     ).length;
 
-    // Calculate goals met streak from achievements table
     const { data: achievements } = await supabase
       .from('daily_achievements')
       .select('achievement_date')
@@ -239,7 +195,6 @@ export default function Progress() {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = formatDateLocal(yesterday);
 
-      // Start counting from today or yesterday
       let currentDate = achievements[0].achievement_date === todayStr ? 
         new Date(todayStr) : 
         (achievements[0].achievement_date === yesterdayStr ? new Date(yesterdayStr) : null);
@@ -247,7 +202,6 @@ export default function Progress() {
       if (currentDate) {
         currentStreak = 1;
         
-        // Count consecutive days
         for (let i = 1; i < achievements.length; i++) {
           const prevDate = new Date(currentDate);
           prevDate.setDate(prevDate.getDate() - 1);
@@ -264,11 +218,11 @@ export default function Progress() {
     }
 
     setStats({
-      avgCalories: avgCalories.toFixed(1),
-      avgProtein: avgProtein.toFixed(1),
-      avgCarbs: avgCarbs.toFixed(1),
-      avgFat: avgFat.toFixed(1),
-      avgFiber: avgFiber.toFixed(1),
+      avgCalories: avgCalories.toFixed(0),
+      avgProtein: avgProtein.toFixed(0),
+      avgCarbs: avgCarbs.toFixed(0),
+      avgFat: avgFat.toFixed(0),
+      avgFiber: avgFiber.toFixed(0),
       proteinGoalRate: ((daysHitProteinGoal / totalDays) * 100).toFixed(0),
       calorieGoalRate: ((daysHitCalorieGoal / totalDays) * 100).toFixed(0),
       goalsMetStreak: currentStreak,
@@ -276,277 +230,250 @@ export default function Progress() {
     });
   };
 
+  const statCards = stats ? [
+    { label: 'Avg Calories', value: stats.avgCalories, unit: 'kcal', goal: goals?.calories, icon: Flame, color: 'primary' },
+    { label: 'Avg Protein', value: stats.avgProtein, unit: 'g', goal: goals?.protein, icon: Beef, color: 'secondary' },
+    { label: 'Avg Carbs', value: stats.avgCarbs, unit: 'g', goal: goals?.carbs, icon: Wheat, color: 'amber' },
+    { label: 'Avg Fat', value: stats.avgFat, unit: 'g', goal: goals?.fat, icon: Droplets, color: 'blue' },
+    { label: 'Avg Fiber', value: stats.avgFiber, unit: 'g', goal: goals?.fiber, icon: Leaf, color: 'green' },
+  ] : [];
+
+  const colorStyles = {
+    primary: { bg: 'bg-primary-700/10', text: 'text-primary-500', border: 'border-primary-700/30' },
+    secondary: { bg: 'bg-secondary-500/10', text: 'text-secondary-400', border: 'border-secondary-500/30' },
+    amber: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
+    blue: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
+    green: { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/30' },
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-gray-600">Loading progress...</div>
-      </div>
+      <Sidebar>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-white/60">Loading progress...</div>
+        </div>
+      </Sidebar>
     );
   }
 
   return (
-    <AuroraBackground>
-      <Navigation />
+    <Sidebar>
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <motion.h1 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-3xl font-heading font-bold text-white"
+            >
+              Progress
+            </motion.h1>
+            <p className="text-white/50 mt-1">Track your nutrition journey over time</p>
+          </div>
+          
+          {/* Streak Display */}
+          {stats && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`card px-6 py-4 flex items-center gap-4 ${stats.goalsMetStreak > 0 ? 'border-amber-500/30' : ''}`}
+            >
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stats.goalsMetStreak > 0 ? 'bg-amber-500/20' : 'bg-white/5'}`}>
+                <Zap size={24} className={stats.goalsMetStreak > 0 ? 'text-amber-400' : 'text-white/30'} />
+              </div>
+              <div>
+                <p className={`text-3xl font-mono font-bold ${stats.goalsMetStreak > 0 ? 'text-amber-400' : 'text-white/40'}`}>
+                  {stats.goalsMetStreak}
+                </p>
+                <p className="text-white/50 text-sm">Day Streak</p>
+              </div>
+            </motion.div>
+          )}
+        </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold text-black mb-2">Your Progress</h1>
-          <p className="text-gray-600">Track your nutrition journey over time</p>
-        </motion.div>
-
-        {/* Set Goals Component */}
+        {/* Set Goals */}
         <SetGoals />
 
-        {/* GitHub-style Heatmap */}
+        {/* Stats Grid */}
+        {stats && (
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            {statCards.map((stat, index) => {
+              const Icon = stat.icon;
+              const styles = colorStyles[stat.color];
+              
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={`card p-5 border ${styles.border}`}
+                >
+                  <div className={`w-10 h-10 rounded-lg ${styles.bg} flex items-center justify-center mb-3`}>
+                    <Icon size={20} className={styles.text} strokeWidth={2} />
+                  </div>
+                  <p className={`text-2xl font-mono font-bold ${styles.text}`}>
+                    {stat.value}
+                    <span className="text-sm ml-1">{stat.unit}</span>
+                  </p>
+                  <p className="text-white/50 text-sm mt-1">{stat.label}</p>
+                  {stat.goal && (
+                    <p className="text-xs text-white/30 mt-1">Goal: {stat.goal}{stat.unit}</p>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Heatmap */}
         <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1, duration: 0.6 }}
-          className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 mb-8 shadow-xl max-w-4xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="card p-6"
         >
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-black">Activity Heatmap</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Each square represents a day. Hover over a day to see detailed breakdown.
-            </p>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-primary-700/10 flex items-center justify-center">
+              <Calendar size={20} className="text-primary-500" strokeWidth={2} />
+            </div>
+            <div>
+              <h2 className="text-lg font-heading font-semibold text-white">Activity Heatmap</h2>
+              <p className="text-white/50 text-sm">Click on a day to see detailed breakdown</p>
+            </div>
           </div>
           <GitHubHeatmap data={heatmapData} goals={goals} />
         </motion.div>
 
-        {/* Stats Overview */}
-        {stats && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.6 }}
-            className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8"
-          >
-            <div className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 text-center shadow-xl">
-              <p className="text-3xl font-bold text-green-600">{stats.avgCalories}</p>
-              <p className="text-sm text-gray-600 mt-2">Avg Daily Calories</p>
-              <p className="text-xs text-green-600 mt-1">Goal: {goals.calories}</p>
-            </div>
-
-            <div className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 text-center shadow-xl">
-              <p className="text-3xl font-bold text-blue-600">{stats.avgProtein}g</p>
-              <p className="text-sm text-gray-600 mt-2">Avg Daily Protein</p>
-              <p className="text-xs text-blue-600 mt-1">Goal: {goals.protein}g</p>
-            </div>
-
-            <div className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 text-center shadow-xl">
-              <p className="text-3xl font-bold text-orange-600">{stats.avgCarbs}g</p>
-              <p className="text-sm text-gray-600 mt-2">Avg Daily Carbs</p>
-              <p className="text-xs text-orange-600 mt-1">Goal: {goals.carbs}g</p>
-            </div>
-
-            <div className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 text-center shadow-xl">
-              <p className="text-3xl font-bold text-purple-600">{stats.avgFat}g</p>
-              <p className="text-sm text-gray-600 mt-2">Avg Daily Fat</p>
-              <p className="text-xs text-purple-600 mt-1">Goal: {goals.fat}g</p>
-            </div>
-
-            <div className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 text-center shadow-xl">
-              <p className="text-3xl font-bold text-red-900">{stats.avgFiber}g</p>
-              <p className="text-sm text-gray-600 mt-2">Avg Daily Fiber</p>
-              <p className="text-xs text-red-900 mt-1">Goal: {goals.fiber}g</p>
-            </div>
-          </motion.div>
-        )}
-
         {/* Weekly Trends */}
         <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
         >
           <WeeklyTrends />
         </motion.div>
 
-        {/* Bar Chart - Last 7 Days Macros */}
+        {/* Bar Chart */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 mb-8 shadow-xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="card p-6"
         >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-black">Last 7 Days - Macro Breakdown</h2>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setBarChartView('all')}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
-                  barChartView === 'all'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                All Macros
-              </button>
-              <button
-                onClick={() => setBarChartView('protein')}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
-                  barChartView === 'protein'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Protein
-              </button>
-              <button
-                onClick={() => setBarChartView('carbs')}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
-                  barChartView === 'carbs'
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Carbs
-              </button>
-              <button
-                onClick={() => setBarChartView('fat')}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
-                  barChartView === 'fat'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Fat
-              </button>
-              <button
-                onClick={() => setBarChartView('fiber')}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
-                  barChartView === 'fiber'
-                    ? 'bg-red-900 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Fiber
-              </button>
-              <button
-                onClick={() => setBarChartView('calories')}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
-                  barChartView === 'calories'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                Calories
-              </button>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-secondary-500/10 flex items-center justify-center">
+                <TrendingUp size={20} className="text-secondary-400" strokeWidth={2} />
+              </div>
+              <h2 className="text-lg font-heading font-semibold text-white">Last 7 Days</h2>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'all', label: 'All', color: 'primary' },
+                { key: 'protein', label: 'Protein', color: 'secondary' },
+                { key: 'carbs', label: 'Carbs', color: 'amber' },
+                { key: 'fat', label: 'Fat', color: 'blue' },
+                { key: 'fiber', label: 'Fiber', color: 'green' },
+                { key: 'calories', label: 'Calories', color: 'primary' },
+              ].map(({ key, label, color }) => (
+                <button
+                  key={key}
+                  onClick={() => setBarChartView(key)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    barChartView === key
+                      ? `bg-${color === 'primary' ? 'primary-700' : color === 'secondary' ? 'secondary-500' : color === 'amber' ? 'amber-500' : color === 'blue' ? 'blue-500' : 'green-500'} text-white`
+                      : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={400}>
+          
+          <ResponsiveContainer width="100%" height={350}>
             <BarChart data={barChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" fontSize={12} />
+              <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '2px solid #a855f7',
+                  backgroundColor: '#0a0a0a',
+                  border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '8px',
-                  color: '#000000'
+                  color: '#fff'
                 }}
               />
               <Legend />
               {barChartView === 'all' ? (
                 <>
-                  <Bar dataKey="Protein" fill="#1d4ed8" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="Carbs" fill="#f59e0b" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="Fat" fill="#a855f7" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="Fiber" fill="#800000" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="Protein" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Carbs" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Fat" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Fiber" fill="#22c55e" radius={[4, 4, 0, 0]} />
                 </>
               ) : barChartView === 'protein' ? (
-                <>
-                  <Bar dataKey="Protein" fill="#1d4ed8" radius={[8, 8, 0, 0]} />
-                  <Line type="monotone" dataKey={() => goals.protein} stroke="#1d4ed8" strokeWidth={2} strokeDasharray="5 5" name="Protein Goal" dot={false} />
-                </>
+                <Bar dataKey="Protein" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
               ) : barChartView === 'carbs' ? (
-                <>
-                  <Bar dataKey="Carbs" fill="#f59e0b" radius={[8, 8, 0, 0]} />
-                  <Line type="monotone" dataKey={() => goals.carbs} stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Carbs Goal" dot={false} />
-                </>
+                <Bar dataKey="Carbs" fill="#f59e0b" radius={[4, 4, 0, 0]} />
               ) : barChartView === 'fat' ? (
-                <>
-                  <Bar dataKey="Fat" fill="#a855f7" radius={[8, 8, 0, 0]} />
-                  <Line type="monotone" dataKey={() => goals.fat} stroke="#a855f7" strokeWidth={2} strokeDasharray="5 5" name="Fat Goal" dot={false} />
-                </>
+                <Bar dataKey="Fat" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               ) : barChartView === 'fiber' ? (
-                <>
-                  <Bar dataKey="Fiber" fill="#800000" radius={[8, 8, 0, 0]} />
-                  <Line type="monotone" dataKey={() => goals.fiber} stroke="#800000" strokeWidth={2} strokeDasharray="5 5" name="Fiber Goal" dot={false} />
-                </>
+                <Bar dataKey="Fiber" fill="#22c55e" radius={[4, 4, 0, 0]} />
               ) : (
-                <>
-                  <Bar dataKey="Calories" fill="#10b981" radius={[8, 8, 0, 0]} />
-                  <Line type="monotone" dataKey={() => goals.calories} stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" name="Calorie Goal" dot={false} />
-                </>
+                <Bar dataKey="Calories" fill="#047857" radius={[4, 4, 0, 0]} />
               )}
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Radar Chart - Goal Achievement */}
+        {/* Radar Chart */}
         {stats && (
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="bg-white/95 backdrop-blur-sm border-2 border-purple-500 rounded-xl p-6 shadow-xl"
+            transition={{ delay: 0.5 }}
+            className="card p-6"
           >
-            <h2 className="text-2xl font-bold text-black mb-6">Goal Achievement Overview</h2>
-            <ResponsiveContainer width="100%" height={400}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <Target size={20} className="text-amber-400" strokeWidth={2} />
+              </div>
+              <div>
+                <h2 className="text-lg font-heading font-semibold text-white">Goal Achievement</h2>
+                <p className="text-white/50 text-sm">Average achievement vs goals</p>
+              </div>
+            </div>
+            
+            <ResponsiveContainer width="100%" height={350}>
               <RadarChart data={[
-                {
-                  metric: 'Protein',
-                  value: Math.min((parseFloat(stats.avgProtein) / goals.protein) * 100, 100),
-                  fullMark: 100,
-                },
-                {
-                  metric: 'Carbs',
-                  value: Math.min((parseFloat(stats.avgCarbs) / goals.carbs) * 100, 100),
-                  fullMark: 100,
-                },
-                {
-                  metric: 'Fat',
-                  value: Math.min((parseFloat(stats.avgFat) / goals.fat) * 100, 100),
-                  fullMark: 100,
-                },
-                {
-                  metric: 'Fiber',
-                  value: Math.min((parseFloat(stats.avgFiber) / goals.fiber) * 100, 100),
-                  fullMark: 100,
-                },
-                {
-                  metric: 'Consistency',
-                  value: parseFloat(stats.proteinGoalRate),
-                  fullMark: 100,
-                },
+                { metric: 'Protein', value: Math.min((parseFloat(stats.avgProtein) / (goals?.protein || 150)) * 100, 100), fullMark: 100 },
+                { metric: 'Carbs', value: Math.min((parseFloat(stats.avgCarbs) / (goals?.carbs || 250)) * 100, 100), fullMark: 100 },
+                { metric: 'Fat', value: Math.min((parseFloat(stats.avgFat) / (goals?.fat || 67)) * 100, 100), fullMark: 100 },
+                { metric: 'Fiber', value: Math.min((parseFloat(stats.avgFiber) / (goals?.fiber || 30)) * 100, 100), fullMark: 100 },
+                { metric: 'Consistency', value: parseFloat(stats.proteinGoalRate), fullMark: 100 },
               ]}>
-                <PolarGrid stroke="#a855f7" />
-                <PolarAngleAxis dataKey="metric" stroke="#374151" />
-                <PolarRadiusAxis angle={90} domain={[0, 100]} stroke="#6b7280" />
-                <Radar name="Your Progress" dataKey="value" stroke="#a855f7" fill="#a855f7" fillOpacity={0.6} />
+                <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                <PolarAngleAxis dataKey="metric" stroke="rgba(255,255,255,0.6)" fontSize={12} />
+                <PolarRadiusAxis angle={90} domain={[0, 100]} stroke="rgba(255,255,255,0.3)" fontSize={10} />
+                <Radar name="Progress" dataKey="value" stroke="#047857" fill="#047857" fillOpacity={0.3} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#ffffff',
-                    border: '2px solid #a855f7',
+                    backgroundColor: '#0a0a0a',
+                    border: '1px solid rgba(255,255,255,0.1)',
                     borderRadius: '8px',
+                    color: '#fff'
                   }}
                   formatter={(value) => `${parseFloat(value).toFixed(1)}%`}
                 />
               </RadarChart>
             </ResponsiveContainer>
-            <p className="text-center text-sm text-gray-600 mt-4">
-              Shows your average achievement percentage vs goals across all metrics
-            </p>
           </motion.div>
         )}
       </div>
-    </AuroraBackground>
+    </Sidebar>
   );
 }

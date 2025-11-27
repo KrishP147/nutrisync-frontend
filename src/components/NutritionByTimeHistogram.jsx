@@ -1,122 +1,145 @@
-import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useMemo, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Flame, Beef, Wheat, Droplets, Leaf } from 'lucide-react';
 
-export default function NutritionByTimeHistogram({ meals, title = "Intake by Time of Day" }) {
-  const [timeChartView, setTimeChartView] = useState('calories'); // 'calories', 'protein', 'carbs', 'fat', 'fiber'
+export default function NutritionByTimeHistogram({ meals = [] }) {
+  const [viewMode, setViewMode] = useState('calories');
 
-  console.log('NutritionByTimeHistogram received meals:', meals?.length || 0, meals);
-
-  const getNutritionByTimeData = () => {
-    if (!meals || meals.length === 0) {
-      console.log('No meals to process for histogram');
-      return [];
+  const histogramData = useMemo(() => {
+    // Create 24 half-hour time slots (12:00 AM to 11:30 PM)
+    const timeSlots = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let half = 0; half < 2; half++) {
+        const label = `${hour.toString().padStart(2, '0')}:${half === 0 ? '00' : '30'}`;
+        timeSlots.push({
+          time: label,
+          hour: hour,
+          halfHour: half,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+          fiber: 0,
+        });
+      }
     }
 
-    // Group meals by half-hour intervals with all macros
-    const nutritionByHalfHour = meals.reduce((acc, meal) => {
+    // Aggregate meals into time slots
+    meals.forEach(meal => {
       const date = new Date(meal.consumed_at);
       const hour = date.getHours();
-      const minute = date.getMinutes();
-      // Round to nearest half hour: 0-29 -> 0, 30-59 -> 30
-      const halfHour = minute < 30 ? 0 : 30;
-      const timeKey = hour * 2 + (halfHour === 30 ? 1 : 0); // Convert to half-hour index (0-47)
-      
-      if (!acc[timeKey]) {
-        acc[timeKey] = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-      }
-      acc[timeKey].calories += meal.total_calories || 0;
-      acc[timeKey].protein += meal.total_protein_g || 0;
-      acc[timeKey].carbs += meal.total_carbs_g || 0;
-      acc[timeKey].fat += meal.total_fat_g || 0;
-      acc[timeKey].fiber += meal.total_fiber_g || 0;
-      return acc;
-    }, {});
+      const minutes = date.getMinutes();
+      const halfHour = minutes < 30 ? 0 : 1;
+      const slotIndex = hour * 2 + halfHour;
 
-    // Create data array for all 48 half-hour intervals (24 hours * 2)
-    return Array.from({ length: 48 }, (_, i) => {
-      const hour = Math.floor(i / 2);
-      const halfHour = (i % 2) * 30;
-      const timeKey = `${hour.toString().padStart(2, '0')}:${halfHour.toString().padStart(2, '0')}`;
-      
-      return {
-        timeIndex: i,
-        hour: hour,
-        calories: Math.round(nutritionByHalfHour[i]?.calories || 0),
-        protein: parseFloat((nutritionByHalfHour[i]?.protein || 0).toFixed(1)),
-        carbs: parseFloat((nutritionByHalfHour[i]?.carbs || 0).toFixed(1)),
-        fat: parseFloat((nutritionByHalfHour[i]?.fat || 0).toFixed(1)),
-        fiber: parseFloat((nutritionByHalfHour[i]?.fiber || 0).toFixed(1)),
-        label: timeKey
-      };
+      if (slotIndex >= 0 && slotIndex < timeSlots.length) {
+        timeSlots[slotIndex].calories += meal.total_calories || 0;
+        timeSlots[slotIndex].protein += meal.total_protein_g || 0;
+        timeSlots[slotIndex].carbs += meal.total_carbs_g || 0;
+        timeSlots[slotIndex].fat += meal.total_fat_g || 0;
+        timeSlots[slotIndex].fiber += meal.total_fiber_g || 0;
+      }
     });
+
+    return timeSlots;
+  }, [meals]);
+
+  const getBarColor = () => {
+    switch (viewMode) {
+      case 'calories': return '#047857';
+      case 'protein': return '#0ea5e9';
+      case 'carbs': return '#f59e0b';
+      case 'fat': return '#3b82f6';
+      case 'fiber': return '#22c55e';
+      default: return '#047857';
+    }
   };
 
-  const chartData = getNutritionByTimeData();
+  const getDataKey = () => {
+    return viewMode;
+  };
+
+  const formatYAxis = (value) => {
+    if (viewMode === 'calories') {
+      return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value;
+    }
+    return `${value}g`;
+  };
+
+  const modes = [
+    { key: 'calories', label: 'Calories', icon: Flame, color: 'primary' },
+    { key: 'protein', label: 'Protein', icon: Beef, color: 'secondary' },
+    { key: 'carbs', label: 'Carbs', icon: Wheat, color: 'amber' },
+    { key: 'fat', label: 'Fat', icon: Droplets, color: 'blue' },
+    { key: 'fiber', label: 'Fiber', icon: Leaf, color: 'green' },
+  ];
+
+  const hasData = meals.length > 0;
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
-        <div className="flex gap-1">
-          {[
-            { key: 'calories', label: 'Cal', color: 'bg-green-600' },
-            { key: 'protein', label: 'P', color: 'bg-blue-600' },
-            { key: 'carbs', label: 'C', color: 'bg-orange-500' },
-            { key: 'fat', label: 'F', color: 'bg-purple-600' },
-            { key: 'fiber', label: 'Fb', color: 'bg-red-900' }
-          ].map(({ key, label, color }) => (
-            <button
-              key={key}
-              onClick={() => setTimeChartView(key)}
-              className={`px-2 py-1 rounded text-xs font-medium transition ${
-                timeChartView === key
-                  ? `${color} text-white`
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-      {(!meals || meals.length === 0) ? (
-        <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-          <p className="text-lg font-medium">No meals logged yet</p>
-          <p className="text-sm mt-1">Your nutrition timeline will appear here</p>
-        </div>
-      ) : (
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart
-            data={chartData}
-            margin={{ top: 10, right: 30, left: 20, bottom: 60 }}
+      {/* View Mode Toggle */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {modes.map(({ key, label, icon: Icon, color }) => (
+          <button
+            key={key}
+            onClick={() => setViewMode(key)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              viewMode === key
+                ? `bg-${color === 'primary' ? 'primary-700' : color === 'secondary' ? 'secondary-500' : color === 'amber' ? 'amber-500' : color === 'blue' ? 'blue-500' : 'green-500'} text-white`
+                : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
+            }`}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
+            <Icon size={14} strokeWidth={2} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Chart */}
+      {hasData ? (
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={histogramData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
             <XAxis
-              dataKey="label"
-              tick={{ fontSize: 9 }}
-              angle={-45}
-              textAnchor="end"
-              height={60}
-              stroke="#9ca3af"
+              dataKey="time"
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={10}
               interval={3}
+              tickFormatter={(value) => value.split(':')[0] + ':00'}
             />
-            <YAxis tick={{ fontSize: 10 }} stroke="#9ca3af" />
+            <YAxis
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={10}
+              tickFormatter={formatYAxis}
+            />
             <Tooltip
-              formatter={(value) => {
-                if (timeChartView === 'calories') return [`${value} cal`, 'Calories'];
-                return [`${value}g`, timeChartView.charAt(0).toUpperCase() + timeChartView.slice(1)];
+              contentStyle={{
+                backgroundColor: '#0a0a0a',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                color: '#fff'
               }}
-              labelFormatter={(label) => `Time ${label}`}
+              formatter={(value) => [
+                viewMode === 'calories' ? `${Math.round(value)} kcal` : `${value.toFixed(1)}g`,
+                viewMode.charAt(0).toUpperCase() + viewMode.slice(1)
+              ]}
+              labelFormatter={(label) => `Time: ${label}`}
             />
-            {timeChartView === 'calories' && <Bar dataKey="calories" fill="#10b981" />}
-            {timeChartView === 'protein' && <Bar dataKey="protein" fill="#1d4ed8" />}
-            {timeChartView === 'carbs' && <Bar dataKey="carbs" fill="#f59e0b" />}
-            {timeChartView === 'fat' && <Bar dataKey="fat" fill="#a855f7" />}
-            {timeChartView === 'fiber' && <Bar dataKey="fiber" fill="#800000" />}
+            <Bar dataKey={getDataKey()} radius={[2, 2, 0, 0]}>
+              {histogramData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry[getDataKey()] > 0 ? getBarColor() : 'rgba(255,255,255,0.05)'} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
+      ) : (
+        <div className="h-64 flex flex-col items-center justify-center text-white/40">
+          <Flame size={32} className="mb-3 opacity-50" />
+          <p>No meals logged yet today</p>
+          <p className="text-sm mt-1">Your nutrition timeline will appear here</p>
+        </div>
       )}
     </div>
   );
 }
-

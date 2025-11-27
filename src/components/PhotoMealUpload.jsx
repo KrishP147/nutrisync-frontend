@@ -654,14 +654,14 @@ export default function PhotoMealUpload({ onMealAdded }) {
   };
 
   return (
-    <div className="bg-white border-2 border-green-100 rounded-xl shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-black mb-4">📸 Photo Analysis</h2>
+    <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg shadow-sm p-6">
+      <h2 className="text-2xl font-heading font-bold text-white mb-4">Photo Analysis</h2>
 
       {!preview && !result && (
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          className="border-2 border-dashed border-gray-300 rounded-lg p-14 min-h-[340px] flex items-center justify-center text-center hover:border-blue-400 transition cursor-pointer"
+          className="border-2 border-dashed border-[#1a1a1a] rounded-lg p-14 min-h-[340px] flex items-center justify-center text-center hover:border-primary-700 transition cursor-pointer"
         >
           <input
             type="file"
@@ -672,8 +672,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
           />
           <label htmlFor="file-input" className="cursor-pointer">
             <div className="text-6xl mb-4">📷</div>
-            <p className="text-gray-600 mb-2">Drop an image here or click to upload</p>
-            <p className="text-sm text-gray-500">Supported: JPG, PNG, HEIC</p>
+            <p className="text-white/60 mb-2">Drop an image here or click to upload</p>
+            <p className="text-sm text-white/60">Supported: JPG, PNG, HEIC</p>
           </label>
         </div>
       )}
@@ -702,7 +702,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
           {/* Meal Type Selector */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-white/60 mb-2">
               Select Meal Type *
             </label>
             <div className="grid grid-cols-4 gap-2">
@@ -712,8 +712,8 @@ export default function PhotoMealUpload({ onMealAdded }) {
                   onClick={() => setMealType(type)}
                   className={`py-2 px-4 rounded-lg border-2 transition capitalize ${
                     mealType === type
-                      ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold'
-                      : 'border-gray-300 hover:border-blue-300 text-black'
+                      ? 'border-primary-700 bg-primary-700/20 text-primary-700 font-semibold'
+                      : 'border-[#1a1a1a] hover:border-primary-700/50 text-white'
                   }`}
                 >
                   {type}
@@ -729,9 +729,9 @@ export default function PhotoMealUpload({ onMealAdded }) {
               id="savePhoto"
               checked={savePhoto}
               onChange={(e) => setSavePhoto(e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary-700 bg-black border-[#1a1a1a] rounded focus:ring-primary-700"
             />
-            <label htmlFor="savePhoto" className="ml-2 text-sm text-gray-700">
+            <label htmlFor="savePhoto" className="ml-2 text-sm text-white/60">
               Save photo with meal log (uncheck to analyze without saving photo)
             </label>
           </div>
@@ -739,15 +739,15 @@ export default function PhotoMealUpload({ onMealAdded }) {
           <button
             onClick={analyzeImage}
             disabled={analyzing || !mealType}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-primary-700 text-white py-3 rounded-lg hover:bg-primary-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {analyzing ? '🔍 Analyzing...' : '📸 Analyze Photo'}
+            {analyzing ? 'Analyzing...' : 'Analyze Photo'}
           </button>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mt-4">
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg mt-4">
           {error}
         </div>
       )}
@@ -777,33 +777,33 @@ export default function PhotoMealUpload({ onMealAdded }) {
             </button>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-gray-800">Detected Foods:</h3>
+              <h3 className="font-semibold text-white">Detected Foods:</h3>
               <button
                 onClick={addManualFood}
-                className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                className="text-sm bg-primary-700 text-white px-3 py-1 rounded-lg hover:bg-primary-600"
               >
                 + Add Food
               </button>
             </div>
 
             {/* Meal Multiplier */}
-            <div className="mb-3 bg-white p-3 rounded border-2 border-purple-300">
+            <div className="mb-3 bg-black p-3 rounded-lg border-2 border-primary-700/30">
               <div className="flex items-center gap-3 mb-1">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Meal Multiplier:</label>
+                <label className="text-sm font-medium text-white/60 whitespace-nowrap">Meal Multiplier:</label>
                 <input
                   type="text"
                   value={mealMultiplier}
                   onChange={(e) => updateMealMultiplier(e.target.value)}
                   placeholder="1 or 2x or 250g"
-                  className="flex-1 px-3 py-1.5 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 text-sm text-gray-900"
+                  className="flex-1 px-3 py-1.5 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 text-sm text-white bg-black"
                 />
-                <span className="text-xs font-semibold text-purple-700 whitespace-nowrap bg-purple-50 px-2 py-1 rounded">
+                <span className="text-xs font-semibold text-primary-700 whitespace-nowrap bg-primary-700/10 px-2 py-1 rounded-lg">
                   Total: {Math.round(getTotalCompoundWeight())}g
                 </span>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-white/60">
                 Enter a number (e.g., 2) to multiply all portions, or grams (e.g., 250g) to scale to that weight
               </p>
             </div>
@@ -813,7 +813,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
                 <FoodSearchInput onFoodSelect={handleFoodSelect} />
                 <button
                   onClick={() => setShowFoodSearch(false)}
-                  className="mt-2 text-sm text-gray-600 hover:text-gray-800"
+                  className="mt-2 text-sm text-white/60 hover:text-white"
                 >
                   Cancel
                 </button>
@@ -822,7 +822,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
             <ul className="space-y-2">
               {editableResult.foods.map((food, idx) => (
-                <li key={idx} className="bg-white p-3 rounded border border-blue-200">
+                <li key={idx} className="bg-black p-3 rounded-lg border border-[#1a1a1a]">
                   {editingIndex === idx ? (
                     <div className="space-y-2">
                       <input
@@ -830,81 +830,81 @@ export default function PhotoMealUpload({ onMealAdded }) {
                         value={food.name}
                         onChange={(e) => updateFood(idx, 'name', e.target.value)}
                         placeholder="Food name"
-                        className="w-full px-2 py-1 border rounded text-gray-900"
+                        className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-white bg-black"
                       />
-                      <p className="text-xs text-gray-600 font-medium">Edit base nutrition values (per 100{food.portion_unit}):</p>
+                      <p className="text-xs text-white/60 font-medium">Edit base nutrition values (per 100{food.portion_unit}):</p>
                       <div className="grid grid-cols-5 gap-2">
                         <div>
-                          <label className="text-xs text-gray-500 block mb-0.5">Calories</label>
+                          <label className="text-xs text-white/60 block mb-0.5">Calories</label>
                           <input
                             type="number"
                             min="0"
                             value={food.base_calories}
                             onChange={(e) => updateFood(idx, 'base_calories', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-gray-500 block mb-0.5">Protein (g)</label>
+                          <label className="text-xs text-white/60 block mb-0.5">Protein (g)</label>
                           <input
                             type="number"
                             step="0.1"
                             min="0"
                             value={food.base_protein_g}
                             onChange={(e) => updateFood(idx, 'base_protein_g', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-gray-500 block mb-0.5">Carbs (g)</label>
+                          <label className="text-xs text-white/60 block mb-0.5">Carbs (g)</label>
                           <input
                             type="number"
                             step="0.1"
                             min="0"
                             value={food.base_carbs_g}
                             onChange={(e) => updateFood(idx, 'base_carbs_g', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-gray-500 block mb-0.5">Fat (g)</label>
+                          <label className="text-xs text-white/60 block mb-0.5">Fat (g)</label>
                           <input
                             type="number"
                             step="0.1"
                             min="0"
                             value={food.base_fat_g}
                             onChange={(e) => updateFood(idx, 'base_fat_g', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-gray-500 block mb-0.5">Fiber (g)</label>
+                          <label className="text-xs text-white/60 block mb-0.5">Fiber (g)</label>
                           <input
                             type="number"
                             step="0.1"
                             min="0"
                             value={food.base_fiber_g}
                             onChange={(e) => updateFood(idx, 'base_fiber_g', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border border-[#1a1a1a] rounded-lg text-sm text-white bg-black"
                           />
                         </div>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setEditingIndex(null)}
-                          className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                          className="text-sm bg-primary-700 text-white px-3 py-1 rounded-lg hover:bg-primary-600"
                         >
                           Done
                         </button>
                         <button
                           onClick={() => saveAsCustomFood(idx)}
-                          className="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700"
+                          className="text-sm bg-secondary-500 text-white px-3 py-1 rounded-lg hover:bg-secondary-400"
                         >
-                          ⭐ Save as Custom Food
+                          Save as Custom Food
                         </button>
                         <button
                           onClick={() => removeFood(idx)}
-                          className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                          className="text-sm bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-400"
                         >
                           Remove
                         </button>
@@ -914,21 +914,21 @@ export default function PhotoMealUpload({ onMealAdded }) {
                     <div className="space-y-2">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <p className="font-medium text-gray-800">{food.name}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="font-medium text-white">{food.name}</p>
+                          <p className="text-xs text-white/60">
                             Base: {food.base_calories} cal per {food.base_portion_size || 100}{food.portion_unit} (enter {food.base_portion_size || 100}{food.portion_unit} or 1)
                           </p>
                         </div>
                         <div className="flex gap-2">
                           <button
                             onClick={() => saveAsCustomFood(idx)}
-                            className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
+                            className="text-xs bg-secondary-500 text-white px-2 py-1 rounded-lg hover:bg-secondary-400"
                           >
-                            ⭐ Save
+                            Save
                           </button>
                           <button
                             onClick={() => setEditingIndex(idx)}
-                            className="text-sm text-blue-600 hover:text-blue-800"
+                            className="text-sm text-primary-700 hover:text-primary-600"
                           >
                             Edit Manually
                           </button>
@@ -938,42 +938,42 @@ export default function PhotoMealUpload({ onMealAdded }) {
                       <div className="flex items-center gap-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <label className="text-sm text-gray-600 w-24">Count (g or x):</label>
+                            <label className="text-sm text-white/60 w-24">Count (g or x):</label>
                             <input
                               type="text"
                               value={food.portion_display}
                               onChange={(e) => updateFoodQuantity(idx, e.target.value)}
                               placeholder="e.g., 150g or 2"
-                              className="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm text-gray-900"
+                              className="flex-1 px-3 py-1 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 text-sm text-white bg-black"
                             />
                           </div>
-                          <p className="text-xs text-gray-500 ml-24">
-                            <span className="font-semibold text-purple-600">{food.base_portion_size || 100}g = 1</span> • Total: {Math.round(food.portion_size)}g
+                          <p className="text-xs text-white/60 ml-24">
+                            <span className="font-semibold text-primary-700">{food.base_portion_size || 100}g = 1</span> • Total: {Math.round(food.portion_size)}g
                           </p>
                         </div>
                       </div>
 
-                      <div className="bg-gray-50 p-2 rounded text-sm">
+                      <div className="bg-[#0a0a0a] p-2 rounded-lg text-sm">
                         <div className="grid grid-cols-5 gap-1 text-center">
                           <div>
-                            <p className="font-bold text-blue-600">{food.calories}</p>
-                            <p className="text-xs text-gray-500">cal</p>
+                            <p className="font-bold font-mono text-secondary-500">{food.calories}</p>
+                            <p className="text-xs text-white/60">cal</p>
                           </div>
                           <div>
-                            <p className="font-bold text-green-600">{food.protein_g}g</p>
-                            <p className="text-xs text-gray-500">P</p>
+                            <p className="font-bold font-mono text-primary-700">{food.protein_g}g</p>
+                            <p className="text-xs text-white/60">P</p>
                           </div>
                           <div>
-                            <p className="font-bold text-yellow-600">{food.carbs_g}g</p>
-                            <p className="text-xs text-gray-500">C</p>
+                            <p className="font-bold font-mono text-amber-500">{food.carbs_g}g</p>
+                            <p className="text-xs text-white/60">C</p>
                           </div>
                           <div>
-                            <p className="font-bold text-orange-600">{food.fat_g}g</p>
-                            <p className="text-xs text-gray-500">F</p>
+                            <p className="font-bold font-mono text-amber-500">{food.fat_g}g</p>
+                            <p className="text-xs text-white/60">F</p>
                           </div>
                           <div>
-                            <p className="font-bold text-purple-600">{food.fiber_g}g</p>
-                            <p className="text-xs text-gray-500">Fiber</p>
+                            <p className="font-bold font-mono text-primary-700">{food.fiber_g}g</p>
+                            <p className="text-xs text-white/60">Fiber</p>
                           </div>
                         </div>
                       </div>
@@ -985,37 +985,37 @@ export default function PhotoMealUpload({ onMealAdded }) {
           </div>
 
           <div className="grid grid-cols-5 gap-2">
-            <div className="text-center p-3 bg-blue-50 rounded">
-              <p className="text-xl font-bold text-blue-600">{Math.round(editableResult.total_nutrition.calories)}</p>
-              <p className="text-xs text-gray-600">Calories</p>
+            <div className="text-center p-3 bg-secondary-500/10 rounded-lg border border-secondary-500/30">
+              <p className="text-xl font-bold font-mono text-secondary-500">{Math.round(editableResult.total_nutrition.calories)}</p>
+              <p className="text-xs text-white/60">Calories</p>
             </div>
-            <div className="text-center p-3 bg-green-50 rounded">
-              <p className="text-xl font-bold text-green-600">{editableResult.total_nutrition.protein_g.toFixed(1)}g</p>
-              <p className="text-xs text-gray-600">Protein</p>
+            <div className="text-center p-3 bg-primary-700/10 rounded-lg border border-primary-700/30">
+              <p className="text-xl font-bold font-mono text-primary-700">{editableResult.total_nutrition.protein_g.toFixed(1)}g</p>
+              <p className="text-xs text-white/60">Protein</p>
             </div>
-            <div className="text-center p-3 bg-yellow-50 rounded">
-              <p className="text-xl font-bold text-yellow-600">{editableResult.total_nutrition.carbs_g.toFixed(1)}g</p>
-              <p className="text-xs text-gray-600">Carbs</p>
+            <div className="text-center p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
+              <p className="text-xl font-bold font-mono text-amber-500">{editableResult.total_nutrition.carbs_g.toFixed(1)}g</p>
+              <p className="text-xs text-white/60">Carbs</p>
             </div>
-            <div className="text-center p-3 bg-orange-50 rounded">
-              <p className="text-xl font-bold text-orange-600">{editableResult.total_nutrition.fat_g.toFixed(1)}g</p>
-              <p className="text-xs text-gray-600">Fat</p>
+            <div className="text-center p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
+              <p className="text-xl font-bold font-mono text-amber-500">{editableResult.total_nutrition.fat_g.toFixed(1)}g</p>
+              <p className="text-xs text-white/60">Fat</p>
             </div>
-            <div className="text-center p-3 bg-purple-50 rounded">
-              <p className="text-xl font-bold text-purple-600">{editableResult.total_nutrition.fiber_g.toFixed(1)}g</p>
-              <p className="text-xs text-gray-600">Fiber</p>
+            <div className="text-center p-3 bg-primary-700/10 rounded-lg border border-primary-700/30">
+              <p className="text-xl font-bold font-mono text-primary-700">{editableResult.total_nutrition.fiber_g.toFixed(1)}g</p>
+              <p className="text-xs text-white/60">Fiber</p>
             </div>
           </div>
 
           {editableResult.recommendations && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-gray-700">💡 {editableResult.recommendations}</p>
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+              <p className="text-sm text-white">{editableResult.recommendations}</p>
             </div>
           )}
 
           {/* Meal Name Editor */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-white/60 mb-2">
               Meal Name
             </label>
             <div className="flex gap-2">
@@ -1024,18 +1024,18 @@ export default function PhotoMealUpload({ onMealAdded }) {
                 value={customMealName}
                 onChange={(e) => handleMealNameChange(e.target.value)}
                 placeholder="Enter meal name"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="flex-1 px-3 py-2 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white bg-black"
               />
               <button
                 onClick={resetMealName}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition whitespace-nowrap"
+                className="px-4 py-2 bg-[#0a0a0a] border border-[#1a1a1a] text-white rounded-lg hover:bg-black transition whitespace-nowrap"
                 title="Reset to dynamic name"
               >
-                🔄 Reset
+                Reset
               </button>
             </div>
             {isNameManuallyEdited && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-white/60 mt-1">
                 Original: {generateDynamicMealName()}
               </p>
             )}
@@ -1043,7 +1043,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
           {/* Meal Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-white/60 mb-2">
               Add Notes (Optional)
             </label>
             <textarea
@@ -1052,9 +1052,9 @@ export default function PhotoMealUpload({ onMealAdded }) {
               placeholder="Add any notes about this meal (e.g., where you ate, how you felt, special ingredients...)"
               maxLength={500}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 resize-none"
+              className="w-full px-3 py-2 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white bg-black resize-none"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-white/60 mt-1">
               {notes.length}/500 characters
             </p>
           </div>
@@ -1063,24 +1063,24 @@ export default function PhotoMealUpload({ onMealAdded }) {
             {/* Save as My Food button */}
             <button
               onClick={saveEntireMealAsCustomFood}
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2.5 rounded-lg hover:from-purple-600 hover:to-pink-600 transition shadow-md font-medium"
+              className="w-full bg-secondary-500 text-white py-2.5 rounded-lg hover:bg-secondary-400 transition shadow-md font-medium"
             >
-              ⭐ Save Entire Meal as My Food
+              Save Entire Meal as My Food
             </button>
 
             <div className="flex gap-2">
               <button
                 onClick={saveMeal}
-                className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
+                className="flex-1 bg-primary-700 text-white py-3 rounded-lg hover:bg-primary-600 transition"
               >
-                ✅ Save Meal
+                Save Meal
               </button>
               <button
                 onClick={resetToOriginal}
-                className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                className="px-6 py-3 bg-[#0a0a0a] border border-[#1a1a1a] text-white rounded-lg hover:bg-black transition"
                 title="Reset to AI-detected values"
               >
-                🔄 Reset
+                Reset
               </button>
             </div>
           </div>

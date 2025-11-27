@@ -1,69 +1,91 @@
 import { useState } from 'react';
-import Navigation from '../components/Navigation';
+import { motion } from 'motion/react';
+import { Camera, PenLine } from 'lucide-react';
+import Sidebar from '../components/layout/Sidebar';
 import MealForm from '../components/MealForm';
 import PhotoMealUpload from '../components/PhotoMealUpload';
 import MealList from '../components/MealList';
-import BackgroundBeamsWithCollision from '../components/ui/BackgroundBeamsWithCollision';
-import { motion } from 'motion/react';
 
 export default function Logging() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState('photo');
 
   const handleMealAdded = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
   return (
-    <BackgroundBeamsWithCollision>
-      <Navigation />
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold text-black mb-2">Log Your Meals</h1>
-          <p className="text-gray-600">Track your nutrition throughout the day</p>
-        </motion.div>
-
-        {/* Logging Methods */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
+    <Sidebar>
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div>
+          <motion.h1 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-3xl font-heading font-bold text-white"
           >
-            <PhotoMealUpload onMealAdded={handleMealAdded} />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <MealForm onMealAdded={handleMealAdded} />
-          </motion.div>
+            Log Meals
+          </motion.h1>
+          <p className="text-white/50 mt-1">Track your nutrition throughout the day</p>
         </div>
 
-        {/* Logged Today Section - Scrollable Container */}
+        {/* Logging Method Tabs */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('photo')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-lg font-medium transition-all ${
+              activeTab === 'photo' 
+                ? 'bg-primary-700 text-white' 
+                : 'bg-surface-300 text-white/60 hover:text-white border border-white/10'
+            }`}
+          >
+            <Camera size={20} strokeWidth={2} />
+            Photo Analysis
+          </button>
+          <button
+            onClick={() => setActiveTab('manual')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-lg font-medium transition-all ${
+              activeTab === 'manual' 
+                ? 'bg-primary-700 text-white' 
+                : 'bg-surface-300 text-white/60 hover:text-white border border-white/10'
+            }`}
+          >
+            <PenLine size={20} strokeWidth={2} />
+            Manual Entry
+          </button>
+        </div>
+
+        {/* Logging Form */}
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {activeTab === 'photo' ? (
+            <PhotoMealUpload onMealAdded={handleMealAdded} />
+          ) : (
+            <MealForm onMealAdded={handleMealAdded} />
+          )}
+        </motion.div>
+
+        {/* Logged Today Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.2 }}
         >
-          <h2 className="text-2xl font-bold text-black mb-4">Logged Today</h2>
-          <div className="bg-gradient-to-br from-green-100 via-green-50 to-emerald-100 rounded-xl p-6 border-2 border-green-400 shadow-xl max-h-[600px] overflow-y-auto custom-scrollbar-light">
+          <h2 className="text-xl font-heading font-semibold text-white mb-4">Logged Today</h2>
+          <div className="card p-6 max-h-[600px] overflow-y-auto custom-scrollbar">
             <MealList 
               refreshTrigger={refreshTrigger}
               onMealDeleted={handleMealAdded}
               onMealUpdated={handleMealAdded}
               limit={20}
-              variant="light-purple"
             />
           </div>
         </motion.div>
       </div>
-    </BackgroundBeamsWithCollision>
+    </Sidebar>
   );
 }

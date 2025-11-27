@@ -229,24 +229,24 @@ export default function MealForm({ onMealAdded }) {
   };
 
   return (
-    <div className="bg-white border-2 border-green-100 rounded-xl shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-black mb-4">Log a Meal</h2>
+    <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-6">
+      <h2 className="text-2xl font-heading font-bold text-white mb-4">Log a Meal</h2>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg mb-4">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-white/60 mb-1">
             Meal Type
           </label>
           <select
             value={mealType}
             onChange={(e) => setMealType(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+            className="w-full px-4 py-2 bg-black border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white"
           >
             <option value="breakfast">Breakfast</option>
             <option value="lunch">Lunch</option>
@@ -258,13 +258,13 @@ export default function MealForm({ onMealAdded }) {
         {useAutocomplete ? (
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-white/60">
                 Search Food
               </label>
               <button
                 type="button"
                 onClick={() => setUseAutocomplete(false)}
-                className="text-xs text-blue-600 hover:text-blue-800"
+                className="text-xs text-primary-700 hover:text-primary-600"
               >
                 Enter manually
               </button>
@@ -274,16 +274,16 @@ export default function MealForm({ onMealAdded }) {
             {foods.length > 0 && (
               <div className="space-y-2 mb-3">
                 {foods.map((food, idx) => (
-                  <div key={food.id} className="bg-blue-50 p-3 rounded-lg">
+                  <div key={food.id} className="bg-black border border-[#1a1a1a] p-3 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800">{food.name}</p>
-                        <p className="text-xs text-gray-600">
+                        <p className="text-sm font-medium text-white">{food.name}</p>
+                        <p className="text-xs text-white/60">
                           Base: {food.base_calories} cal per 100g
                         </p>
                       </div>
                       <div className="w-32">
-                        <label className="block text-xs text-gray-600 mb-1">
+                        <label className="block text-xs text-white/60 mb-1">
                           Count (g or x)
                         </label>
                         <input
@@ -291,21 +291,21 @@ export default function MealForm({ onMealAdded }) {
                           value={food.portion_display}
                           onChange={(e) => updateFoodQuantity(idx, e.target.value)}
                           placeholder="1"
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 text-black bg-white"
+                          className="w-full px-2 py-1 bg-black border border-[#1a1a1a] rounded text-sm focus:ring-2 focus:ring-primary-700 text-white"
                         />
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-blue-600">
+                        <p className="text-sm font-mono font-semibold text-primary-700">
                           {Math.round(food.calories)} cal
                         </p>
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-white/60">
                           P: {food.protein_g.toFixed(1)}g
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeFood(idx)}
-                        className="text-red-600 hover:text-red-800 text-xs font-medium"
+                        className="text-red-500 hover:text-red-400 text-xs font-medium"
                       >
                         Remove
                       </button>
@@ -315,24 +315,24 @@ export default function MealForm({ onMealAdded }) {
 
                 {/* Totals display */}
                 {foods.length >= 2 && (
-                  <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                    <p className="text-xs font-medium text-purple-700 mb-2">Total (Compound Meal):</p>
+                  <div className="bg-primary-700/10 p-3 rounded-lg border border-primary-700/30">
+                    <p className="text-xs font-medium text-primary-700 mb-2">Total (Compound Meal):</p>
                     <div className="grid grid-cols-4 gap-2 text-xs">
                       <div>
-                        <p className="font-semibold text-purple-900">{Math.round(calculateTotals().calories)}</p>
-                        <p className="text-purple-600">Calories</p>
+                        <p className="font-semibold text-white">{Math.round(calculateTotals().calories)}</p>
+                        <p className="text-white/60">Calories</p>
                       </div>
                       <div>
-                        <p className="font-semibold text-purple-900">{calculateTotals().protein_g.toFixed(1)}g</p>
-                        <p className="text-purple-600">Protein</p>
+                        <p className="font-semibold text-white">{calculateTotals().protein_g.toFixed(1)}g</p>
+                        <p className="text-white/60">Protein</p>
                       </div>
                       <div>
-                        <p className="font-semibold text-purple-900">{calculateTotals().carbs_g.toFixed(1)}g</p>
-                        <p className="text-purple-600">Carbs</p>
+                        <p className="font-semibold text-white">{calculateTotals().carbs_g.toFixed(1)}g</p>
+                        <p className="text-white/60">Carbs</p>
                       </div>
                       <div>
-                        <p className="font-semibold text-purple-900">{calculateTotals().fat_g.toFixed(1)}g</p>
-                        <p className="text-purple-600">Fat</p>
+                        <p className="font-semibold text-white">{calculateTotals().fat_g.toFixed(1)}g</p>
+                        <p className="text-white/60">Fat</p>
                       </div>
                     </div>
                   </div>
@@ -347,7 +347,7 @@ export default function MealForm({ onMealAdded }) {
               <button
                 type="button"
                 onClick={() => setShowFoodSearch(true)}
-                className="w-full py-2 px-4 border-2 border-dashed border-blue-300 text-blue-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-sm font-medium"
+                className="w-full py-2 px-4 border-2 border-dashed border-primary-700/30 text-primary-700 rounded-lg hover:border-primary-700 hover:bg-primary-700/10 transition text-sm font-medium"
               >
                 + Add Food
               </button>
@@ -356,13 +356,13 @@ export default function MealForm({ onMealAdded }) {
         ) : (
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-white/60">
                 Meal Name
               </label>
               <button
                 type="button"
                 onClick={() => setUseAutocomplete(true)}
-                className="text-xs text-blue-600 hover:text-blue-800"
+                className="text-xs text-primary-700 hover:text-primary-600"
               >
                 Search database
               </button>
@@ -372,13 +372,13 @@ export default function MealForm({ onMealAdded }) {
               value={mealName}
               onChange={(e) => setMealName(e.target.value)}
               placeholder="e.g., Chicken breast with rice"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+              className="w-full px-4 py-2 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white bg-black"
               required
             />
 
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/60 mb-1">
                   Calories
                 </label>
                 <input
@@ -387,13 +387,13 @@ export default function MealForm({ onMealAdded }) {
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
                   placeholder="500"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+                  className="w-full px-4 py-2 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white bg-black"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/60 mb-1">
                   Protein (g)
                 </label>
                 <input
@@ -403,13 +403,13 @@ export default function MealForm({ onMealAdded }) {
                   value={protein}
                   onChange={(e) => setProtein(e.target.value)}
                   placeholder="30"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+                  className="w-full px-4 py-2 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white bg-black"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/60 mb-1">
                   Carbs (g)
                 </label>
                 <input
@@ -419,13 +419,13 @@ export default function MealForm({ onMealAdded }) {
                   value={carbs}
                   onChange={(e) => setCarbs(e.target.value)}
                   placeholder="50"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+                  className="w-full px-4 py-2 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white bg-black"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/60 mb-1">
                   Fat (g)
                 </label>
                 <input
@@ -435,13 +435,13 @@ export default function MealForm({ onMealAdded }) {
                   value={fat}
                   onChange={(e) => setFat(e.target.value)}
                   placeholder="15"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+                  className="w-full px-4 py-2 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white bg-black"
                   required
                 />
               </div>
 
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/60 mb-1">
                   Fiber (g) - Optional
                 </label>
                 <input
@@ -451,25 +451,25 @@ export default function MealForm({ onMealAdded }) {
                   value={fiber}
                   onChange={(e) => setFiber(e.target.value)}
                   placeholder="5"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+                  className="w-full px-4 py-2 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white bg-black"
                 />
               </div>
             </div>
 
             {/* Save as Custom Food Checkbox */}
-            <div className="mt-3 bg-purple-50 border-2 border-purple-200 rounded-lg p-3">
+            <div className="mt-3 bg-primary-700/10 border-2 border-primary-700/30 rounded-lg p-3">
               <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   checked={saveAsCustom}
                   onChange={(e) => setSaveAsCustom(e.target.checked)}
-                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  className="w-4 h-4 text-primary-700 border-[#1a1a1a] rounded focus:ring-primary-700"
                 />
-                <span className="ml-2 text-sm font-medium text-gray-800">
-                  ⭐ Save as Custom Food (reusable in future)
+                <span className="ml-2 text-sm font-medium text-white">
+                  Save as Custom Food (reusable in future)
                 </span>
               </label>
-              <p className="text-xs text-gray-600 mt-1 ml-6">
+              <p className="text-xs text-white/60 mt-1 ml-6">
                 This will save "{mealName || 'this food'}" to your custom foods library for quick access later
               </p>
             </div>
@@ -478,7 +478,7 @@ export default function MealForm({ onMealAdded }) {
 
         {/* Meal Notes */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-white/60 mb-1">
             Add Notes (Optional)
           </label>
           <textarea
@@ -487,9 +487,9 @@ export default function MealForm({ onMealAdded }) {
             placeholder="Add any notes about this meal..."
             maxLength={500}
             rows={2}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white resize-none"
+            className="w-full px-4 py-2 border border-[#1a1a1a] rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white bg-black resize-none"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-white/60 mt-1">
             {notes.length}/500 characters
           </p>
         </div>
@@ -497,7 +497,7 @@ export default function MealForm({ onMealAdded }) {
         <button
           type="submit"
           disabled={loading || (useAutocomplete && foods.length === 0)}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-medium"
+          className="w-full bg-primary-700 text-white py-3 rounded-lg hover:bg-primary-600 transition disabled:opacity-50 font-medium"
         >
           {loading ? 'Logging meal...' : 'Log Meal'}
         </button>
