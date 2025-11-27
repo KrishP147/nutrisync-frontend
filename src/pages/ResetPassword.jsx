@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import BubbleBackground from '../components/ui/BubbleBackground';
+import { Lock, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -65,79 +65,83 @@ export default function ResetPassword() {
   };
 
   return (
-    <BubbleBackground interactive={true}>
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white/95 backdrop-blur-sm border-2 border-teal-300 p-8 rounded-2xl shadow-2xl max-w-md w-full">
-          <div className="text-center mb-6">
-            <h1 className="text-4xl font-bold text-black mb-2">Reset Password</h1>
-            <div className="w-16 h-1 bg-teal-500 mx-auto mb-4"></div>
-            <p className="text-gray-700">Enter your new password below</p>
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="card p-8 max-w-md w-full border border-white/10">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-full bg-primary-700/20 flex items-center justify-center mx-auto mb-4">
+            <Lock size={32} className="text-primary-500" />
           </div>
-
-          {success ? (
-            <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-                ✓ Password updated successfully!
-              </div>
-              <button
-                onClick={() => navigate('/login')}
-                className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition font-medium shadow-lg hover:shadow-xl"
-              >
-                Go to Login
-              </button>
-            </div>
-          ) : (
-            <>
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black bg-white"
-                    required
-                    disabled={loading}
-                  />
-                  <p className="text-xs text-gray-600 mt-1">
-                    Must be at least 8 characters with a special character
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-black bg-white"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition disabled:opacity-50 font-medium shadow-lg hover:shadow-xl"
-                >
-                  {loading ? 'Updating Password...' : 'Update Password'}
-                </button>
-              </form>
-            </>
-          )}
+          <h1 className="text-3xl font-heading font-bold text-white mb-2">Reset Password</h1>
+          <p className="text-white/50">Enter your new password below</p>
         </div>
+
+        {success ? (
+          <div className="space-y-6">
+            <div className="bg-primary-700/10 border border-primary-700/30 text-primary-500 px-4 py-4 rounded-lg flex items-center gap-3">
+              <CheckCircle size={20} />
+              <span>Password updated successfully!</span>
+            </div>
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full btn-primary py-3"
+            >
+              Go to Login
+            </button>
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg mb-6 flex items-center gap-3">
+                <AlertCircle size={20} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleResetPassword} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input"
+                  placeholder="Enter new password"
+                  required
+                  disabled={loading}
+                />
+                <p className="text-xs text-white/40 mt-2">
+                  Must be at least 8 characters with a special character
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="input"
+                  placeholder="Confirm new password"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full btn-primary py-3 disabled:opacity-50"
+              >
+                {loading ? 'Updating Password...' : 'Update Password'}
+              </button>
+            </form>
+          </>
+        )}
       </div>
-    </BubbleBackground>
+    </div>
   );
 }

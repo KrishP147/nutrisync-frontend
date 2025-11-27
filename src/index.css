@@ -1,9 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @layer base {
   * {
@@ -23,7 +22,6 @@
     font-family: 'Space Grotesk', system-ui, sans-serif;
   }
 
-  /* Remove default focus styles and add custom ones */
   *:focus {
     @apply outline-none;
   }
@@ -42,10 +40,12 @@
 
   .card-hover {
     background-color: #0a0a0a;
-    @apply border border-white/10 rounded-lg transition-all duration-200 hover:border-primary-700/50;
-    &:hover {
-      box-shadow: 0 0 20px rgba(4, 120, 87, 0.3);
-    }
+    @apply border border-white/10 rounded-lg transition-all duration-200;
+  }
+
+  .card-hover:hover {
+    @apply border-primary-700/50;
+    box-shadow: 0 0 20px rgba(4, 120, 87, 0.3);
   }
 
   /* Button variants */
@@ -54,39 +54,56 @@
   }
 
   .btn-primary {
-    @apply btn bg-primary-700 text-white hover:bg-primary-600 shadow-md;
-    &:hover {
-      box-shadow: 0 0 20px rgba(4, 120, 87, 0.3);
-    }
+    @apply btn bg-primary-700 text-white shadow-md;
+  }
+
+  .btn-primary:hover {
+    @apply bg-primary-600;
+    box-shadow: 0 0 20px rgba(4, 120, 87, 0.3);
   }
 
   .btn-secondary {
-    @apply btn bg-secondary-500 text-white hover:bg-secondary-400 shadow-md;
-    &:hover {
-      box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
-    }
+    @apply btn bg-secondary-500 text-white shadow-md;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-secondary-400;
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
   }
 
   .btn-amber {
-    @apply btn bg-amber-500 text-black hover:bg-amber-400 shadow-md;
-    &:hover {
-      box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-    }
+    @apply btn bg-amber-500 text-black shadow-md;
+  }
+
+  .btn-amber:hover {
+    @apply bg-amber-400;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
   }
 
   .btn-ghost {
-    @apply btn bg-transparent text-white/70 hover:text-white hover:bg-white/5;
+    @apply btn bg-transparent text-white/70;
+  }
+
+  .btn-ghost:hover {
+    @apply text-white bg-white/5;
   }
 
   .btn-outline {
-    @apply btn bg-transparent border border-white/20 text-white hover:border-primary-700 hover:text-primary-500;
+    @apply btn bg-transparent border border-white/20 text-white;
+  }
+
+  .btn-outline:hover {
+    @apply border-primary-700 text-primary-500;
   }
 
   /* Input styles */
   .input {
     background-color: #0a0a0a;
     @apply w-full px-4 py-3 border border-white/10 rounded-lg text-white placeholder-white/40 transition-all duration-200;
-    @apply focus:border-primary-700 focus:ring-1 focus:ring-primary-700;
+  }
+
+  .input:focus {
+    @apply border-primary-700 ring-1 ring-primary-700;
   }
 
   .input-label {
@@ -127,7 +144,10 @@
   /* Navigation item */
   .nav-item {
     @apply flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 transition-all duration-200;
-    @apply hover:text-white hover:bg-white/5;
+  }
+
+  .nav-item:hover {
+    @apply text-white bg-white/5;
   }
 
   .nav-item-active {
@@ -180,26 +200,6 @@
 
   .text-gradient-blue {
     @apply bg-gradient-to-r from-secondary-400 to-secondary-600 bg-clip-text text-transparent;
-  }
-
-  /* Custom Scrollbar - Dark Theme */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #047857;
-    border-radius: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #059669;
   }
 
   /* Hide scrollbar but keep functionality */
@@ -259,6 +259,26 @@
   .animation-delay-500 { animation-delay: 500ms; }
 }
 
+/* Custom Scrollbar - Dark Theme */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #047857;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #059669;
+}
+
 /* React Circular Progressbar overrides for dark theme */
 .CircularProgressbar .CircularProgressbar-text {
   font-family: 'JetBrains Mono', monospace !important;
@@ -291,4 +311,14 @@ input[type="number"]::-webkit-outer-spin-button {
 
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+/* Nivo chart tooltip overrides - ensure tooltips are visible above containers */
+div[style*="pointer-events: none"][style*="position: absolute"] {
+  z-index: 9999 !important;
+}
+
+/* Chart containers that need overflow visible for tooltips */
+.chart-container {
+  overflow: visible !important;
 }

@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { Info } from 'lucide-react';
 
 export default function GitHubHeatmap({ data, goals }) {
   const navigate = useNavigate();
   const [hoveredDay, setHoveredDay] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [showInfo, setShowInfo] = useState(false);
 
   const safeGoals = {
     calories: goals?.calories || 2000,
@@ -117,20 +119,20 @@ export default function GitHubHeatmap({ data, goals }) {
     });
   };
 
-  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
   return (
     <div className="relative">
-      {/* Day labels */}
-      <div className="flex gap-1 mb-2 ml-0">
-        <div className="w-4" /> {/* Spacer for alignment */}
-        <div className="flex gap-1 flex-wrap justify-end w-full">
-          {dayLabels.map((label, i) => (
-            <div key={i} className="w-3 h-3 text-[10px] text-white/30 flex items-center justify-center">
-              {label}
-            </div>
-          ))}
-        </div>
+      {/* Info tooltip */}
+      <div 
+        className="absolute -top-1 right-0 z-10"
+        onMouseEnter={() => setShowInfo(true)}
+        onMouseLeave={() => setShowInfo(false)}
+      >
+        <Info size={16} className="text-white/40 hover:text-white/70 cursor-help" />
+        {showInfo && (
+          <div className="absolute right-0 top-5 w-56 bg-black border border-white/10 rounded-lg p-3 text-xs text-white/70 z-20">
+            Activity heatmap showing the last 90 days. Brighter = better goal achievement. Click any day to see details.
+          </div>
+        )}
       </div>
 
       {/* Heatmap Grid */}
@@ -196,7 +198,7 @@ export default function GitHubHeatmap({ data, goals }) {
             </div>
             <div className="flex justify-between">
               <span className="text-white/50">Fat:</span>
-              <span className="font-mono text-blue-400">{hoveredDay.data.fat.toFixed(1)}g</span>
+              <span className="font-mono text-purple-400">{hoveredDay.data.fat.toFixed(1)}g</span>
             </div>
           </div>
           <p className="text-xs text-white/40 mt-2 text-center">Click to view details</p>
@@ -205,3 +207,4 @@ export default function GitHubHeatmap({ data, goals }) {
     </div>
   );
 }
+

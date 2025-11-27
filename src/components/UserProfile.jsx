@@ -2,20 +2,35 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useGoals } from '../contexts/GoalsContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, X, Calculator, Save, AlertCircle } from 'lucide-react';
+import { User, X, Calculator, Save, Leaf, AlertTriangle } from 'lucide-react';
+
+const DIETARY_RESTRICTIONS = [
+  { key: 'halal', label: 'Halal', description: 'Islamic dietary laws' },
+  { key: 'kosher', label: 'Kosher', description: 'Jewish dietary laws' },
+  { key: 'vegetarian', label: 'Vegetarian', description: 'No meat' },
+  { key: 'vegan', label: 'Vegan', description: 'No animal products' },
+  { key: 'gluten_free', label: 'Gluten-Free', description: 'No gluten' },
+  { key: 'dairy_free', label: 'Dairy-Free', description: 'No dairy products' },
+  { key: 'nut_free', label: 'Nut-Free', description: 'No nuts' },
+  { key: 'shellfish_free', label: 'Shellfish-Free', description: 'No shellfish' },
+  { key: 'low_sodium', label: 'Low Sodium', description: 'Reduced salt' },
+  { key: 'low_carb', label: 'Low Carb', description: 'Low carbohydrate' },
+];
 
 export default function UserProfile() {
-  const { goals, updateGoals } = useGoals();
+  const { updateGoals } = useGoals();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({
-    age: '', gender: 'male', height: '', weight: '', activity_level: 'moderate', goal_type: 'maintain'
+    age: '', gender: 'male', height: '', weight: '', activity_level: 'moderately_active', goal_type: 'maintain'
   });
+  const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
   const [calculatedGoals, setCalculatedGoals] = useState(null);
   const [heightUnit, setHeightUnit] = useState('cm');
   const [weightUnit, setWeightUnit] = useState('kg');
   const [bmi, setBmi] = useState(null);
   const [bmiCategory, setBmiCategory] = useState('');
+  const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'dietary'
 
   useEffect(() => {
     if (isOpen) fetchProfile();
@@ -27,37 +42,65 @@ export default function UserProfile() {
     
     if (data) {
       setProfile({
-        age: data.age || '', gender: data.gender || 'male',
-        height: data.height_cm || '', weight: data.weight_kg || '',
-        activity_level: data.activity_level || 'moderate', goal_type: data.goal_type || 'maintain'
+        age: data.age || '', 
+        gender: data.gender || 'male',
+        height: data.height_cm || '', 
+        weight: data.weight_kg || '',
+        activity_level: data.activity_level || 'moderately_active', 
+        goal_type: data.goal_type || 'maintain'
       });
+      setDietaryRestrictions(data.dietary_restrictions || []);
+      // Reset to metric when loading
+      setHeightUnit('cm');
+      setWeightUnit('kg');
       if (data.bmi) setBmi(data.bmi);
       if (data.bmi_category) setBmiCategory(data.bmi_category);
     }
   };
 
-  const calculateBMI = () => {
-    let heightCm = parseFloat(profile.height);
-    let weightKg = parseFloat(profile.weight);
+  const toggleRestriction = (key) => {
+    setDietaryRestrictions(prev => 
+      prev.includes(key) 
+        ? prev.filter(r => r !== key)
+        : [...prev, key]
+    );
+  };
 
-    if (heightUnit === 'ft') {
-      const [feet, inches] = profile.height.split("'").map(s => parseFloat(s) || 0);
-      heightCm = (feet * 30.48) + (inches * 2.54);
+  // Handle height unit conversion
+  const handleHeightUnitChange = (newUnit) => {
+    if (newUnit === heightUnit) return;
+    
+    const currentValue = parseFloat(profile.height);
+    if (!isNaN(currentValue) && currentValue > 0) {
+      if (newUnit === 'ft') {
+        const totalInches = currentValue / 2.54;
+        const feet = Math.floor(totalInches / 12);
+        const inches = Math.round(totalInches % 12);
+        setProfile({ ...profile, height: `${feet}'${inches}` });
+      } else {
+        const [feet, inches] = profile.height.split("'").map(s => parseFloat(s) || 0);
+        const cm = Math.round((feet * 30.48) + (inches * 2.54));
+        setProfile({ ...profile, height: cm.toString() });
+      }
     }
-    if (weightUnit === 'lbs') weightKg = weightKg * 0.453592;
+    setHeightUnit(newUnit);
+  };
 
-    if (heightCm > 0 && weightKg > 0) {
-      const heightM = heightCm / 100;
-      const calculatedBmi = weightKg / (heightM * heightM);
-      setBmi(calculatedBmi.toFixed(1));
-      
-      let category = '';
-      if (calculatedBmi < 18.5) category = 'Underweight';
-      else if (calculatedBmi < 25) category = 'Normal';
-      else if (calculatedBmi < 30) category = 'Overweight';
-      else category = 'Obese';
-      setBmiCategory(category);
+  // Handle weight unit conversion
+  const handleWeightUnitChange = (newUnit) => {
+    if (newUnit === weightUnit) return;
+    
+    const currentValue = parseFloat(profile.weight);
+    if (!isNaN(currentValue) && currentValue > 0) {
+      if (newUnit === 'lbs') {
+        const lbs = Math.round(currentValue * 2.20462 * 10) / 10;
+        setProfile({ ...profile, weight: lbs.toString() });
+      } else {
+        const kg = Math.round(currentValue * 0.453592 * 10) / 10;
+        setProfile({ ...profile, weight: kg.toString() });
+      }
     }
+    setWeightUnit(newUnit);
   };
 
   const calculateGoals = () => {
@@ -72,7 +115,6 @@ export default function UserProfile() {
 
     if (!profile.age || !heightCm || !weightKg) return;
 
-    // Mifflin-St Jeor BMR
     let bmr;
     if (profile.gender === 'male') {
       bmr = 10 * weightKg + 6.25 * heightCm - 5 * profile.age + 5;
@@ -81,9 +123,9 @@ export default function UserProfile() {
     }
 
     const activityMultipliers = {
-      sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725, very_active: 1.9
+      sedentary: 1.2, lightly_active: 1.375, moderately_active: 1.55, very_active: 1.725, extra_active: 1.9
     };
-    let tdee = bmr * activityMultipliers[profile.activity_level];
+    let tdee = bmr * (activityMultipliers[profile.activity_level] || 1.55);
 
     const goalAdjustments = {
       lose: tdee - 500, maintain: tdee, gain: tdee + 300
@@ -96,7 +138,6 @@ export default function UserProfile() {
     const carbs = Math.round((calories - protein * 4 - fat * 9) / 4);
     const fiber = Math.round(calories / 1000 * 14);
 
-    // Calculate BMI
     const heightM = heightCm / 100;
     const calculatedBmi = weightKg / (heightM * heightM);
     setBmi(calculatedBmi.toFixed(1));
@@ -125,13 +166,34 @@ export default function UserProfile() {
     if (weightUnit === 'lbs') weightKg = weightKg * 0.453592;
 
     const profileData = {
-      user_id: user.id, age: parseInt(profile.age), gender: profile.gender,
-      height_cm: heightCm, weight_kg: weightKg,
-      activity_level: profile.activity_level, goal_type: profile.goal_type,
-      bmi: bmi ? parseFloat(bmi) : null, bmi_category: bmiCategory || null
+      user_id: user.id, 
+      age: parseInt(profile.age), 
+      gender: profile.gender,
+      height_cm: heightCm, 
+      weight_kg: weightKg,
+      activity_level: profile.activity_level, 
+      goal_type: profile.goal_type,
+      dietary_restrictions: dietaryRestrictions,
+      bmi: bmi ? parseFloat(bmi) : null, 
+      bmi_category: bmiCategory || null,
+      updated_at: new Date().toISOString()
     };
 
     await supabase.from('user_profile').upsert(profileData, { onConflict: 'user_id' });
+    
+    if (weightKg > 0) {
+      await supabase.from('weight_history').upsert({
+        user_id: user.id,
+        weight_kg: weightKg,
+        bmi: bmi ? parseFloat(bmi) : null,
+        bmi_category: bmiCategory || null,
+        recorded_at: new Date().toISOString()
+      }, { 
+        onConflict: 'user_id,recorded_at',
+        ignoreDuplicates: false 
+      });
+    }
+    
     setLoading(false);
     await fetchProfile();
   };
@@ -165,135 +227,278 @@ export default function UserProfile() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsOpen(false)} className="fixed inset-0 bg-black/80" />
               
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                className="relative card p-8 max-w-2xl w-full my-8 border-primary-700/30">
+                className="relative card p-8 max-w-2xl w-full my-8 border-primary-700/30 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
                 <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 p-2 rounded-lg bg-white/5 text-white/60 hover:text-white">
                   <X size={20} />
                 </button>
 
                 <h2 className="text-2xl font-heading font-bold text-white mb-2">Your Profile</h2>
-                <p className="text-white/50 mb-6">Enter your details to calculate personalized nutrition goals</p>
+                <p className="text-white/50 mb-6">Personalize your nutrition experience</p>
 
-                <div className="space-y-6">
-                  {/* Basic Info */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="input-label">Age</label>
-                      <input type="number" min="0" value={profile.age} onChange={(e) => setProfile({ ...profile, age: e.target.value })} className="input" placeholder="25" />
+                {/* Tab Navigation */}
+                <div className="flex gap-2 mb-6">
+                  <button
+                    onClick={() => setActiveTab('profile')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                      activeTab === 'profile' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:text-white'
+                    }`}
+                  >
+                    <User size={16} />
+                    Profile
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('dietary')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                      activeTab === 'dietary' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:text-white'
+                    }`}
+                  >
+                    <Leaf size={16} />
+                    Dietary
+                    {dietaryRestrictions.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-white/20 rounded text-xs">{dietaryRestrictions.length}</span>
+                    )}
+                  </button>
+                </div>
+
+                {activeTab === 'profile' ? (
+                  <div className="space-y-6">
+                    {/* Basic Info */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="input-label">Age</label>
+                        <input type="number" min="0" value={profile.age} onChange={(e) => setProfile({ ...profile, age: e.target.value })} className="input" placeholder="25" />
+                      </div>
+                      <div>
+                        <label className="input-label">Gender</label>
+                        <select value={profile.gender} onChange={(e) => setProfile({ ...profile, gender: e.target.value })} className="input">
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
                     </div>
+
+                    {/* Height */}
                     <div>
-                      <label className="input-label">Gender</label>
-                      <select value={profile.gender} onChange={(e) => setProfile({ ...profile, gender: e.target.value })} className="input">
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-white/70">Height</label>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleHeightUnitChange('cm')} 
+                            className={`px-3 py-1 rounded text-xs font-medium transition ${heightUnit === 'cm' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                          >
+                            cm
+                          </button>
+                          <button 
+                            onClick={() => handleHeightUnitChange('ft')} 
+                            className={`px-3 py-1 rounded text-xs font-medium transition ${heightUnit === 'ft' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                          >
+                            ft
+                          </button>
+                        </div>
+                      </div>
+                      <input 
+                        type="text" 
+                        value={profile.height} 
+                        onChange={(e) => setProfile({ ...profile, height: e.target.value })} 
+                        className="input"
+                        placeholder={heightUnit === 'cm' ? '175' : "5'10"} 
+                      />
+                    </div>
+
+                    {/* Weight */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium text-white/70">Weight</label>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleWeightUnitChange('kg')} 
+                            className={`px-3 py-1 rounded text-xs font-medium transition ${weightUnit === 'kg' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                          >
+                            kg
+                          </button>
+                          <button 
+                            onClick={() => handleWeightUnitChange('lbs')} 
+                            className={`px-3 py-1 rounded text-xs font-medium transition ${weightUnit === 'lbs' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                          >
+                            lbs
+                          </button>
+                        </div>
+                      </div>
+                      <input 
+                        type="number" 
+                        min="0" 
+                        step="0.1"
+                        value={profile.weight} 
+                        onChange={(e) => setProfile({ ...profile, weight: e.target.value })} 
+                        className="input"
+                        placeholder={weightUnit === 'kg' ? '70' : '154'} 
+                      />
+                    </div>
+
+                    {/* Activity Level */}
+                    <div>
+                      <label className="input-label">Activity Level</label>
+                      <select value={profile.activity_level} onChange={(e) => setProfile({ ...profile, activity_level: e.target.value })} className="input">
+                        <option value="sedentary">Sedentary (little exercise)</option>
+                        <option value="lightly_active">Lightly Active (1-3 days/week)</option>
+                        <option value="moderately_active">Moderately Active (3-5 days/week)</option>
+                        <option value="very_active">Very Active (6-7 days/week)</option>
+                        <option value="extra_active">Extra Active (athlete)</option>
                       </select>
                     </div>
-                  </div>
 
-                  {/* Height */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-white/70">Height</label>
-                      <div className="flex gap-2">
-                        <button onClick={() => setHeightUnit('cm')} className={`px-3 py-1 rounded text-xs font-medium ${heightUnit === 'cm' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60'}`}>cm</button>
-                        <button onClick={() => setHeightUnit('ft')} className={`px-3 py-1 rounded text-xs font-medium ${heightUnit === 'ft' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60'}`}>ft</button>
+                    {/* Goal Type */}
+                    <div>
+                      <label className="input-label">Goal</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[{ key: 'lose', label: 'Lose Weight' }, { key: 'maintain', label: 'Maintain' }, { key: 'gain', label: 'Build Muscle' }].map(({ key, label }) => (
+                          <button key={key} onClick={() => setProfile({ ...profile, goal_type: key })}
+                            className={`py-3 px-4 rounded-lg text-sm font-medium transition ${profile.goal_type === key ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
+                            {label}
+                          </button>
+                        ))}
                       </div>
                     </div>
-                    <input type="text" value={profile.height} onChange={(e) => setProfile({ ...profile, height: e.target.value })} className="input"
-                      placeholder={heightUnit === 'cm' ? '175' : "5'10"} />
-                  </div>
 
-                  {/* Weight */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-white/70">Weight</label>
-                      <div className="flex gap-2">
-                        <button onClick={() => setWeightUnit('kg')} className={`px-3 py-1 rounded text-xs font-medium ${weightUnit === 'kg' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60'}`}>kg</button>
-                        <button onClick={() => setWeightUnit('lbs')} className={`px-3 py-1 rounded text-xs font-medium ${weightUnit === 'lbs' ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60'}`}>lbs</button>
+                    {/* Calculate Button */}
+                    <button onClick={calculateGoals} className="btn-primary w-full py-3">
+                      <Calculator size={18} /> Calculate Goals
+                    </button>
+
+                    {/* BMI Display */}
+                    {bmi && (
+                      <div className="card p-4 border-white/10">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-white/50 text-sm">BMI</p>
+                            <p className={`text-2xl font-mono font-bold ${getBmiColor()}`}>{bmi}</p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            bmiCategory === 'Normal' ? 'bg-primary-700/20 text-primary-500' : 
+                            bmiCategory === 'Underweight' ? 'bg-secondary-500/20 text-secondary-400' : 
+                            'bg-amber-500/20 text-amber-400'
+                          }`}>
+                            {bmiCategory}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <input type="number" min="0" value={profile.weight} onChange={(e) => setProfile({ ...profile, weight: e.target.value })} className="input"
-                      placeholder={weightUnit === 'kg' ? '70' : '154'} />
-                  </div>
+                    )}
 
-                  {/* Activity Level */}
-                  <div>
-                    <label className="input-label">Activity Level</label>
-                    <select value={profile.activity_level} onChange={(e) => setProfile({ ...profile, activity_level: e.target.value })} className="input">
-                      <option value="sedentary">Sedentary (little exercise)</option>
-                      <option value="light">Light (1-3 days/week)</option>
-                      <option value="moderate">Moderate (3-5 days/week)</option>
-                      <option value="active">Active (6-7 days/week)</option>
-                      <option value="very_active">Very Active (athlete)</option>
-                    </select>
-                  </div>
-
-                  {/* Goal Type */}
-                  <div>
-                    <label className="input-label">Goal</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[{ key: 'lose', label: 'Lose Weight' }, { key: 'maintain', label: 'Maintain' }, { key: 'gain', label: 'Build Muscle' }].map(({ key, label }) => (
-                        <button key={key} onClick={() => setProfile({ ...profile, goal_type: key })}
-                          className={`py-3 px-4 rounded-lg text-sm font-medium transition ${profile.goal_type === key ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}>
-                          {label}
+                    {/* Calculated Goals */}
+                    {calculatedGoals && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card p-4 border-primary-700/30 bg-primary-700/5">
+                        <h3 className="font-medium text-white mb-4">Recommended Daily Goals</h3>
+                        <div className="grid grid-cols-5 gap-4 text-center">
+                          <div>
+                            <p className="text-2xl font-mono font-bold text-primary-500">{calculatedGoals.calories}</p>
+                            <p className="text-white/50 text-xs">Calories</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-mono font-bold text-secondary-400">{calculatedGoals.protein}g</p>
+                            <p className="text-white/50 text-xs">Protein</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-mono font-bold text-amber-400">{calculatedGoals.carbs}g</p>
+                            <p className="text-white/50 text-xs">Carbs</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-mono font-bold text-purple-400">{calculatedGoals.fat}g</p>
+                            <p className="text-white/50 text-xs">Fat</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-mono font-bold text-green-400">{calculatedGoals.fiber}g</p>
+                            <p className="text-white/50 text-xs">Fiber</p>
+                          </div>
+                        </div>
+                        <button onClick={handleApplyGoals} disabled={loading} className="btn-primary w-full mt-4">
+                          <Save size={18} /> Apply These Goals
                         </button>
-                      ))}
-                    </div>
+                      </motion.div>
+                    )}
                   </div>
-
-                  {/* Calculate Button */}
-                  <button onClick={calculateGoals} className="btn-primary w-full py-3">
-                    <Calculator size={18} /> Calculate Goals
-                  </button>
-
-                  {/* BMI Display */}
-                  {bmi && (
-                    <div className="card p-4 border-white/10">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-white/50 text-sm">BMI</p>
-                          <p className={`text-2xl font-mono font-bold ${getBmiColor()}`}>{bmi}</p>
-                        </div>
-                        <span className={`badge ${bmiCategory === 'Normal' ? 'badge-green' : bmiCategory === 'Underweight' ? 'badge-blue' : 'badge-amber'}`}>
-                          {bmiCategory}
-                        </span>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Dietary Restrictions Info */}
+                    <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                      <AlertTriangle size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-white font-medium text-sm">Dietary Restrictions</p>
+                        <p className="text-white/60 text-sm mt-1">
+                          Select your dietary restrictions below. AI recommendations will automatically exclude foods that don't meet these requirements.
+                        </p>
                       </div>
                     </div>
-                  )}
 
-                  {/* Calculated Goals */}
-                  {calculatedGoals && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card p-4 border-primary-700/30 bg-primary-700/5">
-                      <h3 className="font-medium text-white mb-4">Recommended Daily Goals</h3>
-                      <div className="grid grid-cols-5 gap-4 text-center">
-                        <div>
-                          <p className="text-2xl font-mono font-bold text-primary-500">{calculatedGoals.calories}</p>
-                          <p className="text-white/50 text-xs">Calories</p>
-                        </div>
-                        <div>
-                          <p className="text-2xl font-mono font-bold text-secondary-400">{calculatedGoals.protein}g</p>
-                          <p className="text-white/50 text-xs">Protein</p>
-                        </div>
-                        <div>
-                          <p className="text-2xl font-mono font-bold text-amber-400">{calculatedGoals.carbs}g</p>
-                          <p className="text-white/50 text-xs">Carbs</p>
-                        </div>
-                        <div>
-                          <p className="text-2xl font-mono font-bold text-blue-400">{calculatedGoals.fat}g</p>
-                          <p className="text-white/50 text-xs">Fat</p>
-                        </div>
-                        <div>
-                          <p className="text-2xl font-mono font-bold text-green-400">{calculatedGoals.fiber}g</p>
-                          <p className="text-white/50 text-xs">Fiber</p>
+                    {/* Restrictions Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {DIETARY_RESTRICTIONS.map((restriction) => {
+                        const isSelected = dietaryRestrictions.includes(restriction.key);
+                        return (
+                          <button
+                            key={restriction.key}
+                            onClick={() => toggleRestriction(restriction.key)}
+                            className={`p-4 rounded-lg border text-left transition ${
+                              isSelected 
+                                ? 'bg-primary-700/20 border-primary-700/50' 
+                                : 'bg-white/5 border-white/10 hover:border-white/20'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition ${
+                                isSelected 
+                                  ? 'bg-primary-700 border-primary-700' 
+                                  : 'border-white/30'
+                              }`}>
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div>
+                                <p className={`font-medium ${isSelected ? 'text-white' : 'text-white/70'}`}>
+                                  {restriction.label}
+                                </p>
+                                <p className="text-white/40 text-xs">{restriction.description}</p>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Selected Summary */}
+                    {dietaryRestrictions.length > 0 && (
+                      <div className="p-4 bg-primary-700/10 border border-primary-700/30 rounded-lg">
+                        <p className="text-white/60 text-sm mb-2">Active restrictions:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {dietaryRestrictions.map(key => {
+                            const restriction = DIETARY_RESTRICTIONS.find(r => r.key === key);
+                            return (
+                              <span key={key} className="px-2 py-1 bg-primary-700/30 text-primary-400 rounded text-sm">
+                                {restriction?.label}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
-                      <button onClick={handleApplyGoals} disabled={loading} className="btn-primary w-full mt-4">
-                        <Save size={18} /> Apply These Goals
-                      </button>
-                    </motion.div>
-                  )}
-                </div>
+                    )}
+
+                    {/* Save Button */}
+                    <button 
+                      onClick={async () => {
+                        await handleSaveProfile();
+                        setIsOpen(false);
+                      }} 
+                      disabled={loading} 
+                      className="btn-primary w-full py-3"
+                    >
+                      <Save size={18} /> Save Dietary Preferences
+                    </button>
+                  </div>
+                )}
               </motion.div>
             </div>
           </div>

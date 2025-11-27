@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { supabase } from '../supabaseClient';
+import { Star, Search, Database, Loader2, Plus } from 'lucide-react';
 
 export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
   const [query, setQuery] = useState(initialValue);
@@ -11,7 +12,6 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
   const [quantity, setQuantity] = useState(1);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -23,7 +23,6 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Debounced search
   useEffect(() => {
     if (query.length < 2) {
       setResults([]);
@@ -33,23 +32,17 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
 
     const timer = setTimeout(async () => {
       setLoading(true);
-      console.log('[FoodSearch] Searching for:', query);
       try {
-        // Search both database foods AND user's custom foods
         const [dbResponse, customResponse] = await Promise.all([
           api.get(`/api/search-food?query=${encodeURIComponent(query)}`),
           searchCustomFoods(query)
         ]);
-
-        console.log('[FoodSearch] DB Response:', dbResponse.data);
-        console.log('[FoodSearch] Custom foods:', customResponse);
 
         setResults(dbResponse.data.foods || []);
         setCustomFoods(customResponse);
         setShowDropdown(true);
       } catch (error) {
         console.error('[FoodSearch] Search failed:', error);
-        console.error('[FoodSearch] Error details:', error.response?.data);
         setResults([]);
         setCustomFoods([]);
       } finally {
@@ -76,7 +69,6 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
       return [];
     }
 
-    // Transform custom foods to match the expected format
     return (data || []).map(food => ({
       name: food.name,
       portion: '100g',
@@ -91,7 +83,6 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
   };
 
   const handleSelect = (food) => {
-    // Calculate nutrition based on quantity
     const multipliedFood = {
       ...food,
       portion: `${quantity} x ${food.portion}`,
@@ -102,7 +93,6 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
       fiber_g: parseFloat((food.fiber_g * quantity).toFixed(1)),
     };
 
-    // Update the input field to show what was selected
     setQuery(food.name);
     onFoodSelect(multipliedFood);
     setResults([]);
@@ -119,49 +109,54 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
           onChange={(e) => setQuantity(parseFloat(e.target.value) || 1)}
           min="0.1"
           step="0.1"
-          className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
+          className="w-20 px-3 py-2 bg-black border border-white/10 rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white font-mono"
           placeholder="Qty"
         />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => results.length > 0 && setShowDropdown(true)}
-          placeholder="Search food (e.g., eggs, chicken breast, banana)..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black bg-white"
-        />
+        <div className="relative flex-1">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => results.length > 0 && setShowDropdown(true)}
+            placeholder="Search food (e.g., eggs, chicken breast, banana)..."
+            className="w-full pl-10 pr-4 py-2 bg-black border border-white/10 rounded-lg focus:ring-2 focus:ring-primary-700 focus:border-transparent text-white placeholder-white/40"
+          />
+        </div>
       </div>
 
       {loading && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-center text-gray-500 text-sm z-10">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0a] border border-white/10 rounded-lg shadow-lg p-3 flex items-center justify-center gap-2 text-white/50 text-sm z-50">
+          <Loader2 size={16} className="animate-spin" />
           Searching...
         </div>
       )}
 
       {showDropdown && (customFoods.length > 0 || results.length > 0) && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto z-10">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0a] border border-white/10 rounded-lg shadow-lg max-h-64 overflow-y-auto z-50">
           {/* Custom Foods Section */}
           {customFoods.length > 0 && (
             <>
-              <div className="px-4 py-2 bg-purple-50 border-b border-purple-200 text-xs font-semibold text-purple-700">
-                ⭐ MY CUSTOM FOODS
+              <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 text-xs font-semibold text-amber-400 flex items-center gap-2">
+                <Star size={14} />
+                MY CUSTOM FOODS
               </div>
               {customFoods.map((food, idx) => (
                 <button
                   key={`custom-${idx}`}
                   onClick={() => handleSelect(food)}
-                  className="w-full px-4 py-3 text-left hover:bg-purple-50 border-b border-gray-100 transition"
+                  className="w-full px-4 py-3 text-left hover:bg-amber-500/10 border-b border-white/5 transition"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-800">{food.name}</span>
-                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">My Food</span>
+                    <span className="font-medium text-white">{food.name}</span>
+                    <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">My Food</span>
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">
+                  <div className="text-sm text-white/50 mt-1 font-mono">
                     {Math.round(food.calories * quantity)} cal |
                     P: {(food.protein_g * quantity).toFixed(1)}g |
                     C: {(food.carbs_g * quantity).toFixed(1)}g |
                     F: {(food.fat_g * quantity).toFixed(1)}g
-                    <span className="text-gray-400 ml-2">({quantity} x {food.portion})</span>
+                    <span className="text-white/30 ml-2">({quantity} x {food.portion})</span>
                   </div>
                 </button>
               ))}
@@ -172,7 +167,8 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
           {results.length > 0 && (
             <>
               {customFoods.length > 0 && (
-                <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600">
+                <div className="px-4 py-2 bg-white/5 border-b border-white/10 text-xs font-semibold text-white/40 flex items-center gap-2">
+                  <Database size={14} />
                   DATABASE FOODS
                 </div>
               )}
@@ -180,15 +176,15 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
                 <button
                   key={`db-${idx}`}
                   onClick={() => handleSelect(food)}
-                  className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition"
+                  className="w-full px-4 py-3 text-left hover:bg-primary-700/10 border-b border-white/5 last:border-b-0 transition"
                 >
-                  <div className="font-medium text-gray-800">{food.name}</div>
-                  <div className="text-sm text-gray-600 mt-1">
+                  <div className="font-medium text-white">{food.name}</div>
+                  <div className="text-sm text-white/50 mt-1 font-mono">
                     {Math.round(food.calories * quantity)} cal |
                     P: {(food.protein_g * quantity).toFixed(1)}g |
                     C: {(food.carbs_g * quantity).toFixed(1)}g |
                     F: {(food.fat_g * quantity).toFixed(1)}g
-                    <span className="text-gray-400 ml-2">({quantity} x {food.portion})</span>
+                    <span className="text-white/30 ml-2">({quantity} x {food.portion})</span>
                   </div>
                 </button>
               ))}
@@ -198,8 +194,8 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
       )}
 
       {showDropdown && !loading && results.length === 0 && customFoods.length === 0 && query.length >= 2 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
-          <p className="text-center text-gray-500 text-sm mb-2">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0a0a0a] border border-white/10 rounded-lg shadow-lg p-4 z-50">
+          <p className="text-center text-white/50 text-sm mb-3">
             No foods found. Try a different search term or add manually:
           </p>
           <button
@@ -215,9 +211,10 @@ export default function FoodSearchInput({ onFoodSelect, initialValue = '' }) {
               };
               onFoodSelect(manualFood);
             }}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+            className="w-full px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-600 text-sm font-medium flex items-center justify-center gap-2"
           >
-            Add "{query}" manually (enter nutrition later)
+            <Plus size={16} />
+            Add "{query}" manually
           </button>
         </div>
       )}

@@ -85,7 +85,7 @@ export default function Sidebar({ children }) {
       {/* Mobile menu button */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-surface-300 border border-white/10 text-white"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-[#0a0a0a] border border-white/10 text-white"
       >
         <Menu size={24} strokeWidth={2} />
       </button>
@@ -112,16 +112,14 @@ export default function Sidebar({ children }) {
         }}
         className={`
           fixed lg:sticky top-0 left-0 h-screen z-50 lg:z-auto
-          bg-surface-300 border-r border-white/10 flex flex-col
+          bg-[#0a0a0a] border-r border-white/10 flex flex-col
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         {/* Logo */}
         <div className="p-6 border-b border-white/10">
           <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
-            <div className="w-10 h-10 rounded-lg bg-primary-700 flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-lg">N</span>
-            </div>
+            <img src="/logo.svg" alt="NutriSync" className="w-10 h-10 flex-shrink-0" />
             <AnimatePresence>
               {!collapsed && (
                 <motion.span
@@ -173,7 +171,7 @@ export default function Sidebar({ children }) {
         {/* Collapse button - desktop only */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-surface-300 border border-white/10 items-center justify-center text-white/60 hover:text-white transition-colors"
+          className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#0a0a0a] border border-white/10 items-center justify-center text-white/60 hover:text-white transition-colors"
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>

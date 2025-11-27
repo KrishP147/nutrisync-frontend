@@ -40,7 +40,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
     componentBorder: 'border-[#1a1a1a]',
     accentColor: 'text-primary-700',
     buttonPrimary: 'bg-primary-700 hover:bg-primary-600',
-    buttonSecondary: 'bg-white/5 hover:bg-white/10',
+    buttonSecondary: 'bg-black/5 hover:bg-black/10',
   };
 
   useEffect(() => {
@@ -423,7 +423,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
       if (error) {
         alert('Failed to save simple food as custom food: ' + error.message);
       } else {
-        alert(`✅ "${foodName}" saved as custom food!\n\nNutrition per 100g:\n${simpleMacros.base_calories} cal | ${simpleMacros.base_protein_g}g P | ${simpleMacros.base_carbs_g}g C | ${simpleMacros.base_fat_g}g F | ${simpleMacros.base_fiber_g}g Fiber`);
+        alert(`"${foodName}" saved as custom food!\n\nNutrition per 100g:\n${simpleMacros.base_calories} cal | ${simpleMacros.base_protein_g}g P | ${simpleMacros.base_carbs_g}g C | ${simpleMacros.base_fat_g}g F | ${simpleMacros.base_fiber_g}g Fiber`);
       }
     } catch (err) {
       alert('Failed to save simple food: ' + err.message);
@@ -456,7 +456,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
       if (error) {
         alert('Failed to save custom food: ' + error.message);
       } else {
-        alert(`✅ "${foodName}" saved as custom food!`);
+        alert(`"${foodName}" saved as custom food!`);
       }
     } catch (err) {
       alert('Failed to save custom food: ' + err.message);
@@ -518,7 +518,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
       if (error) {
         alert('Failed to save compound meal as custom food: ' + error.message);
       } else {
-        alert(`✅ "${foodName}" saved as custom food!\n\nNutrition per 100g:\n${baseCalories} cal | ${baseProtein}g P | ${baseCarbs}g C | ${baseFat}g F | ${baseFiber}g Fiber`);
+        alert(`"${foodName}" saved as custom food!\n\nNutrition per 100g:\n${baseCalories} cal | ${baseProtein}g P | ${baseCarbs}g C | ${baseFat}g F | ${baseFiber}g Fiber`);
       }
     } catch (err) {
       alert('Failed to save compound meal: ' + err.message);
@@ -747,7 +747,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                     value={editMealName}
                     onChange={(e) => setEditMealName(e.target.value)}
                     placeholder="Meal name"
-                    className={`flex-1 text-lg font-semibold px-3 py-2 ${colors.inputBg} border-2 ${colors.inputBorder} text-gray-900 rounded-lg focus:ring-2 focus:ring-purple-500`}
+                    className={`flex-1 text-lg font-semibold px-3 py-2 ${colors.inputBg} border-2 ${colors.inputBorder} text-white rounded-lg focus:ring-2 focus:ring-primary-700`}
                   />
                   <button
                     onClick={() => setEditMealName(originalMealName)}
@@ -772,8 +772,8 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                         onClick={() => setEditMealType(type)}
                         className={`py-2 px-2 rounded-lg border-2 transition capitalize text-xs sm:text-sm truncate ${
                           editMealType === type
-                            ? 'border-purple-500 bg-purple-500 text-white font-semibold'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-purple-300'
+                            ? 'border-primary-700 bg-primary-700 text-white font-semibold'
+                            : 'border-white/10 bg-black text-white/60 hover:border-primary-700/50'
                         }`}
                       >
                         {type}
@@ -790,7 +790,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                     value={editConsumedAt}
                     onChange={(e) => setEditConsumedAt(e.target.value)}
                     max={new Date().toISOString().slice(0, 16)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white"
+                    className="w-full px-3 py-2 border border-white/10 rounded-lg focus:ring-2 focus:ring-primary-700 text-white bg-black"
                   />
                 </div>
               </div>
@@ -807,9 +807,9 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                         value={mealMultiplier}
                         onChange={(e) => updateMealMultiplier(e.target.value)}
                         placeholder="1 or 2x or 250g"
-                        className={`flex-1 px-3 py-1.5 border ${colors.inputBorder} rounded focus:ring-2 focus:ring-purple-500 text-sm text-gray-900 max-w-28`}
+                        className={`flex-1 px-3 py-1.5 border ${colors.inputBorder} rounded focus:ring-2 focus:ring-primary-700 text-sm text-white max-w-28`}
                       />
-                      <span className={`text-xs font-semibold ${colors.accentColor} whitespace-nowrap bg-opacity-20 bg-white px-2 py-1 rounded`}>
+                      <span className={`text-xs font-semibold ${colors.accentColor} whitespace-nowrap bg-opacity-20 bg-black px-2 py-1 rounded`}>
                         Total: {Math.round(getTotalCompoundWeight())}g
                       </span>
                     </div>
@@ -823,9 +823,9 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                     <button
                       type="button"
                       onClick={() => saveCompoundMealAsCustomFood(meal)}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-pink-600 transition text-sm font-medium shadow-md"
+                      className="bg-amber-500 text-black px-4 py-2 rounded-lg hover:bg-amber-400 transition text-sm font-medium shadow-md"
                     >
-                      ⭐ Save Entire Meal as My Food
+                      Save Entire Meal as My Food
                     </button>
                   </div>
 
@@ -846,9 +846,9 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                               </button>
                               <button
                                 onClick={() => saveComponentAsCustomFood(idx)}
-                                className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700"
+                                className="text-xs bg-amber-500 text-black px-2 py-1 rounded hover:bg-amber-400"
                               >
-                                ⭐ Save
+                                Save
                               </button>
                             </div>
                           </div>
@@ -861,7 +861,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                                 min="0"
                                 value={component.base_calories}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_calories', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                                className="w-full px-2 py-1 border rounded text-sm text-white"
                               />
                             </div>
                             <div>
@@ -872,7 +872,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                                 min="0"
                                 value={component.base_protein_g}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_protein_g', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                                className="w-full px-2 py-1 border rounded text-sm text-white"
                               />
                             </div>
                             <div>
@@ -883,7 +883,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                                 min="0"
                                 value={component.base_carbs_g}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_carbs_g', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                                className="w-full px-2 py-1 border rounded text-sm text-white"
                               />
                             </div>
                             <div>
@@ -894,7 +894,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                                 min="0"
                                 value={component.base_fat_g}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_fat_g', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                                className="w-full px-2 py-1 border rounded text-sm text-white"
                               />
                             </div>
                             <div>
@@ -905,7 +905,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                                 min="0"
                                 value={component.base_fiber_g}
                                 onChange={(e) => updateComponentNutrition(idx, 'base_fiber_g', e.target.value)}
-                                className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                                className="w-full px-2 py-1 border rounded text-sm text-white"
                               />
                             </div>
                           </div>
@@ -945,7 +945,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                                 value={component.portion_display ?? ''}
                                 onChange={(e) => updateComponentQuantity(idx, e.target.value)}
                                 placeholder="e.g., 150g or 2"
-                                className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-gray-900 rounded-lg focus:ring-2 focus:ring-opacity-50 text-sm`}
+                                className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-white rounded-lg focus:ring-2 focus:ring-opacity-50 text-sm`}
                               />
                             </div>
                             <div className="flex-1 ml-2">
@@ -967,7 +967,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                                   <p className={`text-xs ${colors.textSecondary}`}>F</p>
                                 </div>
                                 <div>
-                                  <p className="font-bold text-purple-600">{(component.base_fiber_g * (component.portion_size / 100)).toFixed(1)}g</p>
+                                  <p className="font-bold text-red-400">{(component.base_fiber_g * (component.portion_size / 100)).toFixed(1)}g</p>
                                   <p className={`text-xs ${colors.textSecondary}`}>Fiber</p>
                                 </div>
                               </div>
@@ -991,9 +991,9 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                     <button
                       type="button"
                       onClick={() => saveSimpleFoodAsCustomFood(meal)}
-                      className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-lg hover:from-purple-600 hover:to-pink-600 transition font-medium shadow-md"
+                      className="text-xs bg-amber-500 text-black px-3 py-1.5 rounded-lg hover:bg-amber-400 transition font-medium shadow-md"
                     >
-                      ⭐ Save as My Food
+                      Save as My Food
                     </button>
                   </div>
 
@@ -1017,7 +1017,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                             min="0"
                             value={simpleMacros.base_calories}
                             onChange={(e) => updateSimpleMacro('base_calories', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border rounded text-sm text-white"
                           />
                         </div>
                         <div>
@@ -1028,7 +1028,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                             min="0"
                             value={simpleMacros.base_protein_g}
                             onChange={(e) => updateSimpleMacro('base_protein_g', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border rounded text-sm text-white"
                           />
                         </div>
                         <div>
@@ -1039,7 +1039,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                             min="0"
                             value={simpleMacros.base_carbs_g}
                             onChange={(e) => updateSimpleMacro('base_carbs_g', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border rounded text-sm text-white"
                           />
                         </div>
                         <div>
@@ -1050,7 +1050,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                             min="0"
                             value={simpleMacros.base_fat_g}
                             onChange={(e) => updateSimpleMacro('base_fat_g', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border rounded text-sm text-white"
                           />
                         </div>
                         <div>
@@ -1061,7 +1061,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                             min="0"
                             value={simpleMacros.base_fiber_g}
                             onChange={(e) => updateSimpleMacro('base_fiber_g', e.target.value)}
-                            className="w-full px-2 py-1 border rounded text-sm text-gray-900"
+                            className="w-full px-2 py-1 border rounded text-sm text-white"
                           />
                         </div>
                       </div>
@@ -1087,7 +1087,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                           value={editQuantity}
                           onChange={(e) => setEditQuantity(e.target.value)}
                           placeholder="e.g., 150g or 2"
-                          className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-gray-900 rounded-lg focus:ring-2 focus:ring-opacity-50`}
+                          className={`w-full px-3 py-2 ${colors.inputBg} border ${colors.inputBorder} text-white rounded-lg focus:ring-2 focus:ring-opacity-50`}
                         />
                         <p className={`text-xs ${colors.textSecondary} mt-1`}>
                           Enter grams (e.g., 150g) or multiplier (e.g., 2)
@@ -1121,7 +1121,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                             <p className={`text-xs ${colors.textSecondary}`}>F</p>
                           </div>
                           <div>
-                            <p className="font-bold text-purple-600">{simpleMacros.base_fiber_g}g</p>
+                            <p className="font-bold text-red-400">{simpleMacros.base_fiber_g}g</p>
                             <p className={`text-xs ${colors.textSecondary}`}>Fiber</p>
                           </div>
                         </div>
@@ -1142,7 +1142,7 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
                   placeholder="Add any notes about this meal..."
                   maxLength={500}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-900 bg-white resize-none text-sm"
+                  className="w-full px-3 py-2 border border-white/10 rounded-lg focus:ring-2 focus:ring-primary-700 text-white bg-black resize-none text-sm"
                 />
                 <p className={`text-xs ${colors.textSecondary} mt-1`}>
                   {editNotes.length}/500 characters
@@ -1293,9 +1293,9 @@ export default function MealList({ refreshTrigger, onMealDeleted, onMealUpdated,
           <div className="relative max-w-4xl w-full">
             <button
               onClick={() => setViewingPhotoUrl(null)}
-              className="absolute top-4 right-4 bg-white text-gray-900 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition text-2xl font-bold"
+              className="absolute top-4 right-4 bg-black/10 text-white rounded-lg w-10 h-10 flex items-center justify-center hover:bg-black/20 transition"
             >
-              ✕
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
             <img
               src={viewingPhotoUrl}

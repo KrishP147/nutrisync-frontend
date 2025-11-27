@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import { useGoals } from '../contexts/GoalsContext';
+import { supabase } from '../../supabaseClient';
+import { useGoals } from '../../contexts/GoalsContext';
 import { motion } from 'motion/react';
-import { TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { TrendingUp, TrendingDown, Minus, Calendar, Flame, Beef, Wheat, Droplets, Leaf, Info } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 export default function WeeklyTrends() {
   const { goals } = useGoals();
   const [weekData, setWeekData] = useState([]);
   const [comparison, setComparison] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('calories');
+  const [showInfo, setShowInfo] = useState(false);
+
+  const views = [
+    { key: 'calories', label: 'Calories', icon: Flame, color: '#047857', unit: 'kcal' },
+    { key: 'protein', label: 'Protein', icon: Beef, color: '#0ea5e9', unit: 'g' },
+    { key: 'carbs', label: 'Carbs', icon: Wheat, color: '#f59e0b', unit: 'g' },
+    { key: 'fat', label: 'Fat', icon: Droplets, color: '#a855f7', unit: 'g' },
+    { key: 'fiber', label: 'Fiber', icon: Leaf, color: '#22c55e', unit: 'g' },
+  ];
 
   useEffect(() => {
     fetchWeeklyData();
@@ -47,13 +57,14 @@ export default function WeeklyTrends() {
       const dateStr = date.toISOString().split('T')[0];
 
       if (!dailyTotals[dateStr]) {
-        dailyTotals[dateStr] = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+        dailyTotals[dateStr] = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
       }
 
       dailyTotals[dateStr].calories += meal.total_calories || 0;
       dailyTotals[dateStr].protein += meal.total_protein_g || 0;
       dailyTotals[dateStr].carbs += meal.total_carbs_g || 0;
       dailyTotals[dateStr].fat += meal.total_fat_g || 0;
+      dailyTotals[dateStr].fiber += meal.total_fiber_g || 0;
     });
 
     // Get last 7 days for chart
@@ -61,13 +72,17 @@ export default function WeeklyTrends() {
       .slice(-7)
       .map(([date, data]) => ({
         date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
-        calories: data.calories,
-        protein: data.protein,
+        fullDate: new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+        calories: Math.round(data.calories),
+        protein: Math.round(data.protein * 10) / 10,
+        carbs: Math.round(data.carbs * 10) / 10,
+        fat: Math.round(data.fat * 10) / 10,
+        fiber: Math.round(data.fiber * 10) / 10,
       }));
 
     setWeekData(last7Days);
 
-    // Calculate week comparison
+    // Calculate week comparison for calories
     const dates = Object.keys(dailyTotals).sort();
     const thisWeekDates = dates.slice(-7);
     const lastWeekDates = dates.slice(-14, -7);
@@ -87,6 +102,19 @@ export default function WeeklyTrends() {
     });
   };
 
+  const getGoalValue = () => {
+    switch (activeView) {
+      case 'calories': return goals?.calories;
+      case 'protein': return goals?.protein;
+      case 'carbs': return goals?.carbs;
+      case 'fat': return goals?.fat;
+      case 'fiber': return goals?.fiber;
+      default: return null;
+    }
+  };
+
+  const getActiveViewConfig = () => views.find(v => v.key === activeView);
+
   if (loading) {
     return (
       <div className="card p-6 animate-pulse">
@@ -96,20 +124,37 @@ export default function WeeklyTrends() {
     );
   }
 
+  const viewConfig = getActiveViewConfig();
+  const goalValue = getGoalValue();
+
   return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="card p-6 relative">
+      {/* Info tooltip */}
+      <div 
+        className="absolute top-4 right-4 z-10"
+        onMouseEnter={() => setShowInfo(true)}
+        onMouseLeave={() => setShowInfo(false)}
+      >
+        <Info size={18} className="text-white/40 hover:text-white/70 cursor-help" />
+        {showInfo && (
+          <div className="absolute right-0 top-6 w-64 bg-black border border-white/10 rounded-lg p-3 text-xs text-white/70 z-20">
+            Shows your daily intake over the past week. The dotted line represents your goal. Toggle between metrics (Calories, Protein, Carbs, Fat, Fiber) to see trends.
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-secondary-500/10 flex items-center justify-center">
             <Calendar size={20} className="text-secondary-400" strokeWidth={2} />
           </div>
           <div>
             <h2 className="text-lg font-heading font-semibold text-white">Weekly Trends</h2>
-            <p className="text-white/50 text-sm">Calorie intake over the past week</p>
+            <p className="text-white/50 text-sm">{viewConfig.label} intake over the past week</p>
           </div>
         </div>
 
-        {comparison && (
+        {comparison && comparison.thisWeek > 0 && Math.abs(parseFloat(comparison.percentChange)) > 0.1 && activeView === 'calories' && (
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
             comparison.trend === 'up' ? 'bg-amber-500/10 text-amber-400' :
             comparison.trend === 'down' ? 'bg-primary-700/10 text-primary-500' :
@@ -125,6 +170,25 @@ export default function WeeklyTrends() {
         )}
       </div>
 
+      {/* View Toggle */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {views.map(({ key, label, icon: Icon, color }) => (
+          <button
+            key={key}
+            onClick={() => setActiveView(key)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              activeView === key
+                ? 'text-white'
+                : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
+            }`}
+            style={activeView === key ? { backgroundColor: color } : {}}
+          >
+            <Icon size={14} strokeWidth={2} />
+            {label}
+          </button>
+        ))}
+      </div>
+
       {weekData.length > 0 ? (
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={weekData}>
@@ -133,29 +197,34 @@ export default function WeeklyTrends() {
             <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#0a0a0a',
+                backgroundColor: '#000000',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '8px',
                 color: '#fff'
               }}
+              labelFormatter={(label, payload) => {
+                if (payload && payload[0] && payload[0].payload.fullDate) {
+                  return payload[0].payload.fullDate;
+                }
+                return label;
+              }}
+              formatter={(value) => [`${value} ${viewConfig.unit}`, viewConfig.label]}
             />
             <Line 
               type="monotone" 
-              dataKey="calories" 
-              stroke="#047857" 
+              dataKey={activeView}
+              stroke={viewConfig.color}
               strokeWidth={2}
-              dot={{ fill: '#047857', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, fill: '#047857' }}
+              dot={{ fill: viewConfig.color, strokeWidth: 2, r: 4 }}
+              activeDot={{ r: 6, fill: viewConfig.color }}
             />
-            {goals?.calories && (
-              <Line
-                type="monotone"
-                dataKey={() => goals.calories}
-                stroke="rgba(255,255,255,0.2)"
+            {goalValue && (
+              <ReferenceLine
+                y={goalValue}
+                stroke="rgba(255,255,255,0.3)"
                 strokeWidth={1}
                 strokeDasharray="5 5"
-                dot={false}
-                name="Goal"
+                label={{ value: 'Goal', position: 'right', fill: 'rgba(255,255,255,0.5)', fontSize: 10 }}
               />
             )}
           </LineChart>
@@ -166,7 +235,7 @@ export default function WeeklyTrends() {
         </div>
       )}
 
-      {comparison && comparison.thisWeek > 0 && (
+      {comparison && comparison.thisWeek > 0 && activeView === 'calories' && (
         <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 gap-6">
           <div>
             <p className="text-white/50 text-sm mb-1">This Week Avg</p>

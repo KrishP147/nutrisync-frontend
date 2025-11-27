@@ -2,16 +2,38 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useGoals } from '../contexts/GoalsContext';
 import { motion } from 'motion/react';
-import { Lightbulb, ThumbsUp, ThumbsDown, ChevronRight, Sparkles } from 'lucide-react';
+import { Lightbulb, ThumbsUp, ThumbsDown, RefreshCw, Sparkles } from 'lucide-react';
+import api from '../services/api';
 
 export default function Recommendations({ limit = 3 }) {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
   const { goals } = useGoals();
 
   useEffect(() => {
+    const fetchDietaryRestrictions = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('user_profile')
+        .select('dietary_restrictions')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data?.dietary_restrictions) {
+        setDietaryRestrictions(data.dietary_restrictions);
+      }
+    };
+
+    fetchDietaryRestrictions();
+  }, []);
+
+  useEffect(() => {
     generateRecommendations();
-  }, [goals]);
+  }, [goals, dietaryRestrictions]);
 
   const generateRecommendations = async () => {
     setLoading(true);
@@ -41,8 +63,6 @@ export default function Recommendations({ limit = 3 }) {
         fiber: acc.fiber + (meal.total_fiber_g || 0)
       }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
 
-      // Generate recommendations based on gaps
-      const recs = [];
       const userGoals = {
         calories: goals?.calories || 2000,
         protein: goals?.protein || 150,
@@ -51,84 +71,207 @@ export default function Recommendations({ limit = 3 }) {
         fiber: goals?.fiber || 30
       };
 
-      // Protein recommendation
-      const proteinGap = userGoals.protein - totals.protein;
-      if (proteinGap > 30) {
-        recs.push({
-          id: 'protein',
-          type: 'eat',
-          title: 'Increase protein intake',
-          description: `You need ${Math.round(proteinGap)}g more protein today. Consider lean meats, fish, eggs, or legumes.`,
-          priority: 'high',
-          color: 'primary'
+      // Try to get AI recommendations from backend
+      try {
+        const lacking = {
+          calories: Math.max(0, userGoals.calories - totals.calories),
+          protein: Math.max(0, userGoals.protein - totals.protein),
+          carbs: Math.max(0, userGoals.carbs - totals.carbs),
+          fat: Math.max(0, userGoals.fat - totals.fat),
+          fiber: Math.max(0, userGoals.fiber - totals.fiber)
+        };
+
+        const response = await api.post('/api/generate-food-recommendations', {
+          goals: userGoals,
+          current: totals,
+          lacking: lacking,
+          type: 'toEat',
+          dietaryRestrictions: dietaryRestrictions
         });
+
+        if (response.data?.foodsToEat?.length > 0) {
+          // Convert AI response format to recommendations format
+          const aiRecs = response.data.foodsToEat.map((food, idx) => ({
+            id: `ai-${idx}-${Date.now()}`,
+            type: 'eat',
+            title: food.name,
+            description: food.reason,
+            priority: food.score >= 90 ? 'high' : food.score >= 75 ? 'medium' : 'low',
+            color: 'primary'
+          }));
+          setRecommendations(aiRecs.slice(0, limit));
+          setLoading(false);
+          return;
+        }
+      } catch (apiError) {
+        console.error('AI recommendations failed:', apiError);
+        console.log('Using fallback logic');
       }
 
-      // Fiber recommendation
-      const fiberGap = userGoals.fiber - totals.fiber;
-      if (fiberGap > 10) {
-        recs.push({
-          id: 'fiber',
-          type: 'eat',
-          title: 'Add more fiber',
-          description: `You're ${Math.round(fiberGap)}g short on fiber. Try vegetables, fruits, or whole grains.`,
-          priority: 'medium',
-          color: 'secondary'
-        });
-      }
-
-      // Calories check
-      const calorieProgress = (totals.calories / userGoals.calories) * 100;
-      if (calorieProgress > 90 && calorieProgress < 110) {
-        recs.push({
-          id: 'calories-good',
-          type: 'info',
-          title: 'Great calorie balance',
-          description: 'You\'re on track with your calorie goal today. Keep up the good work!',
-          priority: 'low',
-          color: 'amber'
-        });
-      } else if (calorieProgress > 110) {
-        recs.push({
-          id: 'calories-over',
-          type: 'avoid',
-          title: 'Calorie limit reached',
-          description: 'You\'ve exceeded your calorie goal. Consider lighter options for remaining meals.',
-          priority: 'high',
-          color: 'amber'
-        });
-      }
-
-      // Balance check
-      if (totals.carbs > totals.protein * 3 && totals.protein < userGoals.protein * 0.5) {
-        recs.push({
-          id: 'balance',
-          type: 'eat',
-          title: 'Balance your macros',
-          description: 'Your carb-to-protein ratio is high. Add more protein-rich foods to balance.',
-          priority: 'medium',
-          color: 'secondary'
-        });
-      }
-
-      // Default recommendation if no specific ones
-      if (recs.length === 0) {
-        recs.push({
-          id: 'general',
-          type: 'info',
-          title: 'Stay consistent',
-          description: 'You\'re doing well! Keep logging your meals to maintain accurate tracking.',
-          priority: 'low',
-          color: 'primary'
-        });
-      }
-
+      // Fallback to local recommendations
+      const recs = generateLocalRecommendations(totals, userGoals, meals?.length || 0, dietaryRestrictions);
       setRecommendations(recs.slice(0, limit));
     } catch (error) {
       console.error('Error generating recommendations:', error);
+      setRecommendations([{
+        id: 'error',
+        type: 'info',
+        title: 'Keep tracking',
+        description: 'Log more meals to get personalized recommendations.',
+        priority: 'low',
+        color: 'primary'
+      }]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateLocalRecommendations = (totals, userGoals, mealCount, dietaryRestrictions = []) => {
+    const recs = [];
+    const hour = new Date().getHours();
+
+    // Helper function to filter foods by dietary restrictions
+    const filterByRestrictions = (foods) => {
+      if (!dietaryRestrictions || dietaryRestrictions.length === 0) return foods;
+
+      return foods.filter(food => {
+        const lowerFood = food.toLowerCase();
+
+        // Vegan restrictions
+        if (dietaryRestrictions.includes('vegan')) {
+          if (['greek yogurt', 'cottage cheese', 'chicken breast', 'salmon', 'eggs', 'cheese'].some(item => lowerFood.includes(item))) {
+            return false;
+          }
+        }
+
+        // Vegetarian restrictions
+        if (dietaryRestrictions.includes('vegetarian')) {
+          if (['chicken breast', 'salmon', 'beef', 'pork'].some(item => lowerFood.includes(item))) {
+            return false;
+          }
+        }
+
+        // Dairy-free restrictions
+        if (dietaryRestrictions.includes('dairy_free')) {
+          if (['greek yogurt', 'cottage cheese', 'cheese'].some(item => lowerFood.includes(item))) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+    };
+
+    // Protein gap
+    const proteinGap = userGoals.protein - totals.protein;
+    if (proteinGap > 30) {
+      let proteinFoods = ['Greek yogurt', 'cottage cheese', 'chicken breast', 'salmon', 'eggs', 'tofu', 'lentils', 'edamame'];
+      proteinFoods = filterByRestrictions(proteinFoods);
+
+      if (proteinFoods.length > 0) {
+        const randomFood = proteinFoods[Math.floor(Math.random() * proteinFoods.length)];
+        recs.push({
+          id: `protein-${Date.now()}`,
+          type: 'eat',
+          title: `Add ${randomFood}`,
+          description: `You need ${Math.round(proteinGap)}g more protein today. ${randomFood.charAt(0).toUpperCase() + randomFood.slice(1)} is a great source.`,
+          priority: 'high',
+          color: 'primary'
+        });
+      }
+    }
+
+    // Fiber gap
+    const fiberGap = userGoals.fiber - totals.fiber;
+    if (fiberGap > 10) {
+      const fiberFoods = ['broccoli', 'berries', 'avocado', 'chia seeds', 'oatmeal', 'black beans', 'artichoke'];
+      const randomFood = fiberFoods[Math.floor(Math.random() * fiberFoods.length)];
+      recs.push({
+        id: `fiber-${Date.now()}`,
+        type: 'eat',
+        title: `Include ${randomFood}`,
+        description: `You're ${Math.round(fiberGap)}g short on fiber. Add ${randomFood} to boost your intake.`,
+        priority: 'medium',
+        color: 'secondary'
+      });
+    }
+
+    // Calorie status
+    const calorieProgress = (totals.calories / userGoals.calories) * 100;
+    const caloriesRemaining = userGoals.calories - totals.calories;
+    
+    if (calorieProgress > 110) {
+      recs.push({
+        id: `calories-over-${Date.now()}`,
+        type: 'avoid',
+        title: 'Consider lighter options',
+        description: `You've exceeded your calorie goal by ${Math.round(totals.calories - userGoals.calories)} cal. Opt for vegetables or lean protein for remaining meals.`,
+        priority: 'high',
+        color: 'amber'
+      });
+    } else if (calorieProgress < 50 && hour > 18) {
+      recs.push({
+        id: `calories-low-${Date.now()}`,
+        type: 'eat',
+        title: 'You have room for more',
+        description: `You have ${Math.round(caloriesRemaining)} calories remaining. A balanced dinner would help meet your goals.`,
+        priority: 'medium',
+        color: 'primary'
+      });
+    }
+
+    // Time-based suggestions
+    if (hour >= 6 && hour < 10 && mealCount === 0) {
+      const breakfastIdeas = ['overnight oats with berries', 'eggs with avocado toast', 'Greek yogurt parfait', 'protein smoothie'];
+      const idea = breakfastIdeas[Math.floor(Math.random() * breakfastIdeas.length)];
+      recs.push({
+        id: `breakfast-${Date.now()}`,
+        type: 'eat',
+        title: 'Start with breakfast',
+        description: `Try ${idea} to kickstart your metabolism and hit your protein goals early.`,
+        priority: 'medium',
+        color: 'secondary'
+      });
+    }
+
+    // Meal frequency
+    if (mealCount < 2 && hour > 14) {
+      recs.push({
+        id: `frequency-${Date.now()}`,
+        type: 'info',
+        title: 'Spread out your meals',
+        description: 'Consider eating smaller, more frequent meals to maintain energy levels and better nutrient absorption.',
+        priority: 'low',
+        color: 'amber'
+      });
+    }
+
+    // Default if no specific recommendations
+    if (recs.length === 0) {
+      const generalTips = [
+        { title: 'Hydration matters', desc: 'Drinking water before meals can help with portion control and digestion.' },
+        { title: 'Eat the rainbow', desc: 'Try to include vegetables of different colors for varied nutrients.' },
+        { title: 'Mindful eating', desc: 'Take your time with meals - it takes 20 minutes for your brain to register fullness.' },
+        { title: 'Prep ahead', desc: 'Consider meal prepping protein sources for the week to stay on track.' },
+      ];
+      const tip = generalTips[Math.floor(Math.random() * generalTips.length)];
+      recs.push({
+        id: `general-${Date.now()}`,
+        type: 'info',
+        title: tip.title,
+        description: tip.desc,
+        priority: 'low',
+        color: 'primary'
+      });
+    }
+
+    return recs;
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await generateRecommendations();
+    setRefreshing(false);
   };
 
   const colorClasses = {
@@ -184,6 +327,14 @@ export default function Recommendations({ limit = 3 }) {
             <p className="text-white/50 text-sm">Personalized recommendations based on your intake</p>
           </div>
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition"
+          title="Refresh recommendations"
+        >
+          <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+        </button>
       </div>
 
       <div className="space-y-3">

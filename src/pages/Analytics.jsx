@@ -5,35 +5,44 @@ import {
   BarChart3, 
   Clock, 
   PieChart as PieChartIcon, 
-  Utensils, 
   TrendingUp,
-  Plus,
-  Pencil,
-  Trash2,
-  Save,
-  X,
-  Star
+  Waves,
+  GitBranch,
+  Crosshair,
+  Triangle,
+  Grid3X3,
+  LayoutGrid,
+  Info,
+  Sun,
+  Box
 } from 'lucide-react';
 import Sidebar from '../components/layout/Sidebar';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { 
+  NutrientStreamGraph, 
+  CalorieFlowSankey, 
+  NutrientDensityScatter,
+  MealFrequencyHeatmap,
+  MealCompositionTreeMap,
+  MacroRatioTernary,
+  MealTimingSunburst,
+  MealNutrientSpace3D
+} from '../components/charts';
+import { useGoals } from '../contexts/GoalsContext';
+import ChartErrorBoundary from '../components/ChartErrorBoundary';
 
 export default function Analytics() {
+  const { goals } = useGoals();
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
-  const [customFoods, setCustomFoods] = useState([]);
-  const [editingFood, setEditingFood] = useState(null);
-  const [editValues, setEditValues] = useState({});
-  const [creatingFood, setCreatingFood] = useState(false);
-  const [newFoodValues, setNewFoodValues] = useState({
-    name: '', base_calories: 0, base_protein_g: 0, base_carbs_g: 0, base_fat_g: 0, base_fiber_g: 0
-  });
   const [weeklyPatternView, setWeeklyPatternView] = useState('calories');
-  const [mealTypeView, setMealTypeView] = useState('calories');
+  const [showInfoEatingTimes, setShowInfoEatingTimes] = useState(false);
+  const [showInfoMealDist, setShowInfoMealDist] = useState(false);
+  const [showInfoWeekly, setShowInfoWeekly] = useState(false);
 
   useEffect(() => {
     fetchMealsAndCalculateStats();
-    fetchCustomFoods();
   }, []);
 
   const fetchMealsAndCalculateStats = async () => {
@@ -119,15 +128,15 @@ export default function Analytics() {
       return acc;
     }, {});
 
-    const weeklyData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dayName, idx) => {
+    const weeklyData = ['Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays', 'Sundays'].map((dayName, idx) => {
       const dayIndex = idx === 6 ? 0 : idx + 1;
       return {
         day: dayName,
-        avgCalories: weekdayStats[dayIndex] ? Math.round(weekdayStats[dayIndex].calories / weekdayStats[dayIndex].count) : 0,
-        avgProtein: weekdayStats[dayIndex] ? parseFloat((weekdayStats[dayIndex].protein / weekdayStats[dayIndex].count).toFixed(1)) : 0,
-        avgCarbs: weekdayStats[dayIndex] ? parseFloat((weekdayStats[dayIndex].carbs / weekdayStats[dayIndex].count).toFixed(1)) : 0,
-        avgFat: weekdayStats[dayIndex] ? parseFloat((weekdayStats[dayIndex].fat / weekdayStats[dayIndex].count).toFixed(1)) : 0,
-        avgFiber: weekdayStats[dayIndex] ? parseFloat((weekdayStats[dayIndex].fiber / weekdayStats[dayIndex].count).toFixed(1)) : 0
+        'Avg Calories': weekdayStats[dayIndex] ? Math.round(weekdayStats[dayIndex].calories / weekdayStats[dayIndex].count) : 0,
+        'Avg Protein': weekdayStats[dayIndex] ? parseFloat((weekdayStats[dayIndex].protein / weekdayStats[dayIndex].count).toFixed(1)) : 0,
+        'Avg Carbs': weekdayStats[dayIndex] ? parseFloat((weekdayStats[dayIndex].carbs / weekdayStats[dayIndex].count).toFixed(1)) : 0,
+        'Avg Fat': weekdayStats[dayIndex] ? parseFloat((weekdayStats[dayIndex].fat / weekdayStats[dayIndex].count).toFixed(1)) : 0,
+        'Avg Fiber': weekdayStats[dayIndex] ? parseFloat((weekdayStats[dayIndex].fiber / weekdayStats[dayIndex].count).toFixed(1)) : 0
       };
     });
 
@@ -141,20 +150,10 @@ export default function Analytics() {
     }, {});
     const favoriteFood = Object.entries(mealCounts).sort((a, b) => b[1] - a[1])[0];
 
-    const avgByMealType = Object.entries(macrosByType).map(([type, totals]) => ({
-      type: type.charAt(0).toUpperCase() + type.slice(1),
-      avgCalories: Math.round(totals.calories / countsByType[type]),
-      avgProtein: parseFloat((totals.protein / countsByType[type]).toFixed(1)),
-      avgCarbs: parseFloat((totals.carbs / countsByType[type]).toFixed(1)),
-      avgFat: parseFloat((totals.fat / countsByType[type]).toFixed(1)),
-      avgFiber: parseFloat((totals.fiber / countsByType[type]).toFixed(1))
-    })).sort((a, b) => b.avgCalories - a.avgCalories);
-
     setStats({
       hourlyData, mealTypeData, favoriteMealType, peakHour: `${peakHour}:00`,
       biggestMealType, eaterType, weeklyData, totalMeals, avgCaloriesPerMeal,
       favoriteFood: favoriteFood ? { name: favoriteFood[0], count: favoriteFood[1] } : null,
-      avgByMealType
     });
   };
 
@@ -191,40 +190,18 @@ export default function Analytics() {
     return { primary: 'Balanced Eater', description: 'Evenly distributed meals' };
   };
 
-  const fetchCustomFoods = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase.from('user_foods').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-    if (!error && data) setCustomFoods(data);
-  };
+  const COLORS = ['#047857', '#0ea5e9', '#f59e0b', '#a855f7', '#ef4444'];
 
-  const handleEditFood = (food) => {
-    setEditingFood(food.id);
-    setEditValues({ name: food.name, base_calories: food.base_calories, base_protein_g: food.base_protein_g, base_carbs_g: food.base_carbs_g, base_fat_g: food.base_fat_g, base_fiber_g: food.base_fiber_g });
-  };
-
-  const handleSaveFood = async (foodId) => {
-    const { error } = await supabase.from('user_foods').update(editValues).eq('id', foodId);
-    if (!error) { await fetchCustomFoods(); setEditingFood(null); setEditValues({}); }
-  };
-
-  const handleDeleteFood = async (foodId) => {
-    if (!confirm('Delete this custom food?')) return;
-    const { error } = await supabase.from('user_foods').delete().eq('id', foodId);
-    if (!error) await fetchCustomFoods();
-  };
-
-  const handleCreateFood = async () => {
-    if (!newFoodValues.name.trim()) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('user_foods').insert([{ user_id: user.id, ...newFoodValues, source: 'manual_creation' }]);
-    if (!error) {
-      await fetchCustomFoods();
-      setCreatingFood(false);
-      setNewFoodValues({ name: '', base_calories: 0, base_protein_g: 0, base_carbs_g: 0, base_fat_g: 0, base_fiber_g: 0 });
+  const getWeeklyDataKey = () => {
+    switch (weeklyPatternView) {
+      case 'calories': return 'Avg Calories';
+      case 'protein': return 'Avg Protein';
+      case 'carbs': return 'Avg Carbs';
+      case 'fat': return 'Avg Fat';
+      case 'fiber': return 'Avg Fiber';
+      default: return 'Avg Calories';
     }
   };
-
-  const COLORS = ['#047857', '#0ea5e9', '#f59e0b', '#3b82f6', '#ef4444'];
 
   if (loading) {
     return (
@@ -238,7 +215,7 @@ export default function Analytics() {
 
   return (
     <Sidebar>
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div>
           <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-heading font-bold text-white">
@@ -274,47 +251,78 @@ export default function Analytics() {
               </motion.div>
             </div>
 
-            {/* Charts Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Eating Times */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="card p-6">
-                <div className="flex items-center gap-3 mb-6">
+            {/* Eating Times */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="card p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-secondary-500/10 flex items-center justify-center">
                     <Clock size={20} className="text-secondary-400" strokeWidth={2} />
                   </div>
-                  <h2 className="text-lg font-heading font-semibold text-white">Eating Times</h2>
+                  <div>
+                    <h2 className="text-lg font-heading font-semibold text-white">Eating Times</h2>
+                    <p className="text-white/50 text-sm">When you eat by meal count</p>
+                  </div>
                 </div>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={stats.hourlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="label" stroke="rgba(255,255,255,0.5)" fontSize={10} interval={3} />
-                    <YAxis stroke="rgba(255,255,255,0.5)" fontSize={10} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} 
-                      formatter={(value) => [`${value} ${value === 1 ? 'meal' : 'meals'} logged`]} />
-                    <Bar dataKey="count" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </motion.div>
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setShowInfoEatingTimes(true)}
+                  onMouseLeave={() => setShowInfoEatingTimes(false)}
+                >
+                  <Info size={18} className="text-white/40 hover:text-white/70 cursor-help" />
+                  {showInfoEatingTimes && (
+                    <div className="absolute right-0 top-6 w-64 bg-black border border-white/10 rounded-lg p-3 text-xs text-white/70 z-20">
+                      Shows how many meals you log at each hour. Higher bars = more frequent eating times.
+                    </div>
+                  )}
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={stats.hourlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="label" stroke="rgba(255,255,255,0.5)" fontSize={10} interval={3} />
+                  <YAxis stroke="rgba(255,255,255,0.5)" fontSize={10} />
+                  <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} 
+                    formatter={(value) => [`${value} ${value === 1 ? 'meal' : 'meals'} logged`]} />
+                  <Bar dataKey="count" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </motion.div>
 
-              {/* Meal Type Distribution */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="card p-6">
-                <div className="flex items-center gap-3 mb-6">
+            {/* Meal Type Distribution */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="card p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
                     <PieChartIcon size={20} className="text-amber-400" strokeWidth={2} />
                   </div>
-                  <h2 className="text-lg font-heading font-semibold text-white">Meal Distribution</h2>
+                  <div>
+                    <h2 className="text-lg font-heading font-semibold text-white">Meal Distribution</h2>
+                    <p className="text-white/50 text-sm">Breakdown by meal type</p>
+                  </div>
                 </div>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie data={stats.mealTypeData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value" label={({ name, percentage }) => `${name} ${percentage}%`}>
-                      {stats.mealTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
-                      formatter={(value) => [`${value} ${value === 1 ? 'meal' : 'meals'} logged`]} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </motion.div>
-            </div>
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setShowInfoMealDist(true)}
+                  onMouseLeave={() => setShowInfoMealDist(false)}
+                >
+                  <Info size={18} className="text-white/40 hover:text-white/70 cursor-help" />
+                  {showInfoMealDist && (
+                    <div className="absolute right-0 top-6 w-64 bg-black border border-white/10 rounded-lg p-3 text-xs text-white/70 z-20">
+                      Shows the proportion of meals by type: Breakfast, Lunch, Dinner, and Snacks.
+                    </div>
+                  )}
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie data={stats.mealTypeData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" label={({ name, percentage }) => `${name} ${percentage}%`}>
+                    {stats.mealTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                    formatter={(value) => [`${value} ${value === 1 ? 'meal' : 'meals'} logged`]} />
+                </PieChart>
+              </ResponsiveContainer>
+            </motion.div>
 
             {/* Weekly Pattern */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="card p-6">
@@ -323,15 +331,32 @@ export default function Analytics() {
                   <div className="w-10 h-10 rounded-lg bg-primary-700/10 flex items-center justify-center">
                     <TrendingUp size={20} className="text-primary-500" strokeWidth={2} />
                   </div>
-                  <h2 className="text-lg font-heading font-semibold text-white">Weekly Pattern</h2>
+                  <div>
+                    <h2 className="text-lg font-heading font-semibold text-white">Weekly Pattern</h2>
+                    <p className="text-white/50 text-sm">Average intake by day</p>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {['calories', 'protein', 'carbs', 'fat', 'fiber'].map((key) => (
-                    <button key={key} onClick={() => setWeeklyPatternView(key)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition capitalize ${weeklyPatternView === key ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:text-white'}`}>
-                      {key}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap gap-2">
+                    {['calories', 'protein', 'carbs', 'fat', 'fiber'].map((key) => (
+                      <button key={key} onClick={() => setWeeklyPatternView(key)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition capitalize ${weeklyPatternView === key ? 'bg-primary-700 text-white' : 'bg-white/5 text-white/60 hover:text-white'}`}>
+                        {key}
+                      </button>
+                    ))}
+                  </div>
+                  <div 
+                    className="relative"
+                    onMouseEnter={() => setShowInfoWeekly(true)}
+                    onMouseLeave={() => setShowInfoWeekly(false)}
+                  >
+                    <Info size={18} className="text-white/40 hover:text-white/70 cursor-help" />
+                    {showInfoWeekly && (
+                      <div className="absolute right-0 top-6 w-64 bg-black border border-white/10 rounded-lg p-3 text-xs text-white/70 z-20">
+                        Shows your average nutrient intake for each day of the week. Use the buttons to switch between different nutrients.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={280}>
@@ -339,100 +364,146 @@ export default function Analytics() {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                   <XAxis dataKey="day" stroke="rgba(255,255,255,0.5)" fontSize={12} />
                   <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} />
-                  <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
-                  <Bar dataKey={weeklyPatternView === 'calories' ? 'avgCalories' : `avg${weeklyPatternView.charAt(0).toUpperCase() + weeklyPatternView.slice(1)}`}
-                    fill={weeklyPatternView === 'calories' ? '#047857' : weeklyPatternView === 'protein' ? '#0ea5e9' : weeklyPatternView === 'carbs' ? '#f59e0b' : weeklyPatternView === 'fat' ? '#3b82f6' : '#22c55e'}
+                  <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
+                  <Bar dataKey={getWeeklyDataKey()}
+                    fill={weeklyPatternView === 'calories' ? '#047857' : weeklyPatternView === 'protein' ? '#0ea5e9' : weeklyPatternView === 'carbs' ? '#f59e0b' : weeklyPatternView === 'fat' ? '#a855f7' : '#22c55e'}
                     radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </motion.div>
 
-            {/* Custom Foods Section */}
+            {/* Nutrient Stream */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="card p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                    <Star size={20} className="text-amber-400" strokeWidth={2} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-heading font-semibold text-white">My Foods</h2>
-                    <p className="text-white/50 text-sm">{customFoods.length} custom foods saved</p>
-                  </div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-secondary-500/10 flex items-center justify-center">
+                  <Waves size={20} className="text-secondary-400" strokeWidth={2} />
                 </div>
-                <button onClick={() => setCreatingFood(true)} className="btn-primary">
-                  <Plus size={18} /> Add Food
-                </button>
-              </div>
-
-              {/* Create New Food Form */}
-              {creatingFood && (
-                <div className="bg-surface-300 border border-white/10 rounded-lg p-4 mb-6">
-                  <h3 className="font-medium text-white mb-4">Create New Food</h3>
-                  <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
-                    <input type="text" placeholder="Food name" value={newFoodValues.name} onChange={(e) => setNewFoodValues({ ...newFoodValues, name: e.target.value })}
-                      className="input col-span-2 lg:col-span-1" />
-                    <input type="number" placeholder="Calories" min="0" value={newFoodValues.base_calories} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_calories: e.target.value })}
-                      className="input" />
-                    <input type="number" placeholder="Protein" min="0" step="0.1" value={newFoodValues.base_protein_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_protein_g: e.target.value })}
-                      className="input" />
-                    <input type="number" placeholder="Carbs" min="0" step="0.1" value={newFoodValues.base_carbs_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_carbs_g: e.target.value })}
-                      className="input" />
-                    <input type="number" placeholder="Fat" min="0" step="0.1" value={newFoodValues.base_fat_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_fat_g: e.target.value })}
-                      className="input" />
-                    <input type="number" placeholder="Fiber" min="0" step="0.1" value={newFoodValues.base_fiber_g} onChange={(e) => setNewFoodValues({ ...newFoodValues, base_fiber_g: e.target.value })}
-                      className="input" />
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={handleCreateFood} className="btn-primary"><Save size={16} /> Save</button>
-                    <button onClick={() => setCreatingFood(false)} className="btn-ghost"><X size={16} /> Cancel</button>
-                  </div>
+                <div>
+                  <h2 className="text-lg font-heading font-semibold text-white">Nutrient Flow</h2>
+                  <p className="text-white/50 text-sm">Macro distribution over time</p>
                 </div>
-              )}
-
-              {/* Custom Foods List */}
-              <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
-                {customFoods.length === 0 ? (
-                  <p className="text-white/40 text-center py-8">No custom foods yet</p>
-                ) : (
-                  customFoods.map((food) => (
-                    <div key={food.id} className="bg-surface-300 border border-white/5 rounded-lg p-4">
-                      {editingFood === food.id ? (
-                        <div className="space-y-3">
-                          <input type="text" value={editValues.name} onChange={(e) => setEditValues({ ...editValues, name: e.target.value })} className="input" />
-                          <div className="grid grid-cols-5 gap-2">
-                            <input type="number" min="0" value={editValues.base_calories} onChange={(e) => setEditValues({ ...editValues, base_calories: e.target.value })} className="input text-center" />
-                            <input type="number" min="0" step="0.1" value={editValues.base_protein_g} onChange={(e) => setEditValues({ ...editValues, base_protein_g: e.target.value })} className="input text-center" />
-                            <input type="number" min="0" step="0.1" value={editValues.base_carbs_g} onChange={(e) => setEditValues({ ...editValues, base_carbs_g: e.target.value })} className="input text-center" />
-                            <input type="number" min="0" step="0.1" value={editValues.base_fat_g} onChange={(e) => setEditValues({ ...editValues, base_fat_g: e.target.value })} className="input text-center" />
-                            <input type="number" min="0" step="0.1" value={editValues.base_fiber_g} onChange={(e) => setEditValues({ ...editValues, base_fiber_g: e.target.value })} className="input text-center" />
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => handleSaveFood(food.id)} className="btn-primary text-sm"><Save size={14} /> Save</button>
-                            <button onClick={() => setEditingFood(null)} className="btn-ghost text-sm"><X size={14} /> Cancel</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-white">{food.name}</p>
-                            <p className="text-white/50 text-sm">
-                              {food.base_calories} cal | {food.base_protein_g}g P | {food.base_carbs_g}g C | {food.base_fat_g}g F | {food.base_fiber_g}g Fiber
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => handleEditFood(food)} className="p-2 rounded-lg bg-white/5 text-white/60 hover:text-white hover:bg-white/10">
-                              <Pencil size={16} />
-                            </button>
-                            <button onClick={() => handleDeleteFood(food.id)} className="p-2 rounded-lg bg-white/5 text-red-400 hover:bg-red-500/10">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
               </div>
+              <ChartErrorBoundary>
+                <NutrientStreamGraph data={stats.weeklyData.map(d => ({
+                  date: d.day,
+                  protein: d['Avg Protein'],
+                  carbs: d['Avg Carbs'],
+                  fat: d['Avg Fat'],
+                  fiber: d['Avg Fiber']
+                }))} />
+              </ChartErrorBoundary>
+            </motion.div>
+
+            {/* Calorie Flow Sankey */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="card p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <GitBranch size={20} className="text-amber-400" strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-heading font-semibold text-white">Calorie Flow</h2>
+                  <p className="text-white/50 text-sm">From meals to macros</p>
+                </div>
+              </div>
+              <ChartErrorBoundary>
+                <CalorieFlowSankey meals={meals} />
+              </ChartErrorBoundary>
+            </motion.div>
+
+            {/* Nutrient Density Scatter */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} className="card p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-secondary-500/10 flex items-center justify-center">
+                  <Crosshair size={20} className="text-secondary-400" strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-heading font-semibold text-white">Meal Quality</h2>
+                  <p className="text-white/50 text-sm">Nutrient density per meal</p>
+                </div>
+              </div>
+              <ChartErrorBoundary>
+                <NutrientDensityScatter meals={meals} />
+              </ChartErrorBoundary>
+            </motion.div>
+
+            {/* Macro Ratio Ternary */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }} className="card p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Triangle size={20} className="text-amber-400" strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-heading font-semibold text-white">Macro Ratios</h2>
+                  <p className="text-white/50 text-sm">P/C/F balance per meal</p>
+                </div>
+              </div>
+              <ChartErrorBoundary>
+                <MacroRatioTernary meals={meals} />
+              </ChartErrorBoundary>
+            </motion.div>
+
+            {/* Meal Frequency Heatmap */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }} className="card p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-primary-700/10 flex items-center justify-center">
+                  <Grid3X3 size={20} className="text-primary-500" strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-heading font-semibold text-white">Eating Schedule</h2>
+                  <p className="text-white/50 text-sm">When you eat by hour and day</p>
+                </div>
+              </div>
+              <ChartErrorBoundary>
+                <MealFrequencyHeatmap meals={meals} />
+              </ChartErrorBoundary>
+            </motion.div>
+
+            {/* Meal Composition TreeMap */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }} className="card p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <LayoutGrid size={20} className="text-purple-400" strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-heading font-semibold text-white">Food Categories</h2>
+                  <p className="text-white/50 text-sm">What dominates your diet</p>
+                </div>
+              </div>
+              <ChartErrorBoundary>
+                <MealCompositionTreeMap meals={meals} />
+              </ChartErrorBoundary>
+            </motion.div>
+
+            {/* Meal Timing Sunburst */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.3 }} className="card p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Sun size={20} className="text-amber-400" strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-heading font-semibold text-white">Meal Hierarchy</h2>
+                  <p className="text-white/50 text-sm">Meal type → Time → Food category</p>
+                </div>
+              </div>
+              <ChartErrorBoundary>
+                <MealTimingSunburst meals={meals} />
+              </ChartErrorBoundary>
+            </motion.div>
+
+            {/* 3D Nutrient Space */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.4 }} className="card p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-secondary-500/10 flex items-center justify-center">
+                  <Box size={20} className="text-secondary-400" strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-heading font-semibold text-white">3D Nutrient Space</h2>
+                  <p className="text-white/50 text-sm">Explore meals in protein-carb-fat space</p>
+                </div>
+              </div>
+              <ChartErrorBoundary>
+                <MealNutrientSpace3D meals={meals} />
+              </ChartErrorBoundary>
             </motion.div>
           </>
         )}

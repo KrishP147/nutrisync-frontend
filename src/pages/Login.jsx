@@ -79,9 +79,7 @@ export default function Login() {
         >
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 rounded-lg bg-primary-700 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">N</span>
-            </div>
+            <img src="/logo.svg" alt="NutriSync" className="w-10 h-10" />
             <span className="text-xl font-heading font-bold text-white">NutriSync</span>
           </Link>
 
@@ -146,7 +144,7 @@ export default function Login() {
                 id="remember"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-white/20 bg-surface-300 text-primary-700 focus:ring-primary-700 focus:ring-offset-black"
+                className="w-4 h-4 rounded border-white/20 bg-[#0a0a0a] text-primary-700 focus:ring-primary-700 focus:ring-offset-black"
               />
               <label htmlFor="remember" className="text-sm text-white/60">
                 Remember me for 30 days
@@ -192,13 +190,11 @@ export default function Login() {
 
       {/* Right side - Image/Branding */}
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-surface-300">
+        <div className="absolute inset-0 bg-[#0a0a0a]">
           <div className="absolute inset-0 bg-gradient-to-br from-primary-700/20 via-transparent to-secondary-500/20" />
           <div className="absolute inset-0 flex items-center justify-center p-12">
             <div className="text-center">
-              <div className="w-20 h-20 rounded-2xl bg-primary-700 flex items-center justify-center mx-auto mb-8">
-                <span className="text-4xl font-bold text-white">N</span>
-              </div>
+              <img src="/logo.svg" alt="NutriSync" className="w-24 h-24 mx-auto mb-8" />
               <h2 className="text-3xl font-heading font-bold text-white mb-4">
                 Track Your Nutrition
               </h2>

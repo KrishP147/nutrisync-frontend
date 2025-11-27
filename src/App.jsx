@@ -9,7 +9,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ChangePassword from './pages/ChangePassword';
 import Profile from './pages/Profile';
-import DashboardNew from './pages/DashboardNew';
+import Dashboard from './pages/Dashboard';
 import Logging from './pages/Logging';
 import Progress from './pages/Progress';
 import DailyView from './pages/DailyView';
@@ -62,7 +62,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/change-password" element={session ? <ChangePassword /> : <Navigate to="/login" />} />
           <Route path="/profile" element={session ? <Profile /> : <Navigate to="/login" />} />
-          <Route path="/dashboard" element={session ? <DashboardNew /> : <Navigate to="/login" />} />
+          <Route path="/dashboard" element={session ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/logging" element={session ? <Logging /> : <Navigate to="/login" />} />
           <Route path="/progress" element={session ? <Progress /> : <Navigate to="/login" />} />
           <Route path="/daily-view/:date" element={session ? <DailyView /> : <Navigate to="/login" />} />

@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { useGoals } from '../contexts/GoalsContext';
+import { updateDailyAchievement } from '../utils/updateDailyAchievement';
 import api from '../services/api';
 import FoodSearchInput from './FoodSearchInput';
 import imageCompression from 'browser-image-compression';
 
 export default function PhotoMealUpload({ onMealAdded }) {
+  const { goals } = useGoals();
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -21,6 +24,27 @@ export default function PhotoMealUpload({ onMealAdded }) {
   const [savePhoto, setSavePhoto] = useState(true);
   const [customMealName, setCustomMealName] = useState('');
   const [isNameManuallyEdited, setIsNameManuallyEdited] = useState(false);
+  const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
+
+  // Fetch user dietary restrictions on mount
+  useEffect(() => {
+    const fetchDietaryRestrictions = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('user_profile')
+        .select('dietary_restrictions')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data?.dietary_restrictions) {
+        setDietaryRestrictions(data.dietary_restrictions);
+      }
+    };
+
+    fetchDietaryRestrictions();
+  }, []);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -116,6 +140,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
 
       const formData = new FormData();
       formData.append('file', selectedFile);
+      formData.append('dietaryRestrictions', JSON.stringify(dietaryRestrictions));
 
       const response = await api.post('/api/analyze-meal-image', formData, {
         headers: {
@@ -454,7 +479,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
       if (error) {
         alert('Failed to save custom food: ' + error.message);
       } else {
-        alert(`✅ "${foodName}" saved as custom food!`);
+        alert(`"${foodName}" saved as custom food!`);
 
         // Update the food name in the current meal
         const updated = { ...editableResult, foods: [...editableResult.foods] };
@@ -515,7 +540,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
       if (error) {
         alert('Failed to save photo meal as custom food: ' + error.message);
       } else {
-        alert(`✅ "${foodName}" saved as custom food!\n\nNutrition per 100g:\n${baseCalories} cal | ${baseProtein}g P | ${baseCarbs}g C | ${baseFat}g F | ${baseFiber}g Fiber`);
+        alert(`"${foodName}" saved as custom food!\n\nNutrition per 100g:\n${baseCalories} cal | ${baseProtein}g P | ${baseCarbs}g C | ${baseFat}g F | ${baseFiber}g Fiber`);
 
         // Update the meal name to match the saved food name
         setCustomMealName(foodName);
@@ -646,6 +671,9 @@ export default function PhotoMealUpload({ onMealAdded }) {
       setCustomMealName('');
       setIsNameManuallyEdited(false);
 
+      // Update daily achievement for streak tracking
+      await updateDailyAchievement(goals);
+
       if (onMealAdded) onMealAdded(mealData[0]);
     } catch (e) {
       console.error(e);
@@ -696,7 +724,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
               className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition shadow-lg"
               title="Remove photo"
             >
-              ✕
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
           </div>
 
@@ -773,7 +801,7 @@ export default function PhotoMealUpload({ onMealAdded }) {
               className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition shadow-lg"
               title="Remove photo"
             >
-              ✕
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
           </div>
 

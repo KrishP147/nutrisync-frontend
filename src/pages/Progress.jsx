@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { motion } from 'motion/react';
-import { 
-  Flame, 
-  Beef, 
-  Wheat, 
-  Droplets, 
+import {
+  Flame,
+  Beef,
+  Wheat,
+  Droplets,
   Leaf,
-  Target,
   TrendingUp,
   Calendar,
-  Zap
+  Zap,
+  Scale,
+  Info
 } from 'lucide-react';
 import Sidebar from '../components/layout/Sidebar';
-import GitHubHeatmap from '../components/GitHubHeatmap';
-import WeeklyTrends from '../components/WeeklyTrends';
+import { GitHubHeatmap, WeeklyTrends, WeightBMIProgress } from '../components/charts';
 import SetGoals from '../components/SetGoals';
 import { useGoals } from '../contexts/GoalsContext';
 import { 
-  BarChart, Bar, RadarChart, PolarGrid, 
-  PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, 
-  CartesianGrid, Tooltip, ResponsiveContainer, Legend 
+  BarChart, Bar, XAxis, YAxis, 
+  CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  ReferenceLine
 } from 'recharts';
 
 export default function Progress() {
@@ -30,6 +30,7 @@ export default function Progress() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [barChartView, setBarChartView] = useState('all');
+  const [showStreakInfo, setShowStreakInfo] = useState(false);
 
   useEffect(() => {
     fetchProgressData();
@@ -187,7 +188,7 @@ export default function Progress() {
       .order('achievement_date', { ascending: false });
 
     let currentStreak = 0;
-    
+
     if (achievements && achievements.length > 0) {
       const today = new Date();
       const todayStr = formatDateLocal(today);
@@ -195,18 +196,16 @@ export default function Progress() {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = formatDateLocal(yesterday);
 
-      let currentDate = achievements[0].achievement_date === todayStr ? 
-        new Date(todayStr) : 
-        (achievements[0].achievement_date === yesterdayStr ? new Date(yesterdayStr) : null);
-
-      if (currentDate) {
+      // Check if latest achievement is today or yesterday
+      if (achievements[0].achievement_date === todayStr || achievements[0].achievement_date === yesterdayStr) {
+        let currentDate = new Date(achievements[0].achievement_date);
         currentStreak = 1;
-        
+
         for (let i = 1; i < achievements.length; i++) {
           const prevDate = new Date(currentDate);
           prevDate.setDate(prevDate.getDate() - 1);
           const prevDateStr = formatDateLocal(prevDate);
-          
+
           if (achievements[i].achievement_date === prevDateStr) {
             currentStreak++;
             currentDate = prevDate;
@@ -234,7 +233,7 @@ export default function Progress() {
     { label: 'Avg Calories', value: stats.avgCalories, unit: 'kcal', goal: goals?.calories, icon: Flame, color: 'primary' },
     { label: 'Avg Protein', value: stats.avgProtein, unit: 'g', goal: goals?.protein, icon: Beef, color: 'secondary' },
     { label: 'Avg Carbs', value: stats.avgCarbs, unit: 'g', goal: goals?.carbs, icon: Wheat, color: 'amber' },
-    { label: 'Avg Fat', value: stats.avgFat, unit: 'g', goal: goals?.fat, icon: Droplets, color: 'blue' },
+    { label: 'Avg Fat', value: stats.avgFat, unit: 'g', goal: goals?.fat, icon: Droplets, color: 'purple' },
     { label: 'Avg Fiber', value: stats.avgFiber, unit: 'g', goal: goals?.fiber, icon: Leaf, color: 'green' },
   ] : [];
 
@@ -242,7 +241,7 @@ export default function Progress() {
     primary: { bg: 'bg-primary-700/10', text: 'text-primary-500', border: 'border-primary-700/30' },
     secondary: { bg: 'bg-secondary-500/10', text: 'text-secondary-400', border: 'border-secondary-500/30' },
     amber: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
-    blue: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
+    purple: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
     green: { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/30' },
   };
 
@@ -277,16 +276,28 @@ export default function Progress() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className={`card px-6 py-4 flex items-center gap-4 ${stats.goalsMetStreak > 0 ? 'border-amber-500/30' : ''}`}
+              className={`card px-6 py-4 flex items-center gap-4 relative ${stats.goalsMetStreak > 0 ? 'border-amber-500/30' : ''}`}
             >
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stats.goalsMetStreak > 0 ? 'bg-amber-500/20' : 'bg-white/5'}`}>
                 <Zap size={24} className={stats.goalsMetStreak > 0 ? 'text-amber-400' : 'text-white/30'} />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className={`text-3xl font-mono font-bold ${stats.goalsMetStreak > 0 ? 'text-amber-400' : 'text-white/40'}`}>
                   {stats.goalsMetStreak}
                 </p>
                 <p className="text-white/50 text-sm">Day Streak</p>
+              </div>
+              <div
+                className="relative"
+                onMouseEnter={() => setShowStreakInfo(true)}
+                onMouseLeave={() => setShowStreakInfo(false)}
+              >
+                <Info size={18} className="text-white/40 hover:text-white/70 cursor-help" />
+                {showStreakInfo && (
+                  <div className="absolute right-0 top-6 w-64 bg-black border border-white/10 rounded-lg p-3 text-xs text-white/70 z-20">
+                    Streak counts consecutive days where you met ALL your nutrition goals (calories, protein, carbs, fat, fiber). Just logging food isn't enough - you need to hit your targets!
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -375,7 +386,7 @@ export default function Progress() {
                 { key: 'all', label: 'All', color: 'primary' },
                 { key: 'protein', label: 'Protein', color: 'secondary' },
                 { key: 'carbs', label: 'Carbs', color: 'amber' },
-                { key: 'fat', label: 'Fat', color: 'blue' },
+                { key: 'fat', label: 'Fat', color: 'purple' },
                 { key: 'fiber', label: 'Fiber', color: 'green' },
                 { key: 'calories', label: 'Calories', color: 'primary' },
               ].map(({ key, label, color }) => (
@@ -410,69 +421,59 @@ export default function Progress() {
               <Legend />
               {barChartView === 'all' ? (
                 <>
-                  <Bar dataKey="Protein" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Carbs" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Fat" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Fiber" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Protein" fill="#0ea5e9" radius={[4, 4, 0, 0]} name="Protein (g)" />
+                  <Bar dataKey="Carbs" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Carbs (g)" />
+                  <Bar dataKey="Fat" fill="#d8b4fe" radius={[4, 4, 0, 0]} name="Fat (g)" />
+                  <Bar dataKey="Fiber" fill="#22c55e" radius={[4, 4, 0, 0]} name="Fiber (g)" />
                 </>
               ) : barChartView === 'protein' ? (
-                <Bar dataKey="Protein" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                <>
+                  <Bar dataKey="Protein" fill="#0ea5e9" radius={[4, 4, 0, 0]} name="Protein (g)" />
+                  <ReferenceLine y={goals?.protein || 150} stroke="rgba(255,255,255,0.3)" strokeDasharray="5 5" label={{ value: 'Goal', fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} />
+                </>
               ) : barChartView === 'carbs' ? (
-                <Bar dataKey="Carbs" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                <>
+                  <Bar dataKey="Carbs" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Carbs (g)" />
+                  <ReferenceLine y={goals?.carbs || 250} stroke="rgba(255,255,255,0.3)" strokeDasharray="5 5" label={{ value: 'Goal', fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} />
+                </>
               ) : barChartView === 'fat' ? (
-                <Bar dataKey="Fat" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <>
+                  <Bar dataKey="Fat" fill="#d8b4fe" radius={[4, 4, 0, 0]} name="Fat (g)" />
+                  <ReferenceLine y={goals?.fat || 65} stroke="rgba(255,255,255,0.3)" strokeDasharray="5 5" label={{ value: 'Goal', fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} />
+                </>
               ) : barChartView === 'fiber' ? (
-                <Bar dataKey="Fiber" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                <>
+                  <Bar dataKey="Fiber" fill="#22c55e" radius={[4, 4, 0, 0]} name="Fiber (g)" />
+                  <ReferenceLine y={goals?.fiber || 30} stroke="rgba(255,255,255,0.3)" strokeDasharray="5 5" label={{ value: 'Goal', fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} />
+                </>
               ) : (
-                <Bar dataKey="Calories" fill="#047857" radius={[4, 4, 0, 0]} />
+                <>
+                  <Bar dataKey="Calories" fill="#047857" radius={[4, 4, 0, 0]} name="Calories" />
+                  <ReferenceLine y={goals?.calories || 2000} stroke="rgba(255,255,255,0.3)" strokeDasharray="5 5" label={{ value: 'Goal', fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} />
+                </>
               )}
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Radar Chart */}
-        {stats && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="card p-6"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                <Target size={20} className="text-amber-400" strokeWidth={2} />
-              </div>
-              <div>
-                <h2 className="text-lg font-heading font-semibold text-white">Goal Achievement</h2>
-                <p className="text-white/50 text-sm">Average achievement vs goals</p>
-              </div>
+        {/* Weight/BMI Progress - Moved to bottom */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="card p-6"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-secondary-500/10 flex items-center justify-center">
+              <Scale size={20} className="text-secondary-400" strokeWidth={2} />
             </div>
-            
-            <ResponsiveContainer width="100%" height={350}>
-              <RadarChart data={[
-                { metric: 'Protein', value: Math.min((parseFloat(stats.avgProtein) / (goals?.protein || 150)) * 100, 100), fullMark: 100 },
-                { metric: 'Carbs', value: Math.min((parseFloat(stats.avgCarbs) / (goals?.carbs || 250)) * 100, 100), fullMark: 100 },
-                { metric: 'Fat', value: Math.min((parseFloat(stats.avgFat) / (goals?.fat || 67)) * 100, 100), fullMark: 100 },
-                { metric: 'Fiber', value: Math.min((parseFloat(stats.avgFiber) / (goals?.fiber || 30)) * 100, 100), fullMark: 100 },
-                { metric: 'Consistency', value: parseFloat(stats.proteinGoalRate), fullMark: 100 },
-              ]}>
-                <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                <PolarAngleAxis dataKey="metric" stroke="rgba(255,255,255,0.6)" fontSize={12} />
-                <PolarRadiusAxis angle={90} domain={[0, 100]} stroke="rgba(255,255,255,0.3)" fontSize={10} />
-                <Radar name="Progress" dataKey="value" stroke="#047857" fill="#047857" fillOpacity={0.3} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0a0a0a',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }}
-                  formatter={(value) => `${parseFloat(value).toFixed(1)}%`}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </motion.div>
-        )}
+            <div>
+              <h2 className="text-lg font-heading font-semibold text-white">Weight Progress</h2>
+              <p className="text-white/50 text-sm">Track your weight over time</p>
+            </div>
+          </div>
+          <WeightBMIProgress goals={goals} />
+        </motion.div>
       </div>
     </Sidebar>
   );

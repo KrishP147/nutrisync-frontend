@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
+import { useGoals } from '../contexts/GoalsContext';
+import { updateDailyAchievement } from '../utils/updateDailyAchievement';
 import FoodSearchInput from './FoodSearchInput';
 
 export default function MealForm({ onMealAdded }) {
+  const { goals } = useGoals();
   const [mealType, setMealType] = useState('lunch');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -166,6 +169,9 @@ export default function MealForm({ onMealAdded }) {
       setNotes('');
       setLoading(false);
 
+      // Update daily achievement for streak tracking
+      await updateDailyAchievement(goals);
+
       if (onMealAdded) onMealAdded(mealData[0]);
     } else {
       // Manual entry mode (single food)
@@ -222,6 +228,9 @@ export default function MealForm({ onMealAdded }) {
         setNotes('');
         setSaveAsCustom(false);
         setLoading(false);
+
+        // Update daily achievement for streak tracking
+        await updateDailyAchievement(goals);
 
         if (onMealAdded) onMealAdded(data[0]);
       }

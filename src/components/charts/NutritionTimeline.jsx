@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Flame, Beef, Wheat, Droplets, Leaf } from 'lucide-react';
 
-export default function NutritionByTimeHistogram({ meals = [] }) {
+export default function NutritionTimeline({ meals = [] }) {
   const [viewMode, setViewMode] = useState('calories');
 
   const histogramData = useMemo(() => {
@@ -49,7 +49,7 @@ export default function NutritionByTimeHistogram({ meals = [] }) {
       case 'calories': return '#047857';
       case 'protein': return '#0ea5e9';
       case 'carbs': return '#f59e0b';
-      case 'fat': return '#3b82f6';
+      case 'fat': return '#a855f7';
       case 'fiber': return '#22c55e';
       default: return '#047857';
     }
@@ -70,7 +70,7 @@ export default function NutritionByTimeHistogram({ meals = [] }) {
     { key: 'calories', label: 'Calories', icon: Flame, color: 'primary' },
     { key: 'protein', label: 'Protein', icon: Beef, color: 'secondary' },
     { key: 'carbs', label: 'Carbs', icon: Wheat, color: 'amber' },
-    { key: 'fat', label: 'Fat', icon: Droplets, color: 'blue' },
+    { key: 'fat', label: 'Fat', icon: Droplets, color: 'purple' },
     { key: 'fiber', label: 'Fiber', icon: Leaf, color: 'green' },
   ];
 
@@ -86,7 +86,7 @@ export default function NutritionByTimeHistogram({ meals = [] }) {
             onClick={() => setViewMode(key)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
               viewMode === key
-                ? `bg-${color === 'primary' ? 'primary-700' : color === 'secondary' ? 'secondary-500' : color === 'amber' ? 'amber-500' : color === 'blue' ? 'blue-500' : 'green-500'} text-white`
+                ? `bg-${color === 'primary' ? 'primary-700' : color === 'secondary' ? 'secondary-500' : color === 'amber' ? 'amber-500' : color === 'purple' ? 'purple-500' : 'green-500'} text-white`
                 : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
             }`}
           >
@@ -115,7 +115,7 @@ export default function NutritionByTimeHistogram({ meals = [] }) {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#0a0a0a',
+                backgroundColor: '#000000',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '8px',
                 color: '#fff'
@@ -136,10 +136,11 @@ export default function NutritionByTimeHistogram({ meals = [] }) {
       ) : (
         <div className="h-64 flex flex-col items-center justify-center text-white/40">
           <Flame size={32} className="mb-3 opacity-50" />
-          <p>No meals logged yet today</p>
+          <p>No meals logged on this day</p>
           <p className="text-sm mt-1">Your nutrition timeline will appear here</p>
         </div>
       )}
     </div>
   );
 }
+

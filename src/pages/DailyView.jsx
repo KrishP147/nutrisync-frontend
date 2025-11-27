@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { ArrowLeft, Calendar, Flame, Beef, Wheat, Droplets, Leaf } from 'lucide-react';
 import Sidebar from '../components/layout/Sidebar';
 import MealList from '../components/MealList';
-import NutritionByTimeHistogram from '../components/NutritionByTimeHistogram';
+import { NutritionTimeline } from '../components/charts';
 
 export default function DailyView() {
   const { date } = useParams();
@@ -149,7 +149,7 @@ export default function DailyView() {
         {/* Nutrition Timeline */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="card p-6">
           <h2 className="text-lg font-heading font-semibold text-white mb-4">Nutrition Timeline</h2>
-          <NutritionByTimeHistogram meals={meals} />
+          <NutritionTimeline meals={meals} />
         </motion.div>
 
         {/* Meals List */}
