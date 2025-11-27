@@ -1,5 +1,5 @@
 import { ResponsiveSankey } from '@nivo/sankey';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { GitBranch, Info } from 'lucide-react';
 
@@ -15,6 +15,14 @@ const COLORS = {
 
 export default function CalorieFlowSankey({ meals }) {
   const [showInfo, setShowInfo] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (!meals || meals.length === 0) {
     return (
@@ -98,7 +106,7 @@ export default function CalorieFlowSankey({ meals }) {
       >
         <ResponsiveSankey
           data={{ nodes, links }}
-          margin={{ top: 20, right: 140, bottom: 20, left: 140 }}
+          margin={{ top: 20, right: isMobile ? 80 : 140, bottom: 20, left: isMobile ? 80 : 140 }}
           align="justify"
           colors={(node) => node.nodeColor || COLORS[node.id] || '#6b7280'}
           nodeOpacity={1}

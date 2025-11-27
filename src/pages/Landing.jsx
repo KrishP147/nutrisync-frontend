@@ -79,12 +79,13 @@ export default function Landing() {
             <img src="/logo.svg" alt="NutriSync" className="w-10 h-10" />
             <span className="text-xl font-heading font-bold text-white">NutriSync</span>
           </div>
-          <div className="flex items-center gap-6">
-            <Link to="/login" className="text-white/70 hover:text-white transition-colors font-medium">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <Link to="/login" className="text-white/70 hover:text-white transition-colors font-medium text-sm sm:text-base">
               Sign In
             </Link>
-            <Link to="/register" className="btn-primary">
-              Get Started
+            <Link to="/register" className="btn-primary text-sm sm:text-base px-3 sm:px-4">
+              <span className="hidden sm:inline">Get Started</span>
+              <span className="sm:hidden">Start</span>
               <ArrowRight size={18} />
             </Link>
           </div>
@@ -154,14 +155,6 @@ export default function Landing() {
           </motion.div>
         </div>
 
-        {/* Scroll indicator - simplified chevron */}
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <ChevronDown size={32} className="text-white/40" />
-        </motion.div>
       </section>
 
       {/* Features Section */}

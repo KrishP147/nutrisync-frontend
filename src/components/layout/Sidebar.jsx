@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   LayoutDashboard, 
@@ -28,13 +28,13 @@ const bottomItems = [
   { path: '/profile', label: 'Profile', icon: User },
 ];
 
-export default function Sidebar({ children }) {
+function Sidebar({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = useCallback((path) => location.pathname === path, [location.pathname]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -58,24 +58,14 @@ export default function Sidebar({ children }) {
         `}
       >
         {active && (
-          <motion.div
-            layoutId="activeIndicator"
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary-700 rounded-r"
-          />
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary-700 rounded-r" />
         )}
         <Icon size={20} strokeWidth={2} className="flex-shrink-0" />
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              className="font-medium whitespace-nowrap overflow-hidden"
-            >
-              {item.label}
-            </motion.span>
-          )}
-        </AnimatePresence>
+        {!collapsed && (
+          <span className="font-medium whitespace-nowrap overflow-hidden">
+            {item.label}
+          </span>
+        )}
       </Link>
     );
   };
@@ -120,18 +110,11 @@ export default function Sidebar({ children }) {
         <div className="p-6 border-b border-white/10">
           <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
             <img src="/logo.svg" alt="NutriSync" className="w-10 h-10 flex-shrink-0" />
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="text-xl font-heading font-bold text-white whitespace-nowrap overflow-hidden"
-                >
-                  NutriSync
-                </motion.span>
-              )}
-            </AnimatePresence>
+            {!collapsed && (
+              <span className="text-xl font-heading font-bold text-white whitespace-nowrap overflow-hidden">
+                NutriSync
+              </span>
+            )}
           </Link>
         </div>
 
@@ -153,18 +136,11 @@ export default function Sidebar({ children }) {
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/60 hover:text-red-500 hover:bg-red-500/10 transition-all duration-200"
           >
             <LogOut size={20} strokeWidth={2} className="flex-shrink-0" />
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="font-medium whitespace-nowrap overflow-hidden"
-                >
-                  Log Out
-                </motion.span>
-              )}
-            </AnimatePresence>
+            {!collapsed && (
+              <span className="font-medium whitespace-nowrap overflow-hidden">
+                Log Out
+              </span>
+            )}
           </button>
         </div>
 
@@ -186,3 +162,8 @@ export default function Sidebar({ children }) {
     </div>
   );
 }
+
+// Memoize Sidebar to prevent unnecessary re-renders
+// Note: children will always be a new reference, but that's okay
+// The important part is that Sidebar's internal state persists
+export default memo(Sidebar);

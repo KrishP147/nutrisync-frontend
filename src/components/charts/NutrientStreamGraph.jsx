@@ -1,5 +1,5 @@
 import { ResponsiveStream } from '@nivo/stream';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Waves, Info } from 'lucide-react';
 
@@ -7,6 +7,14 @@ const STREAM_COLORS = ['#0ea5e9', '#f59e0b', '#a855f7', '#22c55e']; // Sky blue,
 
 export default function NutrientStreamGraph({ data }) {
   const [showInfo, setShowInfo] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   if (!data || data.length === 0) {
     return (
@@ -59,6 +67,7 @@ export default function NutrientStreamGraph({ data }) {
           axisBottom={{
             tickSize: 0,
             tickPadding: 10,
+            tickValues: isMobile ? 3 : undefined, // Show only 3 labels on mobile
             format: (i) => data[i]?.date || data[i]?.day || '',
           }}
           axisLeft={{

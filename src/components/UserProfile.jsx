@@ -41,12 +41,21 @@ export default function UserProfile() {
     const { data } = await supabase.from('user_profile').select('*').eq('user_id', user.id).single();
     
     if (data) {
+      // Use the saved activity_level exactly as stored - don't override with defaults
+      // Only use fallback if activity_level is null/undefined/empty
+      const savedActivityLevel = data.activity_level;
+      // Ensure we have a valid activity level - check if it's a valid option
+      const validActivityLevels = ['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active'];
+      const activityLevel = (savedActivityLevel && validActivityLevels.includes(savedActivityLevel)) 
+        ? savedActivityLevel 
+        : 'moderately_active';
+      
       setProfile({
         age: data.age || '', 
         gender: data.gender || 'male',
         height: data.height_cm || '', 
         weight: data.weight_kg || '',
-        activity_level: data.activity_level || 'moderately_active', 
+        activity_level: activityLevel, 
         goal_type: data.goal_type || 'maintain'
       });
       setDietaryRestrictions(data.dietary_restrictions || []);
@@ -55,6 +64,16 @@ export default function UserProfile() {
       setWeightUnit('kg');
       if (data.bmi) setBmi(data.bmi);
       if (data.bmi_category) setBmiCategory(data.bmi_category);
+    } else {
+      // If no profile exists, initialize with defaults
+      setProfile({
+        age: '', 
+        gender: 'male',
+        height: '', 
+        weight: '',
+        activity_level: 'moderately_active', 
+        goal_type: 'maintain'
+      });
     }
   };
 
@@ -340,7 +359,11 @@ export default function UserProfile() {
                     {/* Activity Level */}
                     <div>
                       <label className="input-label">Activity Level</label>
-                      <select value={profile.activity_level} onChange={(e) => setProfile({ ...profile, activity_level: e.target.value })} className="input">
+                      <select 
+                        value={profile.activity_level} 
+                        onChange={(e) => setProfile({ ...profile, activity_level: e.target.value })} 
+                        className="input"
+                      >
                         <option value="sedentary">Sedentary (little exercise)</option>
                         <option value="lightly_active">Lightly Active (1-3 days/week)</option>
                         <option value="moderately_active">Moderately Active (3-5 days/week)</option>

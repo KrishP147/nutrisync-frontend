@@ -13,7 +13,6 @@ import {
 import Sidebar from '../components/layout/Sidebar';
 import MealList from '../components/MealList';
 import { NutritionTimeline } from '../components/charts';
-import Recommendations from '../components/Recommendations';
 import { useGoals } from '../contexts/GoalsContext';
 
 export default function Dashboard() {
@@ -264,15 +263,6 @@ export default function Dashboard() {
             </div>
           </motion.div>
         </div>
-
-        {/* AI Recommendations */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <Recommendations key={refreshTrigger} />
-        </motion.div>
 
         {/* Recent Meals */}
         <motion.div

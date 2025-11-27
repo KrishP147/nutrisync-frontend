@@ -1,5 +1,5 @@
 import { ResponsiveTreeMap } from '@nivo/treemap';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { LayoutGrid, Info } from 'lucide-react';
 
@@ -40,6 +40,14 @@ const truncateName = (name, maxLength = 12) => {
 
 export default function MealCompositionTreeMap({ meals }) {
   const [showInfo, setShowInfo] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (!meals || meals.length === 0) {
     return (
@@ -92,14 +100,21 @@ export default function MealCompositionTreeMap({ meals }) {
     })).filter(cat => cat.children.length > 0),
   };
 
-  const CustomTooltip = ({ node }) => (
-    <div className="bg-black border border-white/10 rounded-lg px-3 py-2 shadow-xl z-[9999]">
-      <div className="font-medium text-white mb-1">{node.data.name}</div>
-      {node.value && (
-        <div className="font-mono text-primary-500">{node.value} calories</div>
-      )}
-    </div>
-  );
+  const CustomTooltip = ({ node }) => {
+    const displayName = node.data.displayName || node.data.name || node.id;
+    
+    return (
+      <div className="bg-black border border-white/10 rounded-lg px-3 py-2 shadow-xl z-[9999]">
+        <div className="font-medium text-white mb-1">{displayName}</div>
+        {node.value && (
+          <div className="font-mono text-primary-500">{node.value} calories</div>
+        )}
+        {node.data.name && node.data.name !== displayName && (
+          <div className="text-xs text-white/50 mt-1">{node.data.name}</div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="relative" style={{ overflow: 'visible' }}>
@@ -130,6 +145,8 @@ export default function MealCompositionTreeMap({ meals }) {
           margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
           labelSkipSize={80}
           label={e => {
+            // On mobile, don't show labels on the chart itself - only in tooltip
+            if (isMobile) return '';
             const width = e.width || 0;
             const height = e.height || 0;
             const area = width * height;
@@ -137,7 +154,7 @@ export default function MealCompositionTreeMap({ meals }) {
             return e.data.displayName || truncateName(e.id);
           }}
           labelTextColor="#ffffff"
-          parentLabelPosition="left"
+          parentLabelPosition={isMobile ? "top" : "left"}
           parentLabelTextColor="#ffffff"
           colors={(node) => node.data.color || '#6b7280'}
           borderWidth={2}

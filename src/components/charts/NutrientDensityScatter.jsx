@@ -1,5 +1,5 @@
 import { ResponsiveScatterPlot } from '@nivo/scatterplot';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Crosshair, Info } from 'lucide-react';
 
@@ -13,6 +13,14 @@ const MEAL_TYPE_COLORS = {
 export default function NutrientDensityScatter({ meals, onMealClick }) {
   const [showInfo, setShowInfo] = useState(false);
   const [densityType, setDensityType] = useState('protein');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (!meals || meals.length === 0) {
     return (
@@ -131,6 +139,7 @@ export default function NutrientDensityScatter({ meals, onMealClick }) {
           axisBottom={{
             tickSize: 0,
             tickPadding: 10,
+            tickValues: isMobile ? 3 : undefined, // Show only 3 labels on mobile
             legend: 'Calories',
             legendPosition: 'middle',
             legendOffset: 40,
