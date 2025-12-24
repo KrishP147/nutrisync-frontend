@@ -1,16 +1,46 @@
-# React + Vite
+# NutriSync Frontend (Archived)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> ⚠️ **This repository is archived and maintained for historical reference only.**
+> 
+> **Active Development**: All current development has moved to the [NutriSync Monorepo](https://github.com/KrishP147/nutrisync)
 
-Currently, two official plugins are available:
+## About
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This repository contains the React frontend for NutriSync - a personalized health and nutrition tracking application with AI-powered insights and intermittent fasting support.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 18** with **Vite** for fast development
+- **React Router** for client-side routing
+- **Motion (Framer Motion)** for animations
+- **Tailwind CSS** for styling
+- **Plotly.js** for data visualization
+- **Supabase** for authentication and database
+- **Vitest + React Testing Library** for testing
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- AI-powered food recognition via photo upload
+- Comprehensive meal logging with USDA FoodData Central
+- Intermittent fasting timer with customizable schedules
+- Progress tracking with interactive charts
+- Photo gallery for meal history
+- Personalized nutrition goals and recommendations
+
+## History
+
+This standalone frontend repository contains the full development history from the initial build through various iterations. It has been superseded by the monorepo structure for easier maintenance and deployment.
+
+**Commit History**: This repo preserves all original commits and development history from the frontend-only development phase.
+
+## Current Status
+
+- **Status**: Archived (Read-only)
+- **Last Updated**: December 2025
+- **Active Repository**: [nutrisync monorepo](https://github.com/KrishP147/nutrisync)
+
+For the latest code, features, and active development, please visit the monorepo.
+
+---
+
+*This repository serves as a historical archive of the frontend codebase.*
